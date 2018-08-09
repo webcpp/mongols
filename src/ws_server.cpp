@@ -18,17 +18,28 @@ namespace mongols {
 
     ws_server::ws_server(const std::string& host, int port, int timeout
             , size_t buffer_size, size_t thread_size, int max_event_size)
-    : server(host, port, timeout, buffer_size, thread_size, max_event_size) {
+    : server(0) {
+        if (thread_size > 0) {
+            this->server = new tcp_threading_server(host, port, timeout, buffer_size, thread_size, max_event_size);
+        } else {
+            this->server = new tcp_server(host, port, timeout, buffer_size, max_event_size);
+        }
+    }
 
+    ws_server::~ws_server() {
+        if (this->server) {
+            delete this->server;
+        }
     }
 
     void ws_server::run(const handler_function& f) {
-        this->server.run(std::bind(&ws_server::work, this
+        this->server->run(std::bind(&ws_server::work, this
                 , std::cref(f)
                 , std::placeholders::_1
                 , std::placeholders::_2
                 , std::placeholders::_3
-                , std::placeholders::_4));
+                , std::placeholders::_4
+                , std::placeholders::_5));
     }
 
     void ws_server::run() {
@@ -39,12 +50,13 @@ namespace mongols {
                 , std::placeholders::_4
                 , std::placeholders::_5
                 );
-        this->server.run(std::bind(&ws_server::work, this
+        this->server->run(std::bind(&ws_server::work, this
                 , f
                 , std::placeholders::_1
                 , std::placeholders::_2
                 , std::placeholders::_3
                 , std::placeholders::_4
+                , std::placeholders::_5
                 ));
     }
 
@@ -110,13 +122,14 @@ namespace mongols {
         return message;
     }
 
-    std::pair<std::string, bool> ws_server::work(const handler_function& f
+    std::string ws_server::work(const handler_function& f
             , const std::string& input
+            , bool& keepalive
             , bool& send_to_other
             , std::pair<size_t, size_t>& g_u_id
             , tcp_server::filter_handler_function& send_to_other_filter) {
         std::string response;
-        bool keepalive = KEEPALIVE_CONNECTION;
+        keepalive = KEEPALIVE_CONNECTION;
         send_to_other = false;
 
         if (input[0] == 'G') {
@@ -178,7 +191,7 @@ namespace mongols {
             }
         }
 ws_done:
-        return std::make_pair(std::move(response), keepalive);
+        return response;
     }
 
     bool ws_server::ws_handshake(const std::string& request, std::string& response) {

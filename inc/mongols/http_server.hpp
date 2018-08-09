@@ -76,10 +76,11 @@ namespace mongols {
         void set_enable_session(bool);
         void set_enable_cache(bool);
     private:
-        std::pair < std::string, bool> work(
+        std::string work(
                 const std::function<bool(const mongols::request&)>& req_filter
                 , const std::function<void(const mongols::request& req, mongols::response&)>& res_filter
                 , const std::string&
+                , bool&
                 , bool&
                 , std::pair<size_t, size_t>&
                 , tcp_server::filter_handler_function&);

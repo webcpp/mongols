@@ -37,10 +37,12 @@ namespace mongols {
         thread_exit_timeout.tv_sec = 0;
         thread_exit_timeout.tv_nsec = 200;
         handler_function g = [](const std::string&
+                , bool& keepalive
                 , bool&
                 , std::pair<size_t, size_t>&
                 , filter_handler_function&) {
-            return std::make_pair("", CLOSE_CONNECTION);
+            keepalive = CLOSE_CONNECTION;
+            return "";
         };
         auto thread_exit_fun = std::bind(&tcp_threading_server::work, this, -1, g);
         for (size_t i = 0; i<this->work_pool.size(); ++i) {
@@ -98,18 +100,18 @@ namespace mongols {
                 };
 
                 std::lock_guard<std::mutex> lk(this->main_mtx);
-                bool send_to_all = false;
+                bool keepalive = CLOSE_CONNECTION, send_to_all = false;
                 std::pair<size_t, size_t>& g_u_id = this->clients[fd];
-                std::pair < std::string, bool> output = std::move(g(input, send_to_all, g_u_id, send_to_other_filter));
-                size_t n = send(fd, output.first.c_str(), output.first.size(), 0);
+                std::string output = std::move(g(input, keepalive, send_to_all, g_u_id, send_to_other_filter));
+                size_t n = send(fd, output.c_str(), output.size(), 0);
 
                 if (n >= 0) {
                     if (send_to_all) {
-                        this->work_pool.submit(std::bind(&tcp_threading_server::send_to_all_client, this, fd, output.first, send_to_other_filter));
+                        this->work_pool.submit(std::bind(&tcp_threading_server::send_to_all_client, this, fd, output, send_to_other_filter));
                         std::this_thread::yield();
                     }
                 }
-                if (n < 0 || output.second) {
+                if (n < 0 || keepalive) {
                     goto ev_error;
                 }
 

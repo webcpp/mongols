@@ -10,7 +10,7 @@
 #include "util.hpp"
 #include "MPFDParser/Parser.h"
 
-#define mongols_http_server_version "mongols/0.9.2"
+#define mongols_http_server_version "mongols/0.9.3"
 #define form_urlencoded_type "application/x-www-form-urlencoded"
 #define form_urlencoded_type_len (sizeof(form_urlencoded_type) - 1)
 #define TEMP_DIRECTORY "temp"
@@ -171,7 +171,8 @@ namespace mongols {
                 , std::placeholders::_1
                 , std::placeholders::_2
                 , std::placeholders::_3
-                , std::placeholders::_4);
+                , std::placeholders::_4
+                , std::placeholders::_5);
 
         this->server->run(g);
     }
@@ -287,10 +288,11 @@ namespace mongols {
         }
     }
 
-    std::pair < std::string, bool> http_server::work(
+    std::string http_server::work(
             const std::function<bool(const mongols::request&)>& req_filter
             , const std::function<void(const mongols::request&, mongols::response&)>& res_filter
             , const std::string& input
+            , bool& keepalive
             , bool& send_to_other
             , std::pair<size_t, size_t>&
             , tcp_server::filter_handler_function&) {
@@ -298,7 +300,6 @@ namespace mongols {
         mongols::request req;
         mongols::response res;
         std::string body, output;
-        bool conn = CLOSE_CONNECTION;
         if (this->parse_reqeust(input, req, body)) {
 
             if (body.size()>this->max_body_size) {
@@ -309,7 +310,7 @@ namespace mongols {
                 std::unordered_map<std::string, std::string>::const_iterator tmp;
                 if ((tmp = req.headers.find("Connection")) != req.headers.end()) {
                     if (tmp->second == "keep-alive") {
-                        conn = KEEPALIVE_CONNECTION;
+                        keepalive = KEEPALIVE_CONNECTION;
                     }
                 }
                 if (!req.param.empty()) {
@@ -392,10 +393,7 @@ namespace mongols {
         }
 
 
-        output = std::move(this->create_response(res, conn));
-
-
-        return std::make_pair(std::move(output), conn);
+        return output = std::move(this->create_response(res, keepalive));
     }
 
     void http_server::set_cache_expires(long long expires) {

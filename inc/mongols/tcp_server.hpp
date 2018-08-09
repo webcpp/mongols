@@ -20,8 +20,9 @@ namespace mongols {
     class tcp_server {
     public:
         typedef std::function<bool(const std::pair<size_t, size_t>&) > filter_handler_function;
-        typedef std::function<std::pair<std::string, bool>(
+        typedef std::function<std::string(
                 const std::string&
+                , bool&
                 , bool&
                 , std::pair<size_t, size_t>&
                 , filter_handler_function&) > handler_function;

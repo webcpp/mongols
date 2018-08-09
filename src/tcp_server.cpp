@@ -134,12 +134,17 @@ namespace mongols {
                     return true;
                 };
 
-                bool send_to_all = false;
+                bool keepalive = CLOSE_CONNECTION, send_to_all = false;
                 std::pair<size_t, size_t>& g_u_id = this->clients[fd];
-                std::pair < std::string, bool> output = std::move(g(input, send_to_all, g_u_id, send_to_other_filter));
-                size_t n = send(fd, output.first.c_str(), output.first.size(), 0);
+                std::string output = std::move(g(input, keepalive, send_to_all, g_u_id, send_to_other_filter));
+                size_t n = send(fd, output.c_str(), output.size(), 0);
+                if (n >= 0) {
+                    if (send_to_all) {
+                        this->send_to_all_client(fd, output, send_to_other_filter);
+                    }
+                }
 
-                if (n < 0 || output.second) {
+                if (n < 0 || keepalive) {
                     goto ev_error;
                 }
 
