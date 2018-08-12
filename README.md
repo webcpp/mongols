@@ -44,25 +44,26 @@ or
 #include <mongols/util.hpp>
 #include <iostream>
 
-
+/*
 //websocket server
 int main(int,char**){
 	int port=9090;
 	const char* host="127.0.0.1";
-	mongols::ws_server server(host,port);
+	mongols::ws_server server(host,port,5000,2048,4);
 
-	/*auto f=[](const std::string& input
+	auto f=[](const std::string& input
             , bool& keepalive
             , bool& send_to_other
-            , std::pair<size_t, size_t>& g_u_id
+            , mongols::tcp_server::client_t& client
             , mongols::tcp_server::filter_handler_function& send_to_other_filter){
 			keepalive = KEEPALIVE_CONNECTION;
 			send_to_other=true;
 			return input;
 	};
-	server.run(f);*/
-	server.run();
+	server.run(f);
+	//server.run();
 }
+*/
 
 
 /*
@@ -70,19 +71,19 @@ int main(int,char**){
 int main(int,char**)
 {
 	auto f=[](const std::string& input
-                , bool& keepalive
+					 , bool & keepalive
                 , bool& send_to_other
-                , std::pair<size_t, size_t>& g_u_id
+                , mongols::tcp_server::client_t& client
                 , mongols::tcp_server::filter_handler_function& send_to_other_filter){
+					keepalive= KEEPALIVE_CONNECTION;
 					send_to_other=true;
-                                                            keepalive=KEEPALIVE_CONNECTION;
 					return input;
 				};
 	int port=9090;
 	const char* host="127.0.0.1";
 	
-	mongols::tcp_threading_server
-	//mongols::tcp_server
+	//mongols::tcp_threading_server
+	mongols::tcp_server
 
 	server(host,port);
 	server.run(f);
@@ -91,7 +92,8 @@ int main(int,char**)
 */
 
 
-/*
+
+
 //http server or multi-threading server
 int main(int,char**)
 {
@@ -99,17 +101,30 @@ int main(int,char**)
 		return true;
 	};
 	auto g=[](const mongols::request& req,mongols::response& res){
+		//std::unordered_map<std::string, std::string>::const_iterator i;
+		//if((i=req.session.find("test"))!=req.session.end()){
+		//	long test=std::stol(i->second)+1;
+		//	res.content=std::to_string(test);
+		//	res.session["test"]=res.content;
+		//}else{
+		//	res.content=std::to_string(0);;
+		//	res.session["test"]=res.content;
+		//}
 		res.content=std::move("hello,world");
 		res.status=200;
 	};
 	int port=9090;
 	const char* host="127.0.0.1";
 	mongols::http_server 
-	//server(host,port,5000,1024,2)
+	//server(host,port,5000,1024,4);
 	server(host,port);
+	server.set_enable_session(false);
+	server.set_enable_cache(false);
 	server.run(f,g);
 }
-*/
+
+
+
 
 ```
 
