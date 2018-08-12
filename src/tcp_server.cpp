@@ -101,8 +101,8 @@ namespace mongols {
         fcntl(fd, F_SETFL, flags | O_NONBLOCK);
     }
 
-    void tcp_server::add_client(int fd) {
-        this->clients.insert(std::move(std::make_pair(fd, std::move(std::make_pair(0, 0)))));
+    void tcp_server::add_client(int fd, const std::string& ip, int port) {
+        this->clients.insert(std::move(std::make_pair(fd, std::move(client_t(ip, port, std::make_pair<size_t, size_t>(0, 0))))));
     }
 
     void tcp_server::del_client(int fd) {
@@ -129,22 +129,26 @@ namespace mongols {
                     return false;
                 }
             } else if (ret > 0) {
-                std::string input = std::move(std::string(buffer, ret));
-                filter_handler_function send_to_other_filter = [](const std::pair<size_t, size_t>&) {
-                    return true;
-                };
+                try {
+                    std::string input(buffer, ret);
+                    filter_handler_function send_to_other_filter = [](const client_t&) {
+                        return true;
+                    };
 
-                bool keepalive = CLOSE_CONNECTION, send_to_all = false;
-                std::pair<size_t, size_t>& g_u_id = this->clients[fd];
-                std::string output = std::move(g(input, keepalive, send_to_all, g_u_id, send_to_other_filter));
-                size_t n = send(fd, output.c_str(), output.size(), 0);
-                if (n >= 0) {
-                    if (send_to_all) {
-                        this->send_to_all_client(fd, output, send_to_other_filter);
+                    bool keepalive = CLOSE_CONNECTION, send_to_all = false;
+                    client_t& client = this->clients[fd];
+                    std::string output = std::move(g(input, keepalive, send_to_all, client, send_to_other_filter));
+                    size_t n = send(fd, output.c_str(), output.size(), 0);
+                    if (n >= 0) {
+                        if (send_to_all) {
+                            this->send_to_all_client(fd, output, send_to_other_filter);
+                        }
                     }
-                }
 
-                if (n < 0 || keepalive) {
+                    if (n < 0 || keepalive) {
+                        goto ev_error;
+                    }
+                } catch (std::exception& e) {
                     goto ev_error;
                 }
 
@@ -176,7 +180,7 @@ ev_error:
                     this->setnonblocking(connfd);
                     this->epoll.add(connfd, EPOLLIN | EPOLLRDHUP | EPOLLET);
 
-                    this->add_client(connfd);
+                    this->add_client(connfd, inet_ntoa(clientaddr.sin_addr), ntohs(clientaddr.sin_port));
                 } else {
                     break;
                 }

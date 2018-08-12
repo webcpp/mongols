@@ -19,13 +19,29 @@ namespace mongols {
 
     class tcp_server {
     public:
-        typedef std::function<bool(const std::pair<size_t, size_t>&) > filter_handler_function;
+
+        class client_t {
+        public:
+
+            client_t() : ip(), port(-1), g_u_id(std::move(std::make_pair<size_t,size_t>(0, 0))) {
+            }
+
+            client_t(const std::string& ip, int port, const std::pair<size_t, size_t>& g_u_id)
+            : ip(ip), port(port), g_u_id(g_u_id) {
+            }
+            virtual~client_t() = default;
+            std::string ip;
+            int port;
+            std::pair<size_t, size_t> g_u_id;
+        };
+        typedef std::function<bool(const client_t&) > filter_handler_function;
         typedef std::function<std::string(
                 const std::string&
                 , bool&
                 , bool&
-                , std::pair<size_t, size_t>&
+                , client_t&
                 , filter_handler_function&) > handler_function;
+
 
     public:
         tcp_server() = delete;
@@ -51,8 +67,8 @@ namespace mongols {
 
     protected:
         size_t buffer_size;
-        std::unordered_map<int, std::pair<size_t, size_t> > clients;
-        virtual void add_client(int);
+        std::unordered_map<int, client_t > clients;
+        virtual void add_client(int, const std::string&, int);
         virtual void del_client(int);
         virtual bool send_to_all_client(int, const std::string&, const filter_handler_function&);
         virtual bool work(int, const handler_function&);

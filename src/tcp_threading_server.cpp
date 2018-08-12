@@ -39,7 +39,7 @@ namespace mongols {
         handler_function g = [](const std::string&
                 , bool& keepalive
                 , bool&
-                , std::pair<size_t, size_t>&
+                , tcp_server::client_t&
                 , filter_handler_function&) {
             keepalive = CLOSE_CONNECTION;
             return "";
@@ -59,9 +59,9 @@ namespace mongols {
         std::this_thread::yield();
     }
 
-    void tcp_threading_server::add_client(int fd) {
+    void tcp_threading_server::add_client(int fd, const std::string& ip, int port) {
         std::lock_guard<std::mutex> lk(this->main_mtx);
-        this->clients.insert(std::move(std::make_pair(fd, std::move(std::make_pair(0, 0)))));
+        this->clients.insert(std::move(std::make_pair(fd, std::move(client_t(ip, port, std::make_pair<size_t, size_t>(0, 0))))));
         std::this_thread::yield();
     }
 
@@ -94,29 +94,32 @@ namespace mongols {
                     return false;
                 }
             } else if (ret > 0) {
-                std::string input = std::move(std::string(buffer, ret));
-                filter_handler_function send_to_other_filter = [](const std::pair<size_t, size_t>&) {
-                    return true;
-                };
+                try {
+                    std::string input(buffer, ret);
+                    filter_handler_function send_to_other_filter = [](const tcp_server::client_t&) {
+                        return true;
+                    };
 
-                std::lock_guard<std::mutex> lk(this->main_mtx);
-                bool keepalive = CLOSE_CONNECTION, send_to_all = false;
-                std::pair<size_t, size_t>& g_u_id = this->clients[fd];
-                std::string output = std::move(g(input, keepalive, send_to_all, g_u_id, send_to_other_filter));
-                size_t n = send(fd, output.c_str(), output.size(), 0);
+                    std::lock_guard<std::mutex> lk(this->main_mtx);
+                    bool keepalive = CLOSE_CONNECTION, send_to_all = false;
+                    tcp_server::client_t& client = this->clients[fd];
+                    std::string output = std::move(g(input, keepalive, send_to_all, client, send_to_other_filter));
+                    size_t n = send(fd, output.c_str(), output.size(), 0);
 
-                if (n >= 0) {
-                    if (send_to_all) {
-                        this->work_pool.submit(std::bind(&tcp_threading_server::send_to_all_client, this, fd, output, send_to_other_filter));
-                        std::this_thread::yield();
+                    if (n >= 0) {
+                        if (send_to_all) {
+                            this->work_pool.submit(std::bind(&tcp_threading_server::send_to_all_client, this, fd, output, send_to_other_filter));
+                            std::this_thread::yield();
+                        }
                     }
-                }
-                if (n < 0 || keepalive) {
+                    if (n < 0 || keepalive) {
+                        goto ev_error;
+                    }
+
+                    std::this_thread::yield();
+                } catch (std::exception& e) {
                     goto ev_error;
                 }
-
-                std::this_thread::yield();
-
 
 
             } else {

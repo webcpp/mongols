@@ -82,7 +82,7 @@ namespace mongols {
                 , const std::string&
                 , bool&
                 , bool&
-                , std::pair<size_t, size_t>&
+                , tcp_server::client_t&
                 , tcp_server::filter_handler_function&);
     private:
         bool parse_reqeust(const std::string& str, mongols::request& req, std::string& body);

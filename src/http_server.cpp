@@ -294,13 +294,14 @@ namespace mongols {
             , const std::string& input
             , bool& keepalive
             , bool& send_to_other
-            , std::pair<size_t, size_t>&
+            , tcp_server::client_t& client
             , tcp_server::filter_handler_function&) {
         send_to_other = false;
         mongols::request req;
         mongols::response res;
         std::string body, output;
         if (this->parse_reqeust(input, req, body)) {
+            req.client = client.ip;
 
             if (body.size()>this->max_body_size) {
                 body.clear();

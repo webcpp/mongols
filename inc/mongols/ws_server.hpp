@@ -28,17 +28,17 @@ namespace mongols {
                 , const std::string&
                 , bool&
                 , bool&
-                , std::pair<size_t, size_t>&
+                , tcp_server::client_t&
                 , tcp_server::filter_handler_function&);
         std::string ws_message_parse(const std::string&
                 , bool&
                 , bool&
-                , std::pair<size_t, size_t>&
+                , tcp_server::client_t&
                 , tcp_server::filter_handler_function&);
         std::string ws_json_parse(const std::string& message
                 , bool& keepalive
                 , bool& send_to_other
-                , std::pair<size_t, size_t>& g_u_id
+                , tcp_server::client_t& client
                 , tcp_server::filter_handler_function& send_to_other_filter);
         bool ws_handshake(const std::string &request, std::string &response);
         int ws_parse(const std::string& frame, std::string& message);
