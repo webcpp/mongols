@@ -74,11 +74,11 @@ namespace mongols {
                     || !root["gfilter"].is_array()
                     || !root["ufilter"].is_array()) {
             } else {
-                if (client.g_u_id.first == 0) {
-                    client.g_u_id.first = root["gid"].int_value();
+                if (std::find(client.gid.begin(), client.gid.end(), root["gid"].int_value()) == client.gid.end()) {
+                    client.gid.push_back(root["gid"].int_value());
                 }
-                if (client.g_u_id.second == 0) {
-                    client.g_u_id.second = root["uid"].int_value();
+                if (client.uid == 0) {
+                    client.uid = root["uid"].int_value();
                 }
                 keepalive = KEEPALIVE_CONNECTION;
                 send_to_other = true;
@@ -99,14 +99,17 @@ namespace mongols {
                         if (ufilter.empty()) {
                             res = true;
                         } else {
-                            res = std::find(ufilter.begin(), ufilter.end(), cur_client.g_u_id.second) != ufilter.end();
+                            res = std::find(ufilter.begin(), ufilter.end(), cur_client.uid) != ufilter.end();
                         }
                     } else {
+                        auto tmp_fun = [&](size_t i) {
+                            return std::find(cur_client.gid.begin(), cur_client.gid.end(), i) != cur_client.gid.end();
+                        };
                         if (ufilter.empty()) {
-                            res = std::find(gfilter.begin(), gfilter.end(), cur_client.g_u_id.first) != gfilter.end();
+                            res = std::find_if(gfilter.begin(), gfilter.end(), tmp_fun) != gfilter.end();
                         } else {
-                            res = std::find(gfilter.begin(), gfilter.end(), cur_client.g_u_id.first) != gfilter.end()
-                                    && std::find(ufilter.begin(), ufilter.end(), cur_client.g_u_id.second) != ufilter.end();
+                            res = std::find(ufilter.begin(), ufilter.end(), cur_client.uid) != ufilter.end()
+                                    && std::find_if(gfilter.begin(), gfilter.end(), tmp_fun) != gfilter.end();
                         }
                     }
                     return res;
@@ -147,7 +150,7 @@ namespace mongols {
 
 
             if (ret == 1) {
-                message=std::move(f(message, keepalive, send_to_other, client, send_to_other_filter));
+                message = std::move(f(message, keepalive, send_to_other, client, send_to_other_filter));
                 size_t frame_len = websocket_calc_frame_size((websocket_flags) (WS_OP_TEXT | WS_FINAL_FRAME), message.size());
                 char * frame = (char*) malloc(sizeof (char) * frame_len);
                 frame_len = websocket_build_frame(frame, (websocket_flags) (WS_OP_TEXT | WS_FINAL_FRAME), NULL, message.c_str(), message.size());

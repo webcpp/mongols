@@ -7,7 +7,7 @@
 #include <utility>
 #include <unordered_map>
 #include <atomic>
-
+#include <list>
 
 
 #include "epoll.hpp"
@@ -23,16 +23,19 @@ namespace mongols {
         class client_t {
         public:
 
-            client_t() : ip(), port(-1), g_u_id(std::move(std::make_pair<size_t,size_t>(0, 0))) {
+            client_t() : ip(), port(-1), uid(0), gid() {
+                this->gid.push_back(0);
             }
 
-            client_t(const std::string& ip, int port, const std::pair<size_t, size_t>& g_u_id)
-            : ip(ip), port(port), g_u_id(g_u_id) {
+            client_t(const std::string& ip, int port, size_t uid, size_t gid)
+            : ip(ip), port(port), uid(uid), gid() {
+                this->gid.push_back(gid);
             }
             virtual~client_t() = default;
             std::string ip;
             int port;
-            std::pair<size_t, size_t> g_u_id;
+            size_t uid;
+            std::list<size_t> gid;
         };
         typedef std::function<bool(const client_t&) > filter_handler_function;
         typedef std::function<std::string(

@@ -10,7 +10,7 @@
 #include "util.hpp"
 #include "MPFDParser/Parser.h"
 
-#define mongols_http_server_version "mongols/0.9.3"
+#define mongols_http_server_version "mongols/0.9.4"
 #define form_urlencoded_type "application/x-www-form-urlencoded"
 #define form_urlencoded_type_len (sizeof(form_urlencoded_type) - 1)
 #define TEMP_DIRECTORY "temp"

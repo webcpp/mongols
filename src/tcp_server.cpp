@@ -102,7 +102,7 @@ namespace mongols {
     }
 
     void tcp_server::add_client(int fd, const std::string& ip, int port) {
-        this->clients.insert(std::move(std::make_pair(fd, std::move(client_t(ip, port, std::make_pair<size_t, size_t>(0, 0))))));
+        this->clients.insert(std::move(std::make_pair(fd, std::move(client_t(ip, port, 0, 0)))));
     }
 
     void tcp_server::del_client(int fd) {

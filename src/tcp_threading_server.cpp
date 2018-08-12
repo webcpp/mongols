@@ -61,7 +61,7 @@ namespace mongols {
 
     void tcp_threading_server::add_client(int fd, const std::string& ip, int port) {
         std::lock_guard<std::mutex> lk(this->main_mtx);
-        this->clients.insert(std::move(std::make_pair(fd, std::move(client_t(ip, port, std::make_pair<size_t, size_t>(0, 0))))));
+        this->clients.insert(std::move(std::make_pair(fd, std::move(client_t(ip, port, 0, 0)))));
         std::this_thread::yield();
     }
 
