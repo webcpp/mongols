@@ -56,8 +56,10 @@ int main(int,char**){
             , bool& send_to_other
             , mongols::tcp_server::client_t& client
             , mongols::tcp_server::filter_handler_function& send_to_other_filter){
-			keepalive = KEEPALIVE_CONNECTION;
-			send_to_other=true;
+			if(input=="close"){
+                                        keepalive = CLOSE_CONNECTION;
+                                        send_to_other = false;
+			}
 			return input;
 	};
 	server.run(f);

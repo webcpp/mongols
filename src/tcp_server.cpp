@@ -111,9 +111,12 @@ namespace mongols {
 
     bool tcp_server::send_to_all_client(int fd, const std::string& str, const filter_handler_function& h) {
         if (fd > 0) {
-            for (auto& i : this->clients) {
-                if (i.first != fd && h(i.second)) {
-                    send(i.first, str.c_str(), str.size(), 0);
+            for (auto i = this->clients.begin(); i != this->clients.end();) {
+                if (i->first != fd && h(i->second) && send(i->first, str.c_str(), str.size(), MSG_NOSIGNAL) < 0) {
+                    close(i->first);
+                    this->del_client(i->first);
+                } else {
+                    ++i;
                 }
             }
         }
@@ -125,30 +128,26 @@ namespace mongols {
             char buffer[this->buffer_size];
             ssize_t ret = recv(fd, buffer, this->buffer_size, MSG_WAITALL);
             if (ret == -1) {
-                if (errno == EAGAIN) {
+                if (errno == EAGAIN || errno == EINTR) {
                     return false;
                 }
             } else if (ret > 0) {
-                try {
-                    std::string input(buffer, ret);
-                    filter_handler_function send_to_other_filter = [](const client_t&) {
-                        return true;
-                    };
+                std::string input(buffer, ret);
+                filter_handler_function send_to_other_filter = [](const client_t&) {
+                    return true;
+                };
 
-                    bool keepalive = CLOSE_CONNECTION, send_to_all = false;
-                    client_t& client = this->clients[fd];
-                    std::string output = std::move(g(input, keepalive, send_to_all, client, send_to_other_filter));
-                    size_t n = send(fd, output.c_str(), output.size(), 0);
-                    if (n >= 0) {
-                        if (send_to_all) {
-                            this->send_to_all_client(fd, output, send_to_other_filter);
-                        }
+                bool keepalive = CLOSE_CONNECTION, send_to_all = false;
+                client_t& client = this->clients[fd];
+                std::string output = std::move(g(input, keepalive, send_to_all, client, send_to_other_filter));
+                size_t n = send(fd, output.c_str(), output.size(), MSG_NOSIGNAL);
+                if (n >= 0) {
+                    if (send_to_all) {
+                        this->send_to_all_client(fd, output, send_to_other_filter);
                     }
+                }
 
-                    if (n < 0 || keepalive) {
-                        goto ev_error;
-                    }
-                } catch (std::exception& e) {
+                if (n < 0 || keepalive == CLOSE_CONNECTION) {
                     goto ev_error;
                 }
 
