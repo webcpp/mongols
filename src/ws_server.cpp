@@ -84,7 +84,7 @@ namespace mongols {
                 keepalive = KEEPALIVE_CONNECTION;
                 send_to_other = true;
                 std::vector<size_t> gfilter, ufilter;
-                const Json::Value& gfilter_array=root["gfilter"],ufilter_array=root["ufilter"];
+                const Json::Value& gfilter_array=root["gfilter"],&ufilter_array=root["ufilter"];
                 Json::ArrayIndex ufilter_size = ufilter_array.size(), gfilter_size = gfilter_array.size();
                 for (Json::ArrayIndex i = 0; i < ufilter_size; ++i) {
                     if (ufilter_array[i].isUInt64()) {
