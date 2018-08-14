@@ -40,7 +40,7 @@ namespace mongols {
                 , bool& send_to_other
                 , tcp_server::client_t& client
                 , tcp_server::filter_handler_function& send_to_other_filter);
-        bool ws_handshake(const std::string &request, std::string &response);
+        bool ws_handshake(const std::string &request, std::string &response, std::unordered_map<std::string, std::string>& headers);
         int ws_parse(const std::string& frame, std::string& message);
     private:
         mongols::tcp_server *server;

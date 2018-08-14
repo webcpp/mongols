@@ -84,7 +84,7 @@ namespace mongols {
                 keepalive = KEEPALIVE_CONNECTION;
                 send_to_other = true;
                 std::vector<size_t> gfilter, ufilter;
-                const Json::Value& gfilter_array=root["gfilter"],&ufilter_array=root["ufilter"];
+                const Json::Value& gfilter_array = root["gfilter"], &ufilter_array = root["ufilter"];
                 Json::ArrayIndex ufilter_size = ufilter_array.size(), gfilter_size = gfilter_array.size();
                 for (Json::ArrayIndex i = 0; i < ufilter_size; ++i) {
                     if (ufilter_array[i].isUInt64()) {
@@ -140,9 +140,12 @@ namespace mongols {
         send_to_other = false;
 
         if (input[0] == 'G') {
-
-            if (!this->ws_handshake(input, response)) {
+            std::unordered_map<std::string, std::string> headers;
+            std::unordered_map<std::string, std::string>::const_iterator headers_iterator;
+            if (!this->ws_handshake(input, response, headers)) {
                 keepalive = CLOSE_CONNECTION;
+            } else if ((headers_iterator = headers.find("X-Real-IP")) != headers.end()) {
+                client.ip = headers_iterator->second;
             }
             goto ws_done;
         } else {
@@ -207,7 +210,7 @@ ws_done:
         return response;
     }
 
-    bool ws_server::ws_handshake(const std::string& request, std::string& response) {
+    bool ws_server::ws_handshake(const std::string& request, std::string& response, std::unordered_map<std::string, std::string>& headers) {
         bool ret = false;
         std::istringstream stream(request.c_str());
         std::string reqType;
@@ -225,6 +228,7 @@ ws_done:
             if (pos != std::string::npos) {
                 std::string key = header.substr(0, pos);
                 std::string value = header.substr(pos + 2);
+                headers.insert(std::make_pair(key, value));
                 if (key == "Sec-WebSocket-Key") {
                     ret = true;
                     websocketKey = value;
