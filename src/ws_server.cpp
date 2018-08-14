@@ -8,7 +8,8 @@
 #include "ws_server.hpp"
 #include "lib/websocket_parser.h"
 #include "lib/libwshandshake.hpp"
-#include "lib/json11.hpp"
+//#include "lib/json11.hpp"
+#include "json/json.h"
 
 
 
@@ -66,31 +67,34 @@ namespace mongols {
             , tcp_server::client_t& client
             , tcp_server::filter_handler_function& send_to_other_filter) {
 
-        std::string err;
-        json11::Json root = json11::Json::parse(message, err);
-        if (err.empty()) {
-            if (!root["uid"].is_number()
-                    || !root["gid"].is_number()
-                    || !root["gfilter"].is_array()
-                    || !root["ufilter"].is_array()) {
-            } else {
-                if (std::find(client.gid.begin(), client.gid.end(), root["gid"].int_value()) == client.gid.end()) {
-                    client.gid.push_back(root["gid"].int_value());
+        Json::Reader json_reader;
+        Json::Value root;
+        if (json_reader.parse(message, root)) {
+            if (root.isMember("uid")
+                    && root.isMember("gid")
+                    && root.isMember("ufilter")
+                    && root["ufilter"].isArray()
+                    && root.isMember("gfilter")
+                    && root["ufilter"].isArray()) {
+                if (std::find(client.gid.begin(), client.gid.end(), root["gid"].asUInt64()) == client.gid.end()) {
+                    client.gid.push_back(root["gid"].asInt64());
                 }
                 if (client.uid == 0) {
-                    client.uid = root["uid"].int_value();
+                    client.uid = root["uid"].asUInt64();
                 }
                 keepalive = KEEPALIVE_CONNECTION;
                 send_to_other = true;
                 std::vector<size_t> gfilter, ufilter;
-                for (auto &i : root["gfilter"].array_items()) {
-                    if (i.is_number()) {
-                        gfilter.push_back(i.int_value());
+                const Json::Value& gfilter_array=root["gfilter"],ufilter_array=root["ufilter"];
+                Json::ArrayIndex ufilter_size = ufilter_array.size(), gfilter_size = gfilter_array.size();
+                for (Json::ArrayIndex i = 0; i < ufilter_size; ++i) {
+                    if (ufilter_array[i].isUInt64()) {
+                        ufilter.push_back(ufilter_array[i].asUInt64());
                     }
                 }
-                for (auto &i : root["ufilter"].array_items()) {
-                    if (i.is_number()) {
-                        ufilter.push_back(i.int_value());
+                for (Json::ArrayIndex i = 0; i < gfilter_size; ++i) {
+                    if (gfilter_array[i].isUInt64()) {
+                        gfilter.push_back(gfilter_array[i].asUInt64());
                     }
                 }
                 send_to_other_filter = [ = ](const tcp_server::client_t & cur_client){
@@ -115,13 +119,14 @@ namespace mongols {
                     return res;
 
                 };
-                return message;
+                root["ip"] = client.ip;
+                Json::FastWriter json_writer;
+                return json_writer.write(root);
             }
         } else {
             keepalive = CLOSE_CONNECTION;
             send_to_other = false;
         }
-
         return message;
     }
 
