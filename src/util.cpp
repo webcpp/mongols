@@ -360,25 +360,40 @@ namespace mongols {
     void split(const std::string& s, char delim, std::vector<std::string>& v) {
         auto i = 0;
         auto pos = s.find(delim);
+        std::string tmp;
         while (pos != std::string::npos) {
-            v.push_back(std::move(s.substr(i, pos - i)));
+            tmp = std::move(s.substr(i, pos - i));
+            if (!tmp.empty()) {
+                v.push_back(std::move(tmp));
+            }
             i = ++pos;
             pos = s.find(delim, pos);
-            if (pos == std::string::npos)
-                v.push_back(std::move(s.substr(i)));
+            if (pos == std::string::npos) {
+                tmp = std::move(s.substr(i));
+                if (!tmp.empty()) {
+                    v.push_back(std::move(tmp));
+                }
+            }
         }
     }
 
     void split(const std::string& s, const std::string& delim, std::vector<std::string>& v) {
         size_t last = 0;
         size_t index = s.find_first_of(delim, last);
+        std::string tmp;
         while (index != std::string::npos) {
-            v.push_back(s.substr(last, index - last));
+            tmp = std::move(s.substr(last, index - last));
+            if (!tmp.empty()) {
+                v.push_back(std::move(tmp));
+            }
             last = index + 1;
             index = s.find_first_of(delim, last);
         }
         if (index - last > 0) {
-            v.push_back(s.substr(last, index - last));
+            tmp = std::move(s.substr(last, index - last));
+            if (!tmp.empty()) {
+                v.push_back(std::move(tmp));
+            }
         }
     }
 

@@ -4,41 +4,14 @@
 
 
 #include "tcp_server.hpp"
-#include "servlet.hpp"
-#include "lib/http_parser.h"
+#include "request.hpp"
+#include "response.hpp"
+#include "http_request_parser.hpp"
 #include "lib/lrucache.hpp"
 #include "lib/redis.hpp"
 
 
 namespace mongols {
-
-    class http_request_parser {
-    public:
-        http_request_parser() = delete;
-        http_request_parser(mongols::request& req);
-        virtual~http_request_parser() = default;
-
-        bool parse(const std::string& str);
-
-
-        const std::string& get_body()const;
-        std::string& get_body();
-
-    private:
-
-        struct tmp_ {
-            std::pair<std::string, std::string> pair;
-            http_request_parser* parser;
-        };
-    private:
-        tmp_ tmp;
-        struct http_parser parser;
-        struct http_parser_settings settings;
-        mongols::request& req;
-        std::string body;
-
-
-    };
 
     class http_server {
     public:
@@ -95,7 +68,7 @@ namespace mongols {
         size_t max_body_size;
         mongols::redis redis;
         long long session_expires, cache_expores;
-        bool enable_session,enable_cache;
+        bool enable_session, enable_cache;
 
 
     };

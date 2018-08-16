@@ -126,11 +126,13 @@ namespace mongols {
     bool tcp_server::work(int fd, const handler_function& g) {
         if (fd > 0) {
             char buffer[this->buffer_size];
+ev_recv:
             ssize_t ret = recv(fd, buffer, this->buffer_size, MSG_WAITALL);
             if (ret == -1) {
                 if (errno == EAGAIN || errno == EINTR) {
-                    return false;
+                    goto ev_recv;
                 }
+                goto ev_error;
             } else if (ret > 0) {
                 std::string input(buffer, ret);
                 filter_handler_function send_to_other_filter = [](const client_t&) {
