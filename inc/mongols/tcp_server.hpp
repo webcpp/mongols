@@ -23,18 +23,18 @@ namespace mongols {
         class client_t {
         public:
 
-            client_t() : ip(), port(-1), uid(0), gid() {
+            client_t() : ip(), port(-1), uid(0),u_size(0), gid() {
                 this->gid.push_back(0);
             }
 
             client_t(const std::string& ip, int port, size_t uid, size_t gid)
-            : ip(ip), port(port), uid(uid), gid() {
+            : ip(ip), port(port), uid(uid),u_size(0), gid() {
                 this->gid.push_back(gid);
             }
             virtual~client_t() = default;
             std::string ip;
             int port;
-            size_t uid;
+            size_t uid,u_size;
             std::list<size_t> gid;
         };
         typedef std::function<bool(const client_t&) > filter_handler_function;

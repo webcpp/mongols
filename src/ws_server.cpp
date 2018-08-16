@@ -119,6 +119,7 @@ namespace mongols {
 
                 };
                 root["ip"] = client.ip;
+                root["u_size"] = client.u_size;
                 Json::FastWriter json_writer;
                 return json_writer.write(root);
             }

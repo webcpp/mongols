@@ -107,6 +107,7 @@ ev_recv:
                 std::lock_guard<std::mutex> lk(this->main_mtx);
                 bool keepalive = CLOSE_CONNECTION, send_to_all = false;
                 tcp_server::client_t& client = this->clients[fd];
+                client.u_size = this->clients.size();
                 std::string output = std::move(g(input, keepalive, send_to_all, client, send_to_other_filter));
                 size_t n = send(fd, output.c_str(), output.size(), MSG_NOSIGNAL);
                 if (n >= 0) {
