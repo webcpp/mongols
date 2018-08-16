@@ -22,7 +22,10 @@ or
 - tcp multi-threading server (epoll+multi-threading)
 - http server (epoll)
 - http multi-threading server (epoll+multi-threading)
-- websocket server (epoll+multi-threading)
+- websocket server (epoll)
+- websocket multi-threading  server (epoll+multi-threading)
+- web server (epoll)
+- web multi-threading server (epoll+multi-threading)
 - utils
 
 ## install 
@@ -41,6 +44,7 @@ or
 #include <mongols/tcp_threading_server.hpp>
 #include <mongols/http_server.hpp>
 #include <mongols/ws_server.hpp>
+#include <mongols/web_server.hpp>
 #include <mongols/util.hpp>
 #include <iostream>
 
