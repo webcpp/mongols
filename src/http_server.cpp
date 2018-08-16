@@ -207,7 +207,7 @@ namespace mongols {
         send_to_other = false;
         mongols::request req;
         mongols::response res;
-        std::string body, output;
+        std::string body;
         if (this->parse_reqeust(input, req, body)) {
             req.client = client.ip;
 
@@ -302,7 +302,7 @@ namespace mongols {
         }
 
 
-        return output = std::move(this->create_response(res, keepalive));
+        return this->create_response(res, keepalive);
     }
 
     void http_server::set_cache_expires(long long expires) {

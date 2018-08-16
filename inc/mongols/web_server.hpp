@@ -18,16 +18,18 @@ namespace mongols {
         void set_root_path(const std::string&);
         void set_mime_type_file(const std::string&);
         void set_list_directory(bool);
+        void set_enable_mmap(bool);
         void run(const std::function<bool(const mongols::request&)>& req_filter);
     private:
         std::string root_path;
-        std::unordered_map<std::string,std::string> mime_type;
+        std::unordered_map<std::string, std::string> mime_type;
         http_server *server;
-        bool list_directory;
+        bool list_directory, enable_mmap;
         std::string get_mime_type(const std::string&);
         void res_filter(const mongols::request&, mongols::response&);
         std::string create_list_directory_response(const std::string&);
-       
+        void res_filter_with_mmap(const mongols::request&, mongols::response&);
+
 
     };
 }

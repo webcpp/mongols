@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <sys/mman.h>
 #include <fstream>
 #include <iostream>
 #include <cstring>
@@ -17,7 +18,7 @@
 namespace mongols {
 
     web_server::web_server(const std::string& host, int port, int timeout, size_t buffer_size, size_t thread_size, size_t max_body_size, int max_event_size)
-    : root_path(), mime_type(), server(0), list_directory(false) {
+    : root_path(), mime_type(), server(0), list_directory(false), enable_mmap(false) {
         this->server = new http_server(host, port, timeout, buffer_size, thread_size, max_body_size, max_event_size);
     }
 
@@ -28,8 +29,13 @@ namespace mongols {
     }
 
     void web_server::run(const std::function<bool(const mongols::request&)>& req_filter) {
-        this->server->run(req_filter, std::bind(&web_server::res_filter, this, std::placeholders::_1
-                , std::placeholders::_2));
+        if (this->enable_mmap) {
+            this->server->run(req_filter, std::bind(&web_server::res_filter_with_mmap, this, std::placeholders::_1
+                    , std::placeholders::_2));
+        } else {
+            this->server->run(req_filter, std::bind(&web_server::res_filter, this, std::placeholders::_1
+                    , std::placeholders::_2));
+        }
     }
 
     void web_server::res_filter(const mongols::request& req, mongols::response& res) {
@@ -92,7 +98,7 @@ http_500:
                     split(line, " ", m);
                     int p = 0;
                     for (auto item : m) {
-                        if (!item.empty() && p++ > 0) {
+                        if (p++ > 0) {
                             this->mime_type[item] = m[0];
                         }
                     }
@@ -148,6 +154,46 @@ http_500:
     void web_server::set_list_directory(bool b) {
         this->list_directory = b;
     }
+
+    void web_server::set_enable_mmap(bool b) {
+        this->enable_mmap = b;
+    }
+
+    void web_server::res_filter_with_mmap(const mongols::request& req, mongols::response& res) {
+        std::string path = this->root_path + req.uri;
+        struct stat st;
+        if (stat(path.c_str(), &st) >= 0 && S_ISREG(st.st_mode)) {
+            int ffd = open(path.c_str(), O_RDONLY | O_NONBLOCK);
+            if (ffd > 0) {
+                char *mmap_ptr = (char*) mmap(0, st.st_size, PROT_READ, MAP_PRIVATE, ffd, 0);
+                if (mmap_ptr == MAP_FAILED) {
+                    goto http_500;
+                } else {
+                    close(ffd);
+                    res.status = 200;
+                    res.headers.find("Content-Type")->second = std::move(this->get_mime_type(path));
+                    res.content.assign(mmap_ptr, st.st_size);
+                    munmap(mmap_ptr, st.st_size);
+                }
+            } else {
+http_500:
+                res.status = 500;
+                res.content = std::move("Internal Server Error");
+            }
+        } else if (S_ISDIR(st.st_mode)) {
+            if (this->list_directory) {
+                res.content = std::move(this->create_list_directory_response(path));
+                res.status = 200;
+            } else {
+                res.status = 403;
+                res.content = std::move("Forbidden");
+            }
+        }
+
+    }
+
+
+
 
 }
 
