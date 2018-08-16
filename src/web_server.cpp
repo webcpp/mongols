@@ -167,6 +167,7 @@ http_500:
             if (ffd > 0) {
                 char *mmap_ptr = (char*) mmap(0, st.st_size, PROT_READ, MAP_PRIVATE, ffd, 0);
                 if (mmap_ptr == MAP_FAILED) {
+                    close(ffd);
                     goto http_500;
                 } else {
                     close(ffd);
