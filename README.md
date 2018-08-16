@@ -126,6 +126,24 @@ int main(int,char**)
 	server.run(f,g);
 }
 
+/*
+//web server or multi-threading server
+int main(int,char**)
+{
+	auto f=[](const mongols::request&){
+		return true;
+	};
+	int port=9090;
+	const char* host="127.0.0.1";
+	mongols::web_server 
+	//server(host,port,5000,1024,4);
+	server(host,port);
+	server.set_root_path("html");
+	server.set_mime_type_file("mime.conf");
+	server.set_list_directory(true);
+	server.run(f);
+}
+*/
 
 
 
