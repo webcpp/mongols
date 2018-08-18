@@ -14,7 +14,7 @@ namespace mongols {
         posix_regex() = delete;
 
         posix_regex(const std::string& pattern) : reg(), ok(false) {
-            this->ok = (regcomp(&this->reg, pattern.c_str(), REG_EXTENDED) == 0);
+            this->ok = (regcomp(&this->reg, pattern.c_str(), REG_EXTENDED | REG_ICASE) == 0);
         }
 
         virtual~posix_regex() {
