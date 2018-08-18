@@ -20,6 +20,21 @@ namespace mongols {
             if (this->ok)regfree(&this->reg);
         }
 
+        void match_all(const std::string& subject, std::list<std::string>& matches, size_t n = 30) {
+            std::string tmp = subject;
+            size_t len = subject.size();
+            while (this->match(tmp, matches, n)) {
+                const std::list<std::string>::const_reference item = matches.back();
+                std::string::size_type p = subject.find(item) + item.size();
+                if (p + 1 < len) {
+                    tmp = std::move(subject.substr(p + 1));
+                } else {
+                    break;
+                }
+            }
+
+        }
+
         bool match(const std::string& subject, std::list<std::string>& matches, size_t n = 30) {
             bool result = false;
             if (n > 1) {

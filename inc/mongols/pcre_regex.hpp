@@ -25,6 +25,19 @@ namespace mongols {
             if (this->reg_extra)pcre_free_study(this->reg_extra);
         }
 
+        void match_all(const std::string& subject, std::list<std::string>& matches, size_t n = 30) {
+            int ovector[n], rc, offset = 0;
+            while ((rc = pcre_exec(this->reg, this->reg_extra, subject.c_str(), subject.size(), offset, 0, ovector, n)) >= 0) {
+                int start, len;
+                for (int i = 0; i < rc; i++) {
+                    start = ovector[2 * i];
+                    len = ovector[2 * i + 1] - start;
+                    matches.push_back(std::move(subject.substr(start, len)));
+                }
+                offset = ovector[1];
+            }
+        }
+
         bool match(const std::string& subject, std::list<std::string>& matches, size_t n = 30) {
             bool result = false;
             int ovector[n];
