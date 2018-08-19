@@ -21,6 +21,7 @@ CFLAGS+=`pkg-config --cflags libcurl  hiredis openssl`
 
 CXXFLAGS+=-O3 -std=c++11 -Wall -fPIC 
 CXXFLAGS+=-Iinc/mongols -Iinc/mongols/lib -Isrc/MPFDParser -Iinc/mongols/lib/cpr
+CXXFLAGS+=-Iinc/mongols/lib/leveldb -Isrc/leveldb -DLEVELDB_PLATFORM_POSIX
 CXXFLAGS+=`pkg-config --cflags libcurl  hiredis openssl`
 
 

@@ -257,7 +257,6 @@ namespace mongols {
                     if (this->redis.is_connected()) {
                         if (this->redis.exists(cache_k)) {
                             this->redis.hgetall(cache_k, req.cache);
-                            std::unordered_map<std::string, http_server::cache_t> cache_v;
                         } else {
                             this->redis.hset(cache_k, "cache_key", cache_k);
                             this->redis.expire(cache_k, this->cache_expores);
