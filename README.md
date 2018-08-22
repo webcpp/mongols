@@ -45,6 +45,7 @@ or
 #include <mongols/http_server.hpp>
 #include <mongols/ws_server.hpp>
 #include <mongols/web_server.hpp>
+#include <mongols/leveldb_server.hpp>
 #include <mongols/util.hpp>
 #include <iostream>
 
@@ -149,6 +150,17 @@ int main(int,char**)
 }
 */
 
+/*
+//leveldb_server or multi-threading server
+int main(int,char**){
+	int port=9090;
+	const char* host="127.0.0.1";
+	mongols::leveldb_server 
+	//server(host,port,5000,1024,4);
+	server(host,port);
+	server.run("html/leveldb");
+}
+*/
 
 
 ```
