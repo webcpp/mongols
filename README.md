@@ -138,7 +138,10 @@ int main(int,char**)
 int main(int,char**)
 {
 	auto f=[](const mongols::request&){
-		return true;
+		if(req.method=="GET"&&req.uri.find("..")==std::string::npos){
+			return true;
+		}
+		return false;
 	};
 	int port=9090;
 	const char* host="127.0.0.1";
