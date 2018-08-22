@@ -103,11 +103,11 @@ namespace mongols {
         } else {
             res.headers.insert(std::move(std::make_pair("Connection", "close")));
         }
-        res.headers.insert(std::move(std::make_pair("Content-Length", std::to_string(res.content.size() + 2))));
+        res.headers.insert(std::move(std::make_pair("Content-Length", std::to_string(res.content.size()))));
         for (auto& i : res.headers) {
             output.append(i.first).append(": ").append(i.second).append("\r\n");
         }
-        output.append("\r\n").append(res.content).append("\r\n");
+        output.append("\r\n").append(res.content);
         return output;
     }
 
