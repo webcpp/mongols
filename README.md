@@ -26,6 +26,8 @@ or
 - websocket multi-threading  server (epoll+multi-threading)
 - web server (epoll)
 - web multi-threading server (epoll+multi-threading)
+- leveldb server (epoll)
+- leveldb multi-threading server (epoll+multi-threading)
 - utils
 
 ## install 
