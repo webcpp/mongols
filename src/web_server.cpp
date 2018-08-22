@@ -121,7 +121,7 @@ http_500:
                 "<ul>"
                 "{{#list}}"
                 "<li>"
-                "<a real_path='{{real_path}}' href=\"{{href}}\">{{name}}</a>"
+                "<a href=\"{{href}}\">{{name}}</a>"
                 "</li>"
                 "{{/list}}"
                 "</ul>"
@@ -143,7 +143,6 @@ http_500:
                 kainjow::mustache::data item;
                 item.set("name", entry->d_name);
                 item.set("href", tmp_path.substr(p + n));
-                item.set("real_path", tmp_path);
                 list.push_back(item);
             }
         }
