@@ -39,12 +39,13 @@ or
 `pkg-config --libs --cflags mongols`
 
 ### leveldb_server usage
-
-- POST `curl -d'key=value'` http://host/key
-- GET  `curl http://host/key`
-- DELETE `curl -X DELETE http://host/key`
   - successful  200
   - failed  500
+
+- POST `curl -d'key=value'  http://host/key`
+- GET  `curl http://host/key`
+- DELETE `curl -X DELETE http://host/key`
+
 
 ## example
 
