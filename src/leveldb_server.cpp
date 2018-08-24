@@ -44,7 +44,7 @@ namespace mongols {
     }
 
     void leveldb_server::work(const mongols::request& req, mongols::response& res) {
-        if(req.uri.size()<2)return;
+        if (req.uri.size() < 2)return;
         if (req.method == "GET") {
             std::string value;
             if (this->db->Get(leveldb::ReadOptions(), req.uri.substr(1), &value).ok()) {
@@ -61,7 +61,7 @@ namespace mongols {
                 if (this->db->Put(leveldb::WriteOptions(), item->first, item->second).ok()) {
                     res.headers.find("Content-Type")->second = "text/plain;charset=UTF-8";
                     res.status = 200;
-                    res.content = "OK";
+                    res.content = std::move("OK");
                 } else {
                     goto leveldb_error;
                 }
@@ -69,11 +69,10 @@ namespace mongols {
                 goto leveldb_error;
             }
         } else if (req.method == "DELETE") {
-            std::string value;
             if (this->db->Delete(leveldb::WriteOptions(), req.uri.substr(1)).ok()) {
                 res.headers.find("Content-Type")->second = "text/plain;charset=UTF-8";
                 res.status = 200;
-                res.content = std::move(value);
+                res.content = std::move("OK");
             } else {
                 goto leveldb_error;
             }
