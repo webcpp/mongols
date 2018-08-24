@@ -43,6 +43,8 @@ or
 - POST `curl -d'key=value'` http://host/key
 - GET  `curl http://host/key`
 - DELETE `curl -X DELETE http://host/key`
+  - successful  200
+  - failed  500
 
 ## example
 
