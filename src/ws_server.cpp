@@ -75,11 +75,20 @@ namespace mongols {
                     && root["ufilter"].isArray()
                     && root.isMember("gfilter")
                     && root["ufilter"].isArray()) {
-                if (std::find(client.gid.begin(), client.gid.end(), root["gid"].asUInt64()) == client.gid.end()) {
-                    client.gid.push_back(root["gid"].asInt64());
+                int64_t gid = root["gid"].asInt64(), uid = root["uid"].asInt64();
+                bool gid_is_uint64 = (gid >= 0);
+                std::list<size_t>::iterator gid_iter = std::find(client.gid.begin(), client.gid.end(), (gid_is_uint64 ? gid : -gid));
+                if (gid_iter == client.gid.end()) {
+                    if (gid_is_uint64) {
+                        client.gid.push_back(gid);
+                    }
+                } else {
+                    if (!gid_is_uint64) {
+                        client.gid.erase(gid_iter);
+                    }
                 }
-                if (client.uid == 0) {
-                    client.uid = root["uid"].asUInt64();
+                if (client.uid == 0 && uid > 0) {
+                    client.uid = uid;
                 }
                 keepalive = KEEPALIVE_CONNECTION;
                 send_to_other = true;
