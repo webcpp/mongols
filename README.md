@@ -7,14 +7,13 @@ a library for c++
 - pcre-devel
 - zlib-devel
 - openssl-devel
-- hiredis-devel
 - curl-devel
 
-`sudo yum install pcre-devel zlib-devel openssl-devel hiredis-devel libcurl-devel`
+`sudo yum install pcre-devel zlib-devel openssl-devel libcurl-devel`
 
 or
 
-`sudo apt-get install libpcre3-dev zlib1g-dev libssl-dev libhiredis-dev libcurl4-openssl-dev`
+`sudo apt-get install libpcre3-dev zlib1g-dev libssl-dev libcurl4-openssl-dev`
 
 ## feature
 

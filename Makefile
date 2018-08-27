@@ -17,16 +17,22 @@ CXX=g++
 
 CFLAGS+=-O3 -std=c11 -Wall -fPIC
 CFLAGS+=-Iinc/mongols -Iinc/mongols/lib
-CFLAGS+=`pkg-config --cflags libcurl  hiredis openssl`
+CFLAGS+=-Iinc/mongols/lib/hiredis -pedantic -Wstrict-prototypes -Wwrite-strings
+
+CFLAGS+=`pkg-config --cflags libcurl openssl`
+
+
 
 CXXFLAGS+=-O3 -std=c++11 -Wall -fPIC 
 CXXFLAGS+=-Iinc/mongols -Iinc/mongols/lib -Isrc/MPFDParser -Iinc/mongols/lib/cpr
 CXXFLAGS+=-Iinc/mongols/lib/leveldb -Isrc/leveldb -DLEVELDB_PLATFORM_POSIX
 CXXFLAGS+=-Isrc -Isrc/re2 
-CXXFLAGS+=`pkg-config --cflags libcurl  hiredis openssl`
+
+CXXFLAGS+=`pkg-config --cflags libcurl openssl`
 
 
-LDLIBS+=`pkg-config --libs libcurl hiredis  openssl` -lpcre -lz -lpthread -ldl -lrt -lm -lstdc++
+LDLIBS+=`pkg-config --libs libcurl  openssl`
+LDLIBS+=-lpcre -lz -lpthread -ldl -lrt -lm -lstdc++
 LDFLAGS+=-shared
 
 
