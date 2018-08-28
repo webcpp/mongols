@@ -4,13 +4,14 @@
 #include <functional>
 #include <memory>
 #include <chrono>
+#include <sstream>
 
 #include "version.hpp"
 #include "tcp_threading_server.hpp"
 #include "http_server.hpp"
 #include "util.hpp"
 #include "MPFDParser/Parser.h"
-#include "lib/json/json.h"
+#include "lib/msgpack.hpp"
 
 #define form_urlencoded_type "application/x-www-form-urlencoded"
 #define form_urlencoded_type_len (sizeof(form_urlencoded_type) - 1)
@@ -52,7 +53,7 @@ namespace mongols {
             , size_t thread_size
             , size_t max_body_size
             , int max_event_size)
-    : server(0), max_body_size(max_body_size), db(0), db_options(), json_reader(), json_writer()
+    : server(0), max_body_size(max_body_size), db(0), db_options()
     , session_expires(3600), enable_session(false), enable_cache(false), db_ready(false), db_path(LEVELDB_PATH) {
         if (thread_size > 0) {
             this->server = new tcp_threading_server(host, port, timeout, buffer_size, thread_size, max_event_size);
@@ -242,17 +243,10 @@ namespace mongols {
                                 session_val = tmp->second;
                                 std::string v;
                                 if (this->db->Get(leveldb::ReadOptions(), tmp->second, &v).ok()) {
-                                    Json::Value json_session;
-                                    if (this->json_reader.parse(v, json_session)) {
-                                        Json::Value::Members members = json_session.getMemberNames();
-                                        for (Json::Value::Members::iterator iter = members.begin(); iter != members.end(); ++iter) {
-                                            req.session[*iter] = std::move(json_session[*iter].asString());
-                                        }
-                                    }
+                                    this->deserialize(v, req.session);
                                 } else {
-                                    Json::Value json_session;
-                                    json_session[SESSION_NAME] = tmp->second;
-                                    this->db->Put(leveldb::WriteOptions(), tmp->second, this->json_writer.write(json_session));
+                                    //                                    req.session[SESSION_NAME]=tmp->second;
+                                    this->db->Put(leveldb::WriteOptions(), tmp->second, this->serialize(req.session));
                                 }
                             }
                         } else {
@@ -271,17 +265,10 @@ namespace mongols {
                         cache_k = std::move(mongols::md5(req.method + req.uri + "?" + req.param));
                         std::string cache_v;
                         if (this->db->Get(leveldb::ReadOptions(), cache_k, &cache_v).ok()) {
-                            Json::Value json_cache;
-                            if (this->json_reader.parse(cache_v, json_cache)) {
-                                Json::Value::Members members = json_cache.getMemberNames();
-                                for (Json::Value::Members::iterator iter = members.begin(); iter != members.end(); ++iter) {
-                                    req.cache[*iter] = std::move(json_cache[*iter].asString());
-                                }
-                            }
+                            this->deserialize(cache_v, req.cache);
                         } else {
-                            Json::Value json_cache;
-                            json_cache["cache_key"] = cache_k;
-                            this->db->Put(leveldb::WriteOptions(), cache_k, this->json_writer.write(json_cache));
+                            //                            req.cache["cache_k"]=cache_k;
+                            this->db->Put(leveldb::WriteOptions(), cache_k, this->serialize(req.cache));
                         }
 
                     }
@@ -309,13 +296,9 @@ namespace mongols {
                     } else {
                         ptr = &res.session;
                     }
-                    Json::Value json_session;
-                    for (auto & i : *ptr) {
-                        json_session[i.first] = std::move(i.second);
-                    }
-                    this->db->Put(leveldb::WriteOptions(), session_val, this->json_writer.write(json_session));
+                    this->db->Put(leveldb::WriteOptions(), session_val, this->serialize(*ptr));
+
                 }
-                
                 if (!res.cache.empty() && this->db_ready) {
                     std::unordered_map<std::string, std::string>* ptr = 0;
                     if (!req.cache.empty()) {
@@ -326,12 +309,7 @@ namespace mongols {
                     } else {
                         ptr = &res.cache;
                     }
-                    Json::Value json_cache;
-
-                    for (auto & i : *ptr) {
-                        json_cache[i.first] = std::move(i.second);
-                    }
-                    this->db->Put(leveldb::WriteOptions(), cache_k, this->json_writer.write(json_cache));
+                    this->db->Put(leveldb::WriteOptions(), cache_k, this->serialize(*ptr));
                 }
 
                 if (res.headers.count("Content-Type") > 1) {
@@ -384,6 +362,19 @@ namespace mongols {
     void http_server::set_db_path(const std::string& path) {
         this->db_path = path;
     }
+
+    std::string http_server::serialize(const std::unordered_map<std::string, std::string>& m) {
+        std::stringstream ss;
+        msgpack::pack(ss, m);
+        ss.seekg(0);
+        return ss.str();
+    }
+
+    void http_server::deserialize(const std::string& str, std::unordered_map<std::string, std::string>& m) {
+        // m=msgpack::unpack(str.c_str(), str.size()).get().as<std::unordered_map<std::string, std::string>>();
+        msgpack::unpack(str.c_str(), str.size()).get().convert(m);
+    }
+
 
 
 }

@@ -18,7 +18,6 @@ CXX=g++
 CFLAGS+=-O3 -std=c11 -Wall -fPIC
 CFLAGS+=-Iinc/mongols -Iinc/mongols/lib
 CFLAGS+=-Iinc/mongols/lib/hiredis -pedantic -Wstrict-prototypes -Wwrite-strings
-CFLAGS+=-Iinc/mongols/lib/msgpack
 
 CFLAGS+=`pkg-config --cflags libcurl openssl`
 

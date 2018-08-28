@@ -7,5 +7,5 @@ Name: mongols
 Description: The mongols library,a library for c++
 Version: 1.0.0
 URL: https://github.com/webcpp/mongols
-Cflags: -I${includedir}/mongols
+Cflags: -I${includedir}/mongols -I${includedir}/mongols/lib
 Libs: -L${libdir} -lmongols -lcurl -lssl -lcrypto -lm -lpcre -lz -lpthread -ldl -lstdc++

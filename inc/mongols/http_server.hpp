@@ -8,7 +8,6 @@
 #include "response.hpp"
 #include "http_request_parser.hpp"
 #include "lib/leveldb/db.h"
-#include "lib/json/json.h"
 
 
 
@@ -67,13 +66,13 @@ namespace mongols {
         std::string get_status_text(int status);
         std::string tolower(std::string&);
         void upload(mongols::request&, const std::string&);
+        std::string serialize(const std::unordered_map<std::string, std::string>&);
+        void deserialize(const std::string&, std::unordered_map<std::string, std::string>&);
     private:
         mongols::tcp_server *server;
         size_t max_body_size;
         leveldb::DB *db;
         leveldb::Options db_options;
-        Json::Reader json_reader;
-        Json::FastWriter json_writer;
         long long session_expires;
         bool enable_session, enable_cache, db_ready;
         std::string db_path;
