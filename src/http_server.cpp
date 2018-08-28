@@ -300,28 +300,38 @@ namespace mongols {
                 res_filter(req, res);
 
                 if (!res.session.empty() && this->db_ready) {
-                    std::string v;
-                    if (this->db->Get(leveldb::ReadOptions(), session_val, &v).ok()) {
-                        Json::Value json_session;
-                        if (this->json_reader.parse(v, json_session)) {
-                            for (auto & i : res.session) {
-                                json_session[i.first] = std::move(i.second);
-                            }
-                            this->db->Put(leveldb::WriteOptions(), session_val, this->json_writer.write(json_session));
+                    std::unordered_map<std::string, std::string>* ptr = 0;
+                    if (!req.session.empty()) {
+                        for (auto &i : res.session) {
+                            req.session[i.first] = std::move(i.second);
                         }
+                        ptr = &req.session;
+                    } else {
+                        ptr = &res.session;
                     }
+                    Json::Value json_session;
+                    for (auto & i : *ptr) {
+                        json_session[i.first] = std::move(i.second);
+                    }
+                    this->db->Put(leveldb::WriteOptions(), session_val, this->json_writer.write(json_session));
                 }
+                
                 if (!res.cache.empty() && this->db_ready) {
-                    std::string v;
-                    if (this->db->Get(leveldb::ReadOptions(), cache_k, &v).ok()) {
-                        Json::Value json_cache;
-                        if (this->json_reader.parse(v, json_cache)) {
-                            for (auto & i : res.cache) {
-                                json_cache[i.first] = std::move(i.second);
-                            }
-                            this->db->Put(leveldb::WriteOptions(), cache_k, this->json_writer.write(json_cache));
+                    std::unordered_map<std::string, std::string>* ptr = 0;
+                    if (!req.cache.empty()) {
+                        for (auto &i : res.cache) {
+                            req.cache[i.first] = std::move(i.second);
                         }
+                        ptr = &req.cache;
+                    } else {
+                        ptr = &res.cache;
                     }
+                    Json::Value json_cache;
+
+                    for (auto & i : *ptr) {
+                        json_cache[i.first] = std::move(i.second);
+                    }
+                    this->db->Put(leveldb::WriteOptions(), cache_k, this->json_writer.write(json_cache));
                 }
 
                 if (res.headers.count("Content-Type") > 1) {
