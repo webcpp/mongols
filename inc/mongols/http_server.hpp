@@ -7,8 +7,9 @@
 #include "request.hpp"
 #include "response.hpp"
 #include "http_request_parser.hpp"
-#include "lib/lrucache.hpp"
-#include "lib/redis.hpp"
+#include "lib/leveldb/db.h"
+#include "lib/json/json.h"
+
 
 
 namespace mongols {
@@ -45,9 +46,12 @@ namespace mongols {
                 , const std::function<void(const mongols::request&, mongols::response&)>& res_filter);
 
         void set_session_expires(long long);
-        void set_cache_expires(long long);
         void set_enable_session(bool);
         void set_enable_cache(bool);
+        void set_max_open_files(int);
+        void set_write_buffer_size(size_t);
+        void set_max_file_size(size_t);
+        void set_db_path(const std::string&);
     private:
         std::string work(
                 const std::function<bool(const mongols::request&)>& req_filter
@@ -66,9 +70,13 @@ namespace mongols {
     private:
         mongols::tcp_server *server;
         size_t max_body_size;
-        mongols::redis redis;
-        long long session_expires, cache_expores;
-        bool enable_session, enable_cache;
+        leveldb::DB *db;
+        leveldb::Options db_options;
+        Json::Reader json_reader;
+        Json::FastWriter json_writer;
+        long long session_expires;
+        bool enable_session, enable_cache, db_ready;
+        std::string db_path;
 
 
     };

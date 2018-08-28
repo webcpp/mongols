@@ -10,11 +10,13 @@
 #include "http_server.hpp"
 #include "util.hpp"
 #include "MPFDParser/Parser.h"
+#include "lib/json/json.h"
 
 #define form_urlencoded_type "application/x-www-form-urlencoded"
 #define form_urlencoded_type_len (sizeof(form_urlencoded_type) - 1)
 #define TEMP_DIRECTORY "temp"
 #define SESSION_NAME "SESSIONID"
+#define LEVELDB_PATH "mongols_leveldb"
 
 namespace mongols {
 
@@ -50,16 +52,15 @@ namespace mongols {
             , size_t thread_size
             , size_t max_body_size
             , int max_event_size)
-    : server(0), max_body_size(max_body_size), redis(), session_expires(3600), cache_expores(600), enable_session(false), enable_cache(false) {
+    : server(0), max_body_size(max_body_size), db(0), db_options(), json_reader(), json_writer()
+    , session_expires(3600), enable_session(false), enable_cache(false), db_ready(false), db_path(LEVELDB_PATH) {
         if (thread_size > 0) {
             this->server = new tcp_threading_server(host, port, timeout, buffer_size, thread_size, max_event_size);
         } else {
             this->server = new tcp_server(host, port, timeout, buffer_size, max_event_size);
         }
         if (this->server) {
-            if (this->enable_session || this->enable_cache) {
-                this->redis.connect();
-            }
+            this->db_options.create_if_missing = true;
         }
 
     }
@@ -67,6 +68,9 @@ namespace mongols {
     http_server::~http_server() {
         if (this->server) {
             delete this->server;
+        }
+        if (this->db && this->db_ready) {
+            delete this->db;
         }
     }
 
@@ -228,42 +232,59 @@ namespace mongols {
 
                 std::string session_val, cache_k;
 
-                if (this->enable_session) {
-                    if ((tmp = req.headers.find("Cookie")) != req.headers.end()) {
-                        mongols::parse_param(tmp->second, req.cookies, ';');
-                        if (this->redis.is_connected()&&(tmp = req.cookies.find(SESSION_NAME)) != req.cookies.end()) {
-                            session_val = tmp->second;
-                            if (this->redis.exists(tmp->second)) {
-                                this->redis.hgetall(tmp->second, req.session);
-                            } else {
-                                this->redis.hset(tmp->second, SESSION_NAME, tmp->second);
-                                this->redis.expire(tmp->second, this->session_expires);
+                if (this->db_ready) {
+                    if (this->enable_session) {
+                        if ((tmp = req.headers.find("Cookie")) != req.headers.end()) {
+                            mongols::parse_param(tmp->second, req.cookies, ';');
+                            if ((tmp = req.cookies.find(SESSION_NAME)) != req.cookies.end()) {
+                                session_val = tmp->second;
+                                std::string v;
+                                if (this->db->Get(leveldb::ReadOptions(), tmp->second, &v).ok()) {
+                                    Json::Value json_session;
+                                    if (this->json_reader.parse(v, json_session)) {
+                                        Json::Value::Members members = json_session.getMemberNames();
+                                        for (Json::Value::Members::iterator iter = members.begin(); iter != members.end(); ++iter) {
+                                            req.session[*iter] = std::move(json_session[*iter].asString());
+                                        }
+                                    }
+                                } else {
+                                    Json::Value json_session;
+                                    json_session[SESSION_NAME] = tmp->second;
+                                    this->db->Put(leveldb::WriteOptions(), tmp->second, this->json_writer.write(json_session));
+                                }
                             }
+                        } else {
+                            std::chrono::system_clock::time_point now_time = std::chrono::system_clock::now();
+                            std::time_t expire_time = std::chrono::system_clock::to_time_t(now_time + std::chrono::seconds(this->session_expires));
+                            std::string session_cookie;
+                            session_cookie.append(SESSION_NAME).append("=")
+                                    .append(mongols::random_string(""))
+                                    .append("; HttpOnly; Path=/; Expires=")
+                                    .append(mongols::http_time(&expire_time));
+                            res.headers.insert(std::move(std::make_pair("Set-Cookie", session_cookie)));
                         }
-                    } else {
-                        std::chrono::system_clock::time_point now_time = std::chrono::system_clock::now();
-                        std::time_t expire_time = std::chrono::system_clock::to_time_t(now_time + std::chrono::seconds(this->session_expires));
-                        std::string session_cookie;
-                        session_cookie.append(SESSION_NAME).append("=")
-                                .append(mongols::random_string(""))
-                                .append("; HttpOnly; Path=/; Expires=")
-                                .append(mongols::http_time(&expire_time));
-                        res.headers.insert(std::move(std::make_pair("Set-Cookie", session_cookie)));
+                    }
+
+                    if (this->enable_cache) {
+                        cache_k = std::move(mongols::md5(req.method + req.uri + "?" + req.param));
+                        std::string cache_v;
+                        if (this->db->Get(leveldb::ReadOptions(), cache_k, &cache_v).ok()) {
+                            Json::Value json_cache;
+                            if (this->json_reader.parse(cache_v, json_cache)) {
+                                Json::Value::Members members = json_cache.getMemberNames();
+                                for (Json::Value::Members::iterator iter = members.begin(); iter != members.end(); ++iter) {
+                                    req.cache[*iter] = std::move(json_cache[*iter].asString());
+                                }
+                            }
+                        } else {
+                            Json::Value json_cache;
+                            json_cache["cache_key"] = cache_k;
+                            this->db->Put(leveldb::WriteOptions(), cache_k, this->json_writer.write(json_cache));
+                        }
+
                     }
                 }
 
-                if (this->enable_cache) {
-                    cache_k = std::move(mongols::md5(req.method + req.uri + "?" + req.param));
-                    if (this->redis.is_connected()) {
-                        if (this->redis.exists(cache_k)) {
-                            this->redis.hgetall(cache_k, req.cache);
-                        } else {
-                            this->redis.hset(cache_k, "cache_key", cache_k);
-                            this->redis.expire(cache_k, this->cache_expores);
-                            req.cache["cache_key"] = cache_k;
-                        }
-                    }
-                }
                 if (!body.empty()&& (tmp = req.headers.find("Content-Type")) != req.headers.end()) {
                     if (tmp->second.size() != form_urlencoded_type_len
                             || tmp->second != form_urlencoded_type) {
@@ -276,14 +297,28 @@ namespace mongols {
 
                 res_filter(req, res);
 
-                if (this->enable_session) {
-                    if (this->redis.is_connected()&&!res.session.empty()) {
-                        this->redis.hmset(session_val, res.session);
+                if (!res.session.empty() && this->db_ready) {
+                    Json::Value json_session;
+                    std::string v;
+                    if (this->db->Get(leveldb::ReadOptions(), session_val, &v).ok()) {
+                        if (this->json_reader.parse(v, json_session)) {
+                            for (auto & i : res.session) {
+                                json_session[i.first] = std::move(i.second);
+                            }
+                            this->db->Put(leveldb::WriteOptions(), session_val, this->json_writer.write(json_session));
+                        }
                     }
                 }
-                if (this->enable_cache) {
-                    if (!res.cache.empty() && this->redis.is_connected()) {
-                        this->redis.hmset(cache_k, res.cache);
+                if (!res.cache.empty() && this->db_ready) {
+                    Json::Value json_cache;
+                    std::string v;
+                    if (this->db->Get(leveldb::ReadOptions(), cache_k, &v).ok()) {
+                        if (this->json_reader.parse(v, json_cache)) {
+                            for (auto & i : res.cache) {
+                                json_cache[i.first] = std::move(i.second);
+                            }
+                            this->db->Put(leveldb::WriteOptions(), cache_k, this->json_writer.write(json_cache));
+                        }
                     }
                 }
 
@@ -304,28 +339,39 @@ namespace mongols {
         return this->create_response(res, keepalive);
     }
 
-    void http_server::set_cache_expires(long long expires) {
-        this->cache_expores = expires;
-    }
-
     void http_server::set_session_expires(long long expires) {
         this->session_expires = expires;
     }
 
     void http_server::set_enable_cache(bool b) {
         this->enable_cache = b;
-        if (!this->redis.is_connected()) {
-            this->redis.connect();
+        if (this->enable_cache&&!this->db_ready) {
+            this->db_ready = leveldb::DB::Open(this->db_options, this->db_path, &this->db).ok();
         }
     }
 
     void http_server::set_enable_session(bool b) {
         this->enable_session = b;
-        if (!this->redis.is_connected()) {
-            this->redis.connect();
+        if (this->enable_session&&!this->db_ready) {
+            this->db_ready = leveldb::DB::Open(this->db_options, this->db_path, &this->db).ok();
         }
     }
 
+    void http_server::set_max_file_size(size_t len) {
+        this->db_options.max_file_size = len;
+    }
+
+    void http_server::set_max_open_files(int len) {
+        this->db_options.max_open_files = len;
+    }
+
+    void http_server::set_write_buffer_size(size_t len) {
+        this->db_options.write_buffer_size = len;
+    }
+
+    void http_server::set_db_path(const std::string& path) {
+        this->db_path = path;
+    }
 
 
 }
