@@ -66,12 +66,14 @@ namespace mongols {
     }
 
     http_server::~http_server() {
+        if (this->db_ready && this->db) {
+            delete this->db;
+        }
+
         if (this->server) {
             delete this->server;
         }
-        if (this->db && this->db_ready) {
-            delete this->db;
-        }
+
     }
 
     void http_server::run(const std::function<bool(const mongols::request&)>& req_filter
