@@ -300,9 +300,9 @@ namespace mongols {
                 res_filter(req, res);
 
                 if (!res.session.empty() && this->db_ready) {
-                    Json::Value json_session;
                     std::string v;
                     if (this->db->Get(leveldb::ReadOptions(), session_val, &v).ok()) {
+                        Json::Value json_session;
                         if (this->json_reader.parse(v, json_session)) {
                             for (auto & i : res.session) {
                                 json_session[i.first] = std::move(i.second);
@@ -312,9 +312,9 @@ namespace mongols {
                     }
                 }
                 if (!res.cache.empty() && this->db_ready) {
-                    Json::Value json_cache;
                     std::string v;
                     if (this->db->Get(leveldb::ReadOptions(), cache_k, &v).ok()) {
+                        Json::Value json_cache;
                         if (this->json_reader.parse(v, json_cache)) {
                             for (auto & i : res.cache) {
                                 json_cache[i.first] = std::move(i.second);
