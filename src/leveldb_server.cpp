@@ -48,7 +48,7 @@ namespace mongols {
         if (req.method == "GET") {
             std::string value;
             if (this->db->Get(leveldb::ReadOptions(), req.uri.substr(1), &value).ok()) {
-                res.headers.find("Content-Type")->second = "text/plain;charset=UTF-8";
+                res.headers.find("Content-Type")->second = "application/octet-stream";
                 res.status = 200;
                 res.content = std::move(value);
             } else {
