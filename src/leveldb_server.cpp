@@ -10,7 +10,7 @@
 namespace mongols {
 
     leveldb_server::leveldb_server(const std::string& host, int port, int timeout, size_t buffer_size, size_t thread_size, size_t max_body_size, int max_event_size)
-    : server(0), db(0), options(), ready(false) {
+    : server(0), db(0), options() {
 
         this->server = new http_server(host, port, timeout, buffer_size, thread_size, max_body_size, max_event_size);
 
@@ -18,7 +18,7 @@ namespace mongols {
     }
 
     leveldb_server::~leveldb_server() {
-        if (this->ready && this->db) {
+        if (this->db) {
             delete this->db;
         }
         if (this->server) {
@@ -89,11 +89,12 @@ leveldb_error:
     }
 
     void leveldb_server::run(const std::string& path) {
-        this->ready = leveldb::DB::Open(this->options, path, &this->db).ok();
-        this->server->run(std::bind(&leveldb_server::filter, this, std::placeholders::_1)
-                , std::bind(&leveldb_server::work, this
-                , std::placeholders::_1
-                , std::placeholders::_2));
+        if (leveldb::DB::Open(this->options, path, &this->db).ok()) {
+            this->server->run(std::bind(&leveldb_server::filter, this, std::placeholders::_1)
+                    , std::bind(&leveldb_server::work, this
+                    , std::placeholders::_1
+                    , std::placeholders::_2));
+        }
     }
 
 

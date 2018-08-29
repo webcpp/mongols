@@ -74,7 +74,7 @@ namespace mongols {
         leveldb::DB *db;
         leveldb::Options db_options;
         long long session_expires;
-        bool enable_session, enable_cache, db_ready;
+        bool enable_session, enable_cache;
         std::string db_path;
 
 

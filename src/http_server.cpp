@@ -54,7 +54,7 @@ namespace mongols {
             , size_t max_body_size
             , int max_event_size)
     : server(0), max_body_size(max_body_size), db(0), db_options()
-    , session_expires(3600), enable_session(false), enable_cache(false), db_ready(false), db_path(LEVELDB_PATH) {
+    , session_expires(3600), enable_session(false), enable_cache(false), db_path(LEVELDB_PATH) {
         if (thread_size > 0) {
             this->server = new tcp_threading_server(host, port, timeout, buffer_size, thread_size, max_event_size);
         } else {
@@ -67,7 +67,7 @@ namespace mongols {
     }
 
     http_server::~http_server() {
-        if (this->db_ready && this->db) {
+        if (this->db) {
             delete this->db;
         }
 
@@ -79,7 +79,6 @@ namespace mongols {
 
     void http_server::run(const std::function<bool(const mongols::request&)>& req_filter
             , const std::function<void(const mongols::request&, mongols::response&)>& res_filter) {
-
         tcp_server::handler_function g = std::bind(&http_server::work, this
                 , std::cref(req_filter)
                 , std::cref(res_filter)
@@ -88,7 +87,9 @@ namespace mongols {
                 , std::placeholders::_3
                 , std::placeholders::_4
                 , std::placeholders::_5);
-
+        if (this->enable_cache || this->enable_session) {
+            leveldb::DB::Open(this->db_options, this->db_path, &this->db);
+        }
         this->server->run(g);
     }
 
@@ -235,7 +236,7 @@ namespace mongols {
 
                 std::string session_val, cache_k;
 
-                if (this->db_ready) {
+                if (this->db) {
                     if (this->enable_session) {
                         if ((tmp = req.headers.find("Cookie")) != req.headers.end()) {
                             mongols::parse_param(tmp->second, req.cookies, ';');
@@ -286,8 +287,9 @@ namespace mongols {
 
                 res_filter(req, res);
 
-                if (!res.session.empty() && this->db_ready) {
-                    std::unordered_map<std::string, std::string>* ptr = 0;
+                std::unordered_map<std::string, std::string>* ptr = 0;
+                if (!res.session.empty() && this->db) {
+
                     if (!req.session.empty()) {
                         for (auto &i : res.session) {
                             req.session[i.first] = std::move(i.second);
@@ -299,8 +301,8 @@ namespace mongols {
                     this->db->Put(leveldb::WriteOptions(), session_val, this->serialize(*ptr));
 
                 }
-                if (!res.cache.empty() && this->db_ready) {
-                    std::unordered_map<std::string, std::string>* ptr = 0;
+                
+                if (!res.cache.empty() && this->db) {
                     if (!req.cache.empty()) {
                         for (auto &i : res.cache) {
                             req.cache[i.first] = std::move(i.second);
@@ -310,16 +312,6 @@ namespace mongols {
                         ptr = &res.cache;
                     }
                     this->db->Put(leveldb::WriteOptions(), cache_k, this->serialize(*ptr));
-                }
-
-                if (res.headers.count("Content-Type") > 1) {
-                    auto range = res.headers.equal_range("Content-Type");
-                    for (auto & it = range.first; it != range.second; ++it) {
-                        if (it->second == "text/html;charset=UTF-8") {
-                            res.headers.erase(it);
-                            break;
-                        }
-                    }
                 }
 
             }
@@ -335,16 +327,10 @@ namespace mongols {
 
     void http_server::set_enable_cache(bool b) {
         this->enable_cache = b;
-        if (this->enable_cache&&!this->db_ready) {
-            this->db_ready = leveldb::DB::Open(this->db_options, this->db_path, &this->db).ok();
-        }
     }
 
     void http_server::set_enable_session(bool b) {
         this->enable_session = b;
-        if (this->enable_session&&!this->db_ready) {
-            this->db_ready = leveldb::DB::Open(this->db_options, this->db_path, &this->db).ok();
-        }
     }
 
     void http_server::set_max_file_size(size_t len) {

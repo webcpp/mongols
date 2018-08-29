@@ -26,7 +26,6 @@ namespace mongols {
         http_server* server;
         leveldb::DB *db;
         leveldb::Options options;
-        bool ready;
     protected:
        virtual void work(const mongols::request& req,mongols::response& res);
        virtual bool filter(const mongols::request& req);
