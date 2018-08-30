@@ -15,22 +15,6 @@ namespace mongols {
 
     class http_server {
     public:
-
-        class cache_t {
-        public:
-            cache_t();
-            cache_t(const std::string&, long long);
-            virtual~cache_t() = default;
-            bool expired()const;
-            const std::string& get()const;
-            cache_t& set_data(const std::string&);
-            cache_t& set_expires(long long);
-        private:
-            std::string data;
-            time_t t;
-            long long expires;
-        };
-    public:
         http_server() = delete;
         http_server(const std::string& host, int port
                 , int timeout = 5000

@@ -21,32 +21,6 @@
 
 namespace mongols {
 
-    http_server::cache_t::cache_t() : data(), t(time(0)), expires(600) {
-
-    }
-
-    http_server::cache_t::cache_t(const std::string& v, long long expires) : data(v), t(time(0)), expires(expires) {
-
-    }
-
-    bool http_server::cache_t::expired()const {
-        return difftime(time(0), this->t)>this->expires;
-    }
-
-    const std::string& http_server::cache_t::get() const {
-        return this->data;
-    }
-
-    http_server::cache_t& http_server::cache_t::set_data(const std::string& str) {
-        this->data = str;
-        return *this;
-    }
-
-    http_server::cache_t& http_server::cache_t::set_expires(long long expires) {
-        this->expires = expires;
-        return *this;
-    }
-
     http_server::http_server(const std::string& host, int port
             , int timeout
             , size_t buffer_size
@@ -301,7 +275,7 @@ namespace mongols {
                     this->db->Put(leveldb::WriteOptions(), session_val, this->serialize(*ptr));
 
                 }
-                
+
                 if (!res.cache.empty() && this->db) {
                     if (!req.cache.empty()) {
                         for (auto &i : res.cache) {
