@@ -67,15 +67,6 @@ namespace mongols {
         this->server->run(g);
     }
 
-    bool http_server::parse_reqeust(const std::string& str, mongols::request& req, std::string& body) {
-        mongols::http_request_parser parser(req);
-        if (parser.parse(str)) {
-            body = std::move(parser.get_body());
-            return true;
-        }
-        return false;
-    }
-
     std::string http_server::create_response(mongols::response& res, bool b) {
         std::string output;
         output.append("HTTP/1.1 ").append(std::to_string(res.status)).append(" " + this->get_status_text(res.status)).append("\r\n");
@@ -189,12 +180,16 @@ namespace mongols {
         send_to_other = false;
         mongols::request req;
         mongols::response res;
-        std::string body;
-        if (this->parse_reqeust(input, req, body)) {
+        mongols::http_request_parser parser(req);
+        if (parser.parse(input)) {
+            std::string& body = parser.get_body();
             req.client = client.ip;
-
             if (body.size()>this->max_body_size) {
                 body.clear();
+                res.content = std::move("Not allowed to upload this resource.");
+                res.status = 500;
+                keepalive = CLOSE_CONNECTION;
+                return this->create_response(res, keepalive);
             }
             if (req_filter(req)) {
 
@@ -220,7 +215,6 @@ namespace mongols {
                                 if (this->db->Get(leveldb::ReadOptions(), tmp->second, &v).ok()) {
                                     this->deserialize(v, req.session);
                                 } else {
-                                    //                                    req.session[SESSION_NAME]=tmp->second;
                                     this->db->Put(leveldb::WriteOptions(), tmp->second, this->serialize(req.session));
                                 }
                             }
@@ -242,7 +236,6 @@ namespace mongols {
                         if (this->db->Get(leveldb::ReadOptions(), cache_k, &cache_v).ok()) {
                             this->deserialize(cache_v, req.cache);
                         } else {
-                            //                            req.cache["cache_k"]=cache_k;
                             this->db->Put(leveldb::WriteOptions(), cache_k, this->serialize(req.cache));
                         }
 

@@ -14,7 +14,7 @@ namespace mongols {
 
     int http_request_parser::on_body(http_parser* p, const char* buf, size_t len) {
         http_request_parser::tmp_* THIS = (http_request_parser::tmp_*) p->data;
-        THIS->parser->body = std::move(std::string(buf, len));
+        THIS->parser->body.assign(buf, len);
         return 0;
     }
 
@@ -63,7 +63,7 @@ namespace mongols {
 
     int http_request_parser::on_url(http_parser* p, const char* buf, size_t len) {
         http_request_parser::tmp_* THIS = (http_request_parser::tmp_*) p->data;
-        THIS->parser->req.uri = std::move(std::string(buf, len));
+        THIS->parser->req.uri.assign(buf, len);
         return 0;
     }
 
@@ -100,7 +100,7 @@ namespace mongols {
 
         this->settings.on_url = http_request_parser::on_url; /* [](http_parser *p, const char *buf, size_t len) {
             tmp_* THIS = (tmp_*) p->data;
-            THIS->parser->req.uri = std::move(std::string(buf, len));
+            THIS->parser->req.uri.assign(buf, len);
             return 0;
         };*/
 
@@ -111,7 +111,7 @@ namespace mongols {
 
         this->settings.on_body = http_request_parser::on_body; /* [](http_parser *p, const char *buf, size_t len) {
             tmp_* THIS = (tmp_*) p->data;
-            THIS->parser->body = std::move(std::string(buf, len));
+            THIS->parser->body.assign(buf, len);
             return 0;
         };*/
 

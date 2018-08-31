@@ -18,9 +18,9 @@ namespace mongols {
         http_server() = delete;
         http_server(const std::string& host, int port
                 , int timeout = 5000
-                , size_t buffer_size = 1024
+                , size_t buffer_size = 8192
                 , size_t thread_size = 0
-                , size_t max_body_size = 1024
+                , size_t max_body_size = 4096
                 , int max_event_size = 64);
         virtual~http_server();
 
@@ -45,7 +45,6 @@ namespace mongols {
                 , tcp_server::client_t&
                 , tcp_server::filter_handler_function&);
     private:
-        bool parse_reqeust(const std::string& str, mongols::request& req, std::string& body);
         std::string create_response(mongols::response& res, bool b);
         std::string get_status_text(int status);
         std::string tolower(std::string&);
