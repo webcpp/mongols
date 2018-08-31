@@ -99,17 +99,17 @@ ev_recv:
                 }
                 goto ev_error;
             } else if (ret > 0) {
-                std::string input(buffer, ret);
+                std::string input(buffer, ret), output;
                 filter_handler_function send_to_other_filter = [](const tcp_server::client_t&) {
                     return true;
                 };
-
-                std::lock_guard<std::mutex> *lk = new std::lock_guard<std::mutex>(this->main_mtx);
                 bool keepalive = CLOSE_CONNECTION, send_to_all = false;
-                tcp_server::client_t& client = this->clients[fd];
-                client.u_size = this->clients.size();
-                std::string output = std::move(g(input, keepalive, send_to_all, client, send_to_other_filter));
-                delete lk;
+                {
+                    std::lock_guard<std::mutex> lk(this->main_mtx);
+                    tcp_server::client_t& client = this->clients[fd];
+                    client.u_size = this->clients.size();
+                    output = std::move(g(input, keepalive, send_to_all, client, send_to_other_filter));
+                }
                 size_t n = send(fd, output.c_str(), output.size(), MSG_NOSIGNAL);
                 if (n >= 0) {
                     if (send_to_all) {
