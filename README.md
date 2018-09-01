@@ -47,6 +47,8 @@ or
 
 ## apache benchmark
 
+2 core,4 GB,centos 7:
+
 ![mongols_1.png](https://github.com/webcpp/mongols/blob/master/ab/mongols_1.png)
 
 ![mongols_2.png](https://github.com/webcpp/mongols/blob/master/ab/mongols_2.png)
