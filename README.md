@@ -45,6 +45,11 @@ or
 - GET  `curl http://host/key`
 - DELETE `curl -X DELETE http://host/key`
 
+## apache benchmark
+
+![mongols_1.png](https://github.com/webcpp/mongols/blob/master/ab/mongols_1.png)
+
+![mongols_2.png](https://github.com/webcpp/mongols/blob/master/ab/mongols_2.png)
 
 ## example
 
