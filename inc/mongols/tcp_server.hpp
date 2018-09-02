@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <atomic>
 #include <list>
+#include <thread>
 
 
 #include "epoll.hpp"

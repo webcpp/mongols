@@ -7,27 +7,24 @@ a library for c++
 - pcre-devel
 - zlib-devel
 - openssl-devel
-- curl-devel
 
-`sudo yum install pcre-devel zlib-devel openssl-devel libcurl-devel`
+`sudo yum install pcre-devel zlib-devel openssl-devel`
 
 or
 
-`sudo apt-get install libpcre3-dev zlib1g-dev libssl-dev libcurl4-openssl-dev`
+`sudo apt-get install libpcre3-dev zlib1g-dev libssl-dev`
 
 ## feature
-
-- tcp sever (epoll)
-- tcp multi-threading server (epoll+multi-threading)
-- http server (epoll)
-- http multi-threading server (epoll+multi-threading)
-- websocket server (epoll)
-- websocket multi-threading  server (epoll+multi-threading)
-- web server (epoll)
-- web multi-threading server (epoll+multi-threading)
-- leveldb server (epoll)
-- leveldb multi-threading server (epoll+multi-threading)
+epoll or epoll + multi-threading
+- tcp sever 
+- http server
+- websocket server 
+- web server 
+- leveldb server 
+- lua_server
+- sqlite_server
 - utils
+
 
 ## install 
 
@@ -38,12 +35,24 @@ or
 `pkg-config --libs --cflags mongols`
 
 ### leveldb_server usage
-  - successful  200
-  - failed  500
+  - successful: 200
+  - failed: 500
 
 - POST `curl -d'key=value'  http://host/key`
 - GET  `curl http://host/key`
 - DELETE `curl -X DELETE http://host/key`
+
+### sqlite_server usage
+ - successful: 200
+ - failed: 500
+ - sql_type: cmd,transaction,query
+ - sql: SQL statement
+ - result: JSON
+
+POST `curl -d 'sql_type=x' -d 'sql=sql_statement' http://127.0.0.1:9090/`
+
+example: `curl -d'sql_type=query' -d'sql=select * from test limit 3;' http://127.0.0.1:9090/`
+result: `{"changes":0,"result":[{"id":"1","name":"a"},{"id":"2","name":"ete8s"},{"id":"3","name":"db"}]}`
 
 ## apache benchmark
 
@@ -63,6 +72,8 @@ or
 #include <mongols/ws_server.hpp>
 #include <mongols/web_server.hpp>
 #include <mongols/leveldb_server.hpp>
+#include <mongols/lua_server.hpp>
+#include <mongols/sqlite_server.hpp>
 #include <mongols/util.hpp>
 #include <iostream>
 
@@ -182,6 +193,33 @@ int main(int,char**){
 }
 */
 
+
+/*
+//lua_server or multi-threading server
+int main(int,char**){
+	int port = 9090;
+	const char* host="127.0.0.1";
+	mongols::lua_server 
+	//server(host,port,5000,1024,2);
+	server(host,port);
+	server.set_root_path("html/lua");
+	server.run("html/lua/package/?.lua;","html/lua/package/?.so;");
+
+}
+*/
+
+/*
+//sqlite_server or multi-threading server
+int main(int,char**){
+	int port = 9090;
+	const char* host="127.0.0.1";
+	mongols::sqlite_server 
+	//server(host,port,5000,8096,2);
+	server(host,port);
+	server.run("html/sqlite/test.db");
+
+}
+*/
 
 ```
 

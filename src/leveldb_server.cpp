@@ -44,7 +44,9 @@ namespace mongols {
     }
 
     void leveldb_server::work(const mongols::request& req, mongols::response& res) {
-        if (req.uri.size() < 2)return;
+        if (req.uri.size() < 2) {
+            goto leveldb_error;
+        }
         if (req.method == "GET") {
             std::string value;
             if (this->db->Get(leveldb::ReadOptions(), req.uri.substr(1), &value).ok()) {

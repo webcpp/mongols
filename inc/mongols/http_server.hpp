@@ -19,7 +19,7 @@ namespace mongols {
         http_server(const std::string& host, int port
                 , int timeout = 5000
                 , size_t buffer_size = 8192
-                , size_t thread_size = 0
+                , size_t thread_size = std::thread::hardware_concurrency()
                 , size_t max_body_size = 4096
                 , int max_event_size = 64);
         virtual~http_server();

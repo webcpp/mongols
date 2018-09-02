@@ -17,21 +17,32 @@ CXX=g++
 
 CFLAGS+=-O3 -std=c11 -Wall -fPIC
 CFLAGS+=-Iinc/mongols -Iinc/mongols/lib
-CFLAGS+=-Iinc/mongols/lib/hiredis -pedantic -Wstrict-prototypes -Wwrite-strings
+CFLAGS+=-Iinc/mongols/lib/lua -Wextra -DLUA_COMPAT_5_2 -DLUA_USE_POSIX
+CFLAGS+=-Iinc/mongols/lib/sqlite  -DSQLITE_THREADSAFE=1 \
+	-DSQLITE_ENABLE_FTS4  \
+	-DSQLITE_ENABLE_FTS5 \
+	-DSQLITE_ENABLE_JSON1  \
+	-DSQLITE_ENABLE_RTREE \
+	-DSQLITE_ENABLE_EXPLAIN_COMMENTS  \
+	-DHAVE_USLEEP \
+	-DHAVE_READLINE
 
-CFLAGS+=`pkg-config --cflags libcurl openssl`
+CFLAGS+=`pkg-config --cflags openssl`
 
 
 
 CXXFLAGS+=-O3 -std=c++11 -Wall -fPIC 
-CXXFLAGS+=-Iinc/mongols -Iinc/mongols/lib -Isrc/MPFDParser -Iinc/mongols/lib/cpr
+CXXFLAGS+=-Iinc/mongols -Iinc/mongols/lib 
+CXXFLAGS+=-Isrc/MPFDParser
 CXXFLAGS+=-Iinc/mongols/lib/leveldb -Isrc/leveldb -DLEVELDB_PLATFORM_POSIX
+CXXFLAGS+= -DKAGUYA_USE_CPP11
 CXXFLAGS+=-Isrc -Isrc/re2 
+CXXFLAGS+=-Iinc/mongols/lib/sqlite
 
-CXXFLAGS+=`pkg-config --cflags libcurl openssl`
+CXXFLAGS+=`pkg-config --cflags openssl`
 
 
-LDLIBS+=`pkg-config --libs libcurl  openssl`
+LDLIBS+=`pkg-config --libs openssl`
 LDLIBS+=-lpcre -lz -lpthread -ldl -lrt -lm -lstdc++
 LDFLAGS+=-shared
 

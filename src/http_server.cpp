@@ -184,6 +184,7 @@ namespace mongols {
         if (parser.parse(input)) {
             std::string& body = parser.get_body();
             req.client = client.ip;
+            req.user_agent=req.headers["User-Agent"];
             if (body.size()>this->max_body_size) {
                 body.clear();
                 res.content = std::move("Not allowed to upload this resource.");

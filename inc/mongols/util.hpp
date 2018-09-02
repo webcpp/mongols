@@ -8,6 +8,7 @@
 
 #include <ctime>
 #include <cstdlib>
+#include <cstdio>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -67,6 +68,10 @@ namespace mongols {
     std::string sha1(const std::string&);
 
     std::string bin2hex(const std::string&);
+
+    std::string url_encode(const std::string& str);
+    
+    std::string url_decode(const std::string& str);
 }
 
 #endif /* UTIL_HPP */
