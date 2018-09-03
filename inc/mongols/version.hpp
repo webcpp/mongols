@@ -1,7 +1,7 @@
 #ifndef VERSION_HPP
 #define VERSION_HPP
 
-#define mongols_http_server_version "mongols/1.0.8"
+#define mongols_http_server_version "mongols/1.0.9"
 
 #endif /* VERSION_HPP */
 
