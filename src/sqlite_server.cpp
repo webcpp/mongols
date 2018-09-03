@@ -46,6 +46,7 @@ namespace mongols {
         res.headers.find("Content-Type")->second = "application/json;charset=utf-8";
         Json::Value root;
         res.status = 500;
+        root["error"] = Json::Value();
         std::unordered_map<std::string, std::string>::const_iterator sql_iter, type_iter;
         if ((sql_iter = req.form.find(SQLITE_SQL_FIELD)) != req.form.end()
                 &&(type_iter = req.form.find(SQLITE_TYPE_FIELD)) != req.form.end()) {
@@ -54,15 +55,23 @@ namespace mongols {
                 int rc = this->db->execute(sql);
                 if (rc == SQLITE_OK || rc == SQLITE_DONE) {
                     res.status = 200;
+                } else {
+                    root["error"] = "failed";
                 }
             } else if (type_iter->second == "transaction") {
-                sqlite3pp::transaction xct(*this->db);
-                {
-                    sqlite3pp::command cmd(*this->db, sql);
-                    cmd.execute();
+                try {
+                    {
+                        sqlite3pp::transaction xct(*this->db);
+                        {
+                            sqlite3pp::command cmd(*this->db, sql);
+                            cmd.execute_all();
+                        }
+                        xct.commit();
+                    }
+                    res.status = 200;
+                } catch (std::exception& e) {
+                    root["error"] = e.what();
                 }
-                xct.rollback();
-                res.status = 200;
 
             } else if (type_iter->second == "query") {
                 try {
@@ -95,8 +104,9 @@ namespace mongols {
                 } catch (std::exception& e) {
                     root["error"] = e.what();
                 }
+            } else {
+                root["error"] = "Not support this sql_type";
             }
-            root["changes"] = this->db->changes();
         } else {
             root["error"] = std::move("Not found form data.");
         }
