@@ -1,17 +1,19 @@
-
-
-
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <cstdlib>
 #include <ctime>
 
+#include <openssl/evp.h>  
+#include <openssl/bio.h>  
+#include <openssl/buffer.h> 
+#include <openssl/sha.h>
+#include <openssl/md5.h>
+
 #include <string>
 #include <cstring>
 #include <fstream>
 
-#include <openssl/md5.h>
 
 
 #include "util.hpp"
@@ -475,7 +477,6 @@ namespace mongols {
         for (int i = 0; i < len; i++) {
             c = chars[i];
             ic = c;
-            // uncomment this if you want to encode spaces with +
             if (c == ' ') new_str += '+';
             else if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~') new_str += c;
             else {

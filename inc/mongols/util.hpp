@@ -1,10 +1,7 @@
 #ifndef UTIL_HPP
 #define UTIL_HPP
 
-#include <openssl/evp.h>  
-#include <openssl/bio.h>  
-#include <openssl/buffer.h> 
-#include <openssl/sha.h>
+
 
 #include <ctime>
 #include <cstdlib>
