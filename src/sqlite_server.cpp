@@ -70,7 +70,24 @@ namespace mongols {
                     for (sqlite3pp::query::iterator i = qry.begin(); i != qry.end(); ++i) {
                         Json::Value row;
                         for (int j = 0; j < qry.column_count(); ++j) {
-                            row[qry.column_name(j)] = std::move((*i).get<const char*>(j));
+                            switch ((*i).column_type(j)) {
+                                case SQLITE_INTEGER:
+                                    row[qry.column_name(j)] = static_cast<Json::Int64> ((*i).get<long long int>(j));
+                                    break;
+                                case SQLITE_FLOAT:
+                                    row[qry.column_name(j)] = (*i).get<double>(j);
+                                    break;
+                                case SQLITE_BLOB:
+                                    row[qry.column_name(j)] = std::move((*i).get<std::string>(j));
+                                    break;
+                                case SQLITE_NULL:
+                                    row[qry.column_name(j)] = Json::Value();
+                                    break;
+                                case SQLITE_TEXT:
+                                    row[qry.column_name(j)] = std::move((*i).get<std::string>(j));
+                                    break;
+                                default:break;
+                            }
                         }
                         root["result"].append(row);
                     }
