@@ -53,7 +53,7 @@ POST `curl -d 'sql_type=x' -d 'sql=sql_statement' http://127.0.0.1:9090/`
 
 example: `curl -d'sql_type=query' -d'sql=select * from test limit 3;' http://127.0.0.1:9090/`
 
-result: `{"changes":0,"result":[{"id":1,"name":"abcd"},{"id":2,"name":"ete8s"},{"id":3,"name":"db"}]}`
+result: `{"error":null,"result":[{"id":1,"name":"a"},{"id":2,"name":"b"},{"id":3,"name":"c"}]}`
 
 ## apache benchmark
 
