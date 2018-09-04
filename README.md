@@ -1,6 +1,8 @@
 # mongols
 a library for c++
 
+The best server platform is not nginx,but mongols.
+
 ## dependency
 
 - linux
