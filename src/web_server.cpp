@@ -18,7 +18,7 @@
 namespace mongols {
 
     web_server::web_server(const std::string& host, int port, int timeout, size_t buffer_size, size_t thread_size, size_t max_body_size, int max_event_size)
-    : root_path(), mime_type(), server(0), list_directory(false), enable_mmap(false) {
+    : cache_expires(3600), root_path(), mime_type(), server(0), list_directory(false), enable_mmap(false) {
         this->server = new http_server(host, port, timeout, buffer_size, thread_size, max_body_size, max_event_size);
     }
 
@@ -29,6 +29,7 @@ namespace mongols {
     }
 
     void web_server::run(const std::function<bool(const mongols::request&)>& req_filter) {
+        this->server->set_cache_expires(this->cache_expires);
         if (this->enable_mmap) {
             this->server->run(req_filter, std::bind(&web_server::res_filter_with_mmap, this, std::placeholders::_1
                     , std::placeholders::_2));
@@ -56,6 +57,8 @@ http_read:
                 } else {
                     res.status = 200;
                     res.headers.find("Content-Type")->second = std::move(this->get_mime_type(path));
+                    time_t now = time(0);
+                    res.headers.insert(std::move(std::make_pair(std::move("Last-Modified"), mongols::http_time(&now))));
                     res.content.assign(ffd_buffer, st.st_size);
                     close(ffd);
                 }
@@ -192,6 +195,9 @@ http_500:
 
     }
 
+    void web_server::set_cache_expires(long long expires) {
+        this->cache_expires = expires;
+    }
 
 
 

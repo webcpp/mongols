@@ -19,8 +19,10 @@ namespace mongols {
         void set_mime_type_file(const std::string&);
         void set_list_directory(bool);
         void set_enable_mmap(bool);
+        void set_cache_expires(long long);
         void run(const std::function<bool(const mongols::request&)>& req_filter);
     private:
+        long long cache_expires;
         std::string root_path;
         std::unordered_map<std::string, std::string> mime_type;
         http_server *server;
