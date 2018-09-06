@@ -36,7 +36,7 @@ namespace mongols {
         struct timespec thread_exit_timeout;
         thread_exit_timeout.tv_sec = 0;
         thread_exit_timeout.tv_nsec = 200;
-        handler_function g = [](const std::string&
+        handler_function g = [](const std::pair<char*, size_t>&
                 , bool& keepalive
                 , bool&
                 , tcp_server::client_t&
@@ -99,7 +99,10 @@ ev_recv:
                 }
                 goto ev_error;
             } else if (ret > 0) {
-                std::string input(buffer, ret), output;
+                std::pair<char*, size_t> input;
+                input.first = &buffer[0];
+                input.second = ret;
+                std::string output;
                 filter_handler_function send_to_other_filter = [](const tcp_server::client_t&) {
                     return true;
                 };

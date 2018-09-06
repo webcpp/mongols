@@ -28,7 +28,7 @@ namespace mongols {
             , size_t max_body_size
             , int max_event_size)
     : server(0), max_body_size(max_body_size), db(0), db_options()
-    , session_expires(3600), enable_session(false), enable_cache(false), db_path(LEVELDB_PATH) {
+    , session_expires(3600), cache_expires(3600), enable_session(false), enable_cache(false), db_path(LEVELDB_PATH) {
         if (thread_size > 0) {
             this->server = new tcp_threading_server(host, port, timeout, buffer_size, thread_size, max_event_size);
         } else {
@@ -172,7 +172,7 @@ namespace mongols {
     std::string http_server::work(
             const std::function<bool(const mongols::request&)>& req_filter
             , const std::function<void(const mongols::request&, mongols::response&)>& res_filter
-            , const std::string& input
+            , const std::pair<char*, size_t>& input
             , bool& keepalive
             , bool& send_to_other
             , tcp_server::client_t& client
@@ -181,10 +181,20 @@ namespace mongols {
         mongols::request req;
         mongols::response res;
         mongols::http_request_parser parser(req);
-        if (parser.parse(input)) {
+        if (parser.parse(input.first, input.second)) {
+            std::unordered_map<std::string, std::string>::const_iterator tmp_iterator;
+            if ((tmp_iterator = req.headers.find("If-Modified-Since")) != req.headers.end()
+                    && difftime(time(0), mongols::parse_http_time((u_char*) tmp_iterator->second.c_str(), tmp_iterator->second.size()))
+                    <= this->cache_expires) {
+                res.status = 304;
+                res.content.clear();
+                return this->create_response(res, keepalive);
+            }
             std::string& body = parser.get_body();
             req.client = client.ip;
-            req.user_agent=req.headers["User-Agent"];
+            if ((tmp_iterator = req.headers.find("User-Agent")) != req.headers.end()) {
+                req.user_agent = tmp_iterator->second;
+            }
             if (body.size()>this->max_body_size) {
                 body.clear();
                 res.content = std::move("Not allowed to upload this resource.");
@@ -193,10 +203,8 @@ namespace mongols {
                 return this->create_response(res, keepalive);
             }
             if (req_filter(req)) {
-
-                std::unordered_map<std::string, std::string>::const_iterator tmp;
-                if ((tmp = req.headers.find("Connection")) != req.headers.end()) {
-                    if (tmp->second == "keep-alive") {
+                if ((tmp_iterator = req.headers.find("Connection")) != req.headers.end()) {
+                    if (tmp_iterator->second == "keep-alive") {
                         keepalive = KEEPALIVE_CONNECTION;
                     }
                 }
@@ -208,15 +216,15 @@ namespace mongols {
 
                 if (this->db) {
                     if (this->enable_session) {
-                        if ((tmp = req.headers.find("Cookie")) != req.headers.end()) {
-                            mongols::parse_param(tmp->second, req.cookies, ';');
-                            if ((tmp = req.cookies.find(SESSION_NAME)) != req.cookies.end()) {
-                                session_val = tmp->second;
+                        if ((tmp_iterator = req.headers.find("Cookie")) != req.headers.end()) {
+                            mongols::parse_param(tmp_iterator->second, req.cookies, ';');
+                            if ((tmp_iterator = req.cookies.find(SESSION_NAME)) != req.cookies.end()) {
+                                session_val = tmp_iterator->second;
                                 std::string v;
-                                if (this->db->Get(leveldb::ReadOptions(), tmp->second, &v).ok()) {
+                                if (this->db->Get(leveldb::ReadOptions(), tmp_iterator->second, &v).ok()) {
                                     this->deserialize(v, req.session);
                                 } else {
-                                    this->db->Put(leveldb::WriteOptions(), tmp->second, this->serialize(req.session));
+                                    this->db->Put(leveldb::WriteOptions(), tmp_iterator->second, this->serialize(req.session));
                                 }
                             }
                         } else {
@@ -239,13 +247,12 @@ namespace mongols {
                         } else {
                             this->db->Put(leveldb::WriteOptions(), cache_k, this->serialize(req.cache));
                         }
-
                     }
                 }
 
-                if (!body.empty()&& (tmp = req.headers.find("Content-Type")) != req.headers.end()) {
-                    if (tmp->second.size() != form_urlencoded_type_len
-                            || tmp->second != form_urlencoded_type) {
+                if (!body.empty()&& (tmp_iterator = req.headers.find("Content-Type")) != req.headers.end()) {
+                    if (tmp_iterator->second.size() != form_urlencoded_type_len
+                            || tmp_iterator->second != form_urlencoded_type) {
                         this->upload(req, body);
                         body.clear();
                     } else {
@@ -291,6 +298,10 @@ namespace mongols {
 
     void http_server::set_session_expires(long long expires) {
         this->session_expires = expires;
+    }
+
+    void http_server::set_cache_expires(long long expires) {
+        this->cache_expires = expires;
     }
 
     void http_server::set_enable_cache(bool b) {

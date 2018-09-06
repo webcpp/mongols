@@ -29,6 +29,7 @@ namespace mongols {
                 , const std::function<void(const mongols::request&, mongols::response&)>& res_filter);
 
         void set_session_expires(long long);
+        void set_cache_expires(long long);
         void set_enable_session(bool);
         void set_enable_cache(bool);
         void set_max_open_files(int);
@@ -39,7 +40,7 @@ namespace mongols {
         std::string work(
                 const std::function<bool(const mongols::request&)>& req_filter
                 , const std::function<void(const mongols::request& req, mongols::response&)>& res_filter
-                , const std::string&
+                , const std::pair<char*, size_t>&
                 , bool&
                 , bool&
                 , tcp_server::client_t&
@@ -56,7 +57,7 @@ namespace mongols {
         size_t max_body_size;
         leveldb::DB *db;
         leveldb::Options db_options;
-        long long session_expires;
+        long long session_expires, cache_expires;
         bool enable_session, enable_cache;
         std::string db_path;
 

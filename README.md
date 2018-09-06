@@ -85,7 +85,7 @@ result: `{"error":null,"result":[{"id":1,"name":"a"},{"id":2,"name":"b"},{"id":3
 int main(int,char**){
 	int port=9090;
 	const char* host="127.0.0.1";
-	mongols::ws_server server(host,port,5000,2048,4);
+	mongols::ws_server server(host,port,5000,8096,4);
 
 	auto f=[](const std::string& input
             , bool& keepalive
@@ -109,21 +109,19 @@ int main(int,char**){
 //tcp server or tcp multi-threading server
 int main(int,char**)
 {
-	auto f=[](const std::string& input
+	auto f=[](const std::pair<char*,size_t>& input
 					 , bool & keepalive
                 , bool& send_to_other
                 , mongols::tcp_server::client_t& client
                 , mongols::tcp_server::filter_handler_function& send_to_other_filter){
 					keepalive= KEEPALIVE_CONNECTION;
 					send_to_other=true;
-					return input;
+					return std::string(input.first,input.second);
 				};
 	int port=9090;
 	const char* host="127.0.0.1";
-	
-	//mongols::tcp_threading_server
 	mongols::tcp_server
-
+           //server(host,port,5000,8096,2);
 	server(host,port);
 	server.run(f);
 
@@ -155,7 +153,7 @@ int main(int,char**)
 	int port=9090;
 	const char* host="127.0.0.1";
 	mongols::http_server 
-	//server(host,port,5000,1024,4);
+	//server(host,port,5000,8096,4);
 	server(host,port);
 	server.set_enable_session(false);
 	server.set_enable_cache(false);
@@ -175,7 +173,7 @@ int main(int,char**)
 	int port=9090;
 	const char* host="127.0.0.1";
 	mongols::web_server 
-	//server(host,port,5000,1024,4);
+	//server(host,port,5000,8096,4);
 	server(host,port);
 	server.set_root_path("html");
 	server.set_mime_type_file("mime.conf");
@@ -190,7 +188,7 @@ int main(int,char**){
 	int port=9090;
 	const char* host="127.0.0.1";
 	mongols::leveldb_server 
-	//server(host,port,5000,1024,4);
+	//server(host,port,5000,8096,4);
 	server(host,port);
 	server.run("html/leveldb");
 }
@@ -203,7 +201,7 @@ int main(int,char**){
 	int port = 9090;
 	const char* host="127.0.0.1";
 	mongols::lua_server 
-	//server(host,port,5000,1024,2);
+	//server(host,port,5000,8096,2);
 	server(host,port);
 	server.set_root_path("html/lua");
 	server.run("html/lua/package/?.lua;","html/lua/package/?.so;");

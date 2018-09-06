@@ -134,7 +134,9 @@ ev_recv:
                 }
                 goto ev_error;
             } else if (ret > 0) {
-                std::string input(buffer, ret);
+                std::pair<char*, size_t> input;
+                input.first = &buffer[0];
+                input.second = ret;
                 filter_handler_function send_to_other_filter = [](const client_t&) {
                     return true;
                 };
