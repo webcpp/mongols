@@ -15,6 +15,7 @@ namespace mongols {
         virtual~http_request_parser() = default;
 
         bool parse(const std::string& str);
+        bool parse(const char*,size_t);
 
 
         const std::string& get_body()const;

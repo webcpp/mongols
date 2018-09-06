@@ -30,11 +30,6 @@ namespace mongols {
                 , bool&
                 , tcp_server::client_t&
                 , tcp_server::filter_handler_function&);
-        std::string ws_message_parse(const std::string&
-                , bool&
-                , bool&
-                , tcp_server::client_t&
-                , tcp_server::filter_handler_function&);
         std::string ws_json_parse(const std::string& message
                 , bool& keepalive
                 , bool& send_to_other

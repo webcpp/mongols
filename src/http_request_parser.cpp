@@ -73,9 +73,6 @@ namespace mongols {
         http_parser_settings_init(&this->settings);
         this->tmp.parser = this;
         this->parser.data = &this->tmp;
-    }
-
-    bool http_request_parser::parse(const std::string& str) {
 
 
         this->settings.on_message_begin = http_request_parser::on_message_begin;
@@ -101,10 +98,14 @@ namespace mongols {
 
         this->settings.on_chunk_complete = http_request_parser::on_chunk_complete;
 
+    }
 
-
+    bool http_request_parser::parse(const std::string& str) {
         return http_parser_execute(&this->parser, &this->settings, str.c_str(), str.size()) == str.size();
+    }
 
+    bool http_request_parser::parse(const char* str, size_t len) {
+        return http_parser_execute(&this->parser, &this->settings, str, len) == len;
     }
 
     const std::string& http_request_parser::get_body() const {

@@ -43,7 +43,7 @@ namespace mongols {
     }
 
     void ws_server::run() {
-        handler_function f = std::bind(&ws_server::ws_message_parse, this
+        handler_function f = std::bind(&ws_server::ws_json_parse, this
                 , std::placeholders::_1
                 , std::placeholders::_2
                 , std::placeholders::_3
@@ -60,7 +60,7 @@ namespace mongols {
                 ));
     }
 
-    std::string ws_server::ws_message_parse(const std::string& message
+    std::string ws_server::ws_json_parse(const std::string& message
             , bool& keepalive
             , bool& send_to_other
             , tcp_server::client_t& client
