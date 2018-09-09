@@ -329,6 +329,3 @@ Percentage of the requests served within a certain time (ms)
 
 Note: RPS [80000,120000] in ubuntu 18.04.
 
-## chat
-
-[http://fusheng.hi-nginx.com](http://fusheng.hi-nginx.com)
