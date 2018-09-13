@@ -5,7 +5,7 @@ libdir=${exec_prefix}/lib
 
 Name: mongols
 Description: The mongols library,a library for c++
-Version: 1.0.7
+Version: 1.0.9
 URL: https://github.com/webcpp/mongols
 Requires:
 Libs: -L${libdir} -lmongols

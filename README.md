@@ -164,7 +164,7 @@ int main(int,char**)
 //web server or multi-threading server
 int main(int,char**)
 {
-	auto f=[](const mongols::request&){
+	auto f=[](const mongols::request& req){
 		if(req.method=="GET"&&req.uri.find("..")==std::string::npos){
 			return true;
 		}
@@ -327,5 +327,7 @@ Percentage of the requests served within a certain time (ms)
 
 ```
 
-Note: RPS [80000,120000] in ubuntu 18.04.
+Note: RPS [80000,120000] in ubuntu 18.04:
+![mongols_3.png](https://github.com/webcpp/mongols/blob/master/ab/mongols_3.png)
+
 
