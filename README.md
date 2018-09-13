@@ -327,7 +327,8 @@ Percentage of the requests served within a certain time (ms)
 
 ```
 
-Note: RPS [80000,120000] in ubuntu 18.04:
+Note: RPS [80000,120000] in linux mint 18(ubuntu 16.04):
+
 ![mongols_3.png](https://github.com/webcpp/mongols/blob/master/ab/mongols_3.png)
 
 
