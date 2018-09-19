@@ -80,7 +80,7 @@ namespace mongols {
                 std::list<size_t>::iterator gid_iter = std::find(client.gid.begin(), client.gid.end(), (gid_is_uint64 ? gid : -gid));
                 if (gid_iter == client.gid.end()) {
                     if (gid_is_uint64) {
-                        client.gid.push_back(gid);
+                        client.gid.emplace_back(gid);
                     }
                 } else {
                     if (!gid_is_uint64) {
@@ -97,12 +97,12 @@ namespace mongols {
                 Json::ArrayIndex ufilter_size = ufilter_array.size(), gfilter_size = gfilter_array.size();
                 for (Json::ArrayIndex i = 0; i < ufilter_size; ++i) {
                     if (ufilter_array[i].isUInt64()) {
-                        ufilter.push_back(ufilter_array[i].asUInt64());
+                        ufilter.emplace_back(ufilter_array[i].asUInt64());
                     }
                 }
                 for (Json::ArrayIndex i = 0; i < gfilter_size; ++i) {
                     if (gfilter_array[i].isUInt64()) {
-                        gfilter.push_back(gfilter_array[i].asUInt64());
+                        gfilter.emplace_back(gfilter_array[i].asUInt64());
                     }
                 }
                 send_to_other_filter = [ = ](const tcp_server::client_t & cur_client){
