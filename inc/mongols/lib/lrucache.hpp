@@ -43,8 +43,11 @@ namespace mongols {
                 this->_cache_.cwalk(f);
             }
 
-            virtual~lru_cache() {
+            void clear() {
+                this->_cache_.clear();
+            }
 
+            virtual~lru_cache() {
             }
         private:
             lru11::Cache<key_t, value_t> _cache_;
