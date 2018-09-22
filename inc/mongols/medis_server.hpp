@@ -14,6 +14,7 @@
 #include "lib/simple_resp.h"
 #include "lib/leveldb/db.h"
 #include "lib/leveldb/options.h"
+#include "lib/lrucache.hpp"
 
 
 namespace mongols {
@@ -31,9 +32,17 @@ namespace mongols {
 
 
         void run(const std::string& path);
+        void ready();
         void set_max_open_files(int);
         void set_write_buffer_size(size_t);
         void set_max_file_size(size_t);
+
+        void set_lru_str_max_size(size_t);
+        void set_lru_list_max_size(size_t);
+        void set_lru_map_max_size(size_t);
+        void set_lru_set_max_size(size_t);
+        void set_lru_queue_max_size(size_t);
+        void set_lru_stack_max_size(size_t);
     private:
 
         tcp_server *server;
@@ -71,6 +80,15 @@ namespace mongols {
         typedef std::unordered_map<std::string, mongols_queue> mongols_hash_queue;
         typedef std::stack<std::string> mongols_stack;
         typedef std::unordered_map<std::string, mongols_stack> mongols_hash_stack;
+
+        size_t lru_str_max_size, lru_list_max_size, lru_map_max_size, lru_set_max_size, lru_queue_max_size, lru_stack_max_size;
+        mongols::cache::lru_cache<std::string, size_t> *sr, *lt, *mp, *st, *qe, *sk;
+        mongols_map sr_data;
+        mongols_hash_list lt_data;
+        mongols_hash_map mp_data;
+        mongols_hash_set st_data;
+        mongols_hash_queue qe_data;
+        mongols_hash_stack sk_data;
 
     protected:
         //string
@@ -119,7 +137,67 @@ namespace mongols {
         // echo and ping
         virtual std::string echo(const std::vector<std::string>&);
         virtual std::string ping(const std::vector<std::string>&);
-        
+
+
+        // the version with memory
+
+        std::string _flushall(const std::vector<std::string>&);
+        //string
+        virtual std::string _get(const std::vector<std::string>&);
+        virtual std::string _set(const std::vector<std::string>&);
+        virtual std::string _del(const std::vector<std::string>&);
+        virtual std::string _exists(const std::vector<std::string>&);
+        virtual std::string _getset(const std::vector<std::string>&);
+        virtual std::string _mget(const std::vector<std::string>&);
+        virtual std::string _mset(const std::vector<std::string>&);
+        virtual std::string _strlen(const std::vector<std::string>&);
+        virtual std::string _append(const std::vector<std::string>&);
+
+        //hash map
+        virtual std::string _hget(const std::vector<std::string>&);
+        virtual std::string _hset(const std::vector<std::string>&);
+        virtual std::string _hdel(const std::vector<std::string>&);
+        virtual std::string _hexists(const std::vector<std::string>&);
+
+        //list
+        virtual std::string _lpush_front(const std::vector<std::string>&);
+        virtual std::string _lpop_front(const std::vector<std::string>&);
+        virtual std::string _lpush_back(const std::vector<std::string>&);
+        virtual std::string _lpop_back(const std::vector<std::string>&);
+        virtual std::string _lfront(const std::vector<std::string>&);
+        virtual std::string _lback(const std::vector<std::string>&);
+        virtual std::string _llen(const std::vector<std::string>&);
+
+        // set
+        virtual std::string _sadd(const std::vector<std::string>&);
+        virtual std::string _sdel(const std::vector<std::string>&);
+        virtual std::string _smembers(const std::vector<std::string>&);
+        virtual std::string _scard(const std::vector<std::string>&);
+        virtual std::string _sexists(const std::vector<std::string>&);
+        virtual std::string _sdifference(const std::vector<std::string>&);
+        virtual std::string _sintersection(const std::vector<std::string>&);
+        virtual std::string _sunion(const std::vector<std::string>&);
+        virtual std::string _ssymmetric_difference(const std::vector<std::string>&);
+
+        //queue
+        virtual std::string _qpush(const std::vector<std::string>&);
+        virtual std::string _qpop(const std::vector<std::string>&);
+        virtual std::string _qfront(const std::vector<std::string>&);
+        virtual std::string _qback(const std::vector<std::string>&);
+        virtual std::string _qempty(const std::vector<std::string>&);
+
+        //stack
+        virtual std::string _zpush(const std::vector<std::string>&);
+        virtual std::string _zpop(const std::vector<std::string>&);
+        virtual std::string _ztop(const std::vector<std::string>&);
+        virtual std::string _zempty(const std::vector<std::string>&);
+
+
+        // incr and  decr
+        virtual std::string _incrby(const std::vector<std::string>&);
+        virtual std::string _incr(const std::vector<std::string>&);
+        virtual std::string _decrby(const std::vector<std::string>&);
+        virtual std::string _decr(const std::vector<std::string>&);
 
 
 
