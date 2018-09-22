@@ -119,16 +119,14 @@ namespace mongols {
         // echo and ping
         virtual std::string echo(const std::vector<std::string>&);
         virtual std::string ping(const std::vector<std::string>&);
-
+        
 
 
 
 
     };
 
-
-
-
-
 } // namespace mongols
+
+
 #endif
