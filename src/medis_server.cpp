@@ -22,7 +22,7 @@ namespace mongols {
             , size_t buffer_size
             , size_t thread_size
             , int max_event_size)
-    : server(0), db(0), options(), resp_decoder(), resp_encoder(), op()
+    : server(0), db(0), options(), sqldb(0), resp_decoder(), resp_encoder(), op()
     , lru_str_max_size(1024)
     , lru_list_max_size(1024)
     , lru_map_max_size(1024)
@@ -152,6 +152,13 @@ namespace mongols {
         this->op["_DECR"] = &medis_server::_decr;
         this->op["_DECRBY"] = &medis_server::_decrby;
 
+
+        // sqlite
+
+        this->op["SQLCMD"] = &medis_server::sql_cmd;
+        this->op["SQLTRANCATION"] = &medis_server::sql_trancation;
+        this->op["SQLQUERY"] = &medis_server::sql_query;
+
     }
 
     medis_server::~medis_server() {
@@ -164,6 +171,9 @@ namespace mongols {
 
         if (this->db) {
             delete this->db;
+        }
+        if (this->sqldb) {
+            delete this->sqldb;
         }
         if (this->server) {
             delete this->server;
@@ -183,16 +193,22 @@ namespace mongols {
         this->options.write_buffer_size = len;
     }
 
-    void medis_server::run(const std::string& path) {
+    void medis_server::run(const std::string& path, const std::string& db_name) {
         this->options.create_if_missing = true;
         if (leveldb::DB::Open(this->options, path, &this->db).ok()) {
-
-            this->server->run(std::bind(&medis_server::work, this
-                    , std::placeholders::_1
-                    , std::placeholders::_2
-                    , std::placeholders::_3
-                    , std::placeholders::_4
-                    , std::placeholders::_5));
+            try {
+                this->sqldb = new sqlite3pp::database(db_name.c_str());
+                this->sqldb->enable_extended_result_codes(true);
+                this->sqldb->enable_foreign_keys(true);
+                this->sqldb->enable_triggers(true);
+                this->server->run(std::bind(&medis_server::work, this
+                        , std::placeholders::_1
+                        , std::placeholders::_2
+                        , std::placeholders::_3
+                        , std::placeholders::_4
+                        , std::placeholders::_5));
+            } catch (std::exception&) {
+            }
 
         }
     }
@@ -1723,6 +1739,61 @@ medis_error:
         }
         return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
     }
+
+    std::string medis_server::sql_cmd(const std::vector<std::string>& ret) {
+        if (ret.size() == 2) {
+            int rc = this->sqldb->execute(ret[1].c_str());
+            bool b = true;
+            if (rc != SQLITE_OK && rc != SQLITE_DONE) {
+                b = false;
+            }
+            return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{(b ? "1" : "0")}).response;
+
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
+    std::string medis_server::sql_trancation(const std::vector<std::string>& ret) {
+        if (ret.size() == 2) {
+            try {
+                {
+                    sqlite3pp::transaction xct(*this->sqldb);
+                    {
+                        sqlite3pp::command cmd(*this->sqldb, ret[1].c_str());
+                        cmd.execute_all();
+                    }
+                    xct.commit();
+                }
+
+            } catch (std::exception& e) {
+
+            }
+            return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
+
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
+    std::string medis_server::sql_query(const std::vector<std::string>& ret) {
+        if (ret.size() == 2) {
+            std::vector<std::string> v;
+            try {
+                sqlite3pp::query qry(*this->sqldb, ret[1].c_str());
+                for (sqlite3pp::query::iterator i = qry.begin(); i != qry.end(); ++i) {
+                    for (int j = 0; j < qry.column_count(); ++j) {
+                        v.emplace_back(qry.column_name(j));
+                        v.emplace_back((*i).get<std::string>(j));
+                    }
+                }
+            } catch (std::exception& e) {
+
+            }
+            return this->resp_encoder.encode(simple_resp::RESP_TYPE::ARRAYS, v).response;
+
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
 
 
 

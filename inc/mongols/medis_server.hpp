@@ -15,6 +15,8 @@
 #include "lib/leveldb/db.h"
 #include "lib/leveldb/options.h"
 #include "lib/lrucache.hpp"
+#include "lib/sqlite/sqlite3pp.h"
+#include "lib/sqlite/sqlite3ppext.h"
 
 
 namespace mongols {
@@ -31,7 +33,7 @@ namespace mongols {
         virtual ~medis_server();
 
 
-        void run(const std::string& path);
+        void run(const std::string&,const std::string&);
         void ready();
         void set_max_open_files(int);
         void set_write_buffer_size(size_t);
@@ -48,6 +50,7 @@ namespace mongols {
         tcp_server *server;
         leveldb::DB *db;
         leveldb::Options options;
+        sqlite3pp::database *sqldb;
 
     protected:
         typedef std::string(medis_server::*op_funcion)(const std::vector<std::string>&);
@@ -199,7 +202,11 @@ namespace mongols {
         virtual std::string _decrby(const std::vector<std::string>&);
         virtual std::string _decr(const std::vector<std::string>&);
 
+        // sqlite
 
+        virtual std::string sql_cmd(const std::vector<std::string>&);
+        virtual std::string sql_trancation(const std::vector<std::string>&);
+        virtual std::string sql_query(const std::vector<std::string>&);
 
 
     };

@@ -32,14 +32,17 @@ namespace mongols {
 
     void sqlite_server::run(const std::string& db_name) {
 
-        this->db = new sqlite3pp::database(db_name.c_str());
-        this->db->enable_extended_result_codes(true);
-        this->db->enable_foreign_keys(true);
-        this->db->enable_triggers(true);
-        this->server->run(std::bind(&sqlite_server::filter, this, std::placeholders::_1)
-                , std::bind(&sqlite_server::work, this
-                , std::placeholders::_1
-                , std::placeholders::_2));
+        try {
+            this->db = new sqlite3pp::database(db_name.c_str());
+            this->db->enable_extended_result_codes(true);
+            this->db->enable_foreign_keys(true);
+            this->db->enable_triggers(true);
+            this->server->run(std::bind(&sqlite_server::filter, this, std::placeholders::_1)
+                    , std::bind(&sqlite_server::work, this
+                    , std::placeholders::_1
+                    , std::placeholders::_2));
+        } catch (std::exception&) {
+        }
     }
 
     void sqlite_server::work(const mongols::request& req, mongols::response& res) {
