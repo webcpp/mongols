@@ -205,6 +205,7 @@ namespace mongols {
         // sqlite
 
         virtual std::string sql_cmd(const std::vector<std::string>&);
+        virtual std::string sql_bind_cmd(const std::vector<std::string>&);
         virtual std::string sql_trancation(const std::vector<std::string>&);
         virtual std::string sql_query(const std::vector<std::string>&);
 

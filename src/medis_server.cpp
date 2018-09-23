@@ -156,6 +156,7 @@ namespace mongols {
         // sqlite
 
         this->op["SQLCMD"] = &medis_server::sql_cmd;
+        this->op["SQLBINDCMD"] = &medis_server::sql_bind_cmd;
         this->op["SQLTRANCATION"] = &medis_server::sql_trancation;
         this->op["SQLQUERY"] = &medis_server::sql_query;
 
@@ -1753,6 +1754,19 @@ medis_error:
         return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
     }
 
+    std::string medis_server::sql_bind_cmd(const std::vector<std::string>& ret) {
+        size_t len = ret.size();
+        if (len > 2 && (len - 2) % 2 == 0) {
+            sqlite3pp::command cmd(*this->sqldb, ret[1].c_str());
+            for (size_t i = 2; i < len - 1; ++++i) {
+                cmd.bind(ret[i].c_str(), ret[i + 1].c_str(), sqlite3pp::nocopy);
+            }
+            bool b = (cmd.execute_all() == SQLITE_OK);
+            return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{(b ? "1" : "0")}).response;
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
     std::string medis_server::sql_trancation(const std::vector<std::string>& ret) {
         if (ret.size() == 2) {
             try {
@@ -1782,7 +1796,14 @@ medis_error:
                 for (sqlite3pp::query::iterator i = qry.begin(); i != qry.end(); ++i) {
                     for (int j = 0; j < qry.column_count(); ++j) {
                         v.emplace_back(qry.column_name(j));
-                        v.emplace_back((*i).get<std::string>(j));
+                        switch ((*i).column_type(j)) {
+                            case SQLITE_NULL:
+                                v.emplace_back("");
+                                break;
+                            default:
+                                v.emplace_back((*i).get<std::string>(j));
+                                break;
+                        }
                     }
                 }
             } catch (std::exception& e) {
