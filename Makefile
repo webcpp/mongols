@@ -26,8 +26,8 @@ CFLAGS+=-Iinc/mongols/lib/sqlite  -DSQLITE_THREADSAFE=1 \
 	-DSQLITE_ENABLE_EXPLAIN_COMMENTS  \
 	-DHAVE_USLEEP \
 	-DHAVE_READLINE
-
-CFLAGS+=`pkg-config --cflags openssl`
+CFLAGS+=-Iinc/mongols/lib/z
+CFLAGS+=-Iinc/mongols/lib/hash
 
 
 
@@ -39,11 +39,9 @@ CXXFLAGS+= -DKAGUYA_USE_CPP11
 CXXFLAGS+=-Isrc -Isrc/re2 
 CXXFLAGS+=-Iinc/mongols/lib/sqlite
 
-CXXFLAGS+=`pkg-config --cflags openssl`
 
 
-LDLIBS+=`pkg-config --libs openssl`
-LDLIBS+=-lpcre -lz -lpthread -ldl -lrt -lm -lstdc++
+LDLIBS+=-lpthread -ldl -lrt -lm -lstdc++
 LDFLAGS+=-shared
 
 

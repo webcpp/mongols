@@ -6,15 +6,9 @@ The best server platform is not nginx,but mongols.
 ## dependency
 
 - linux
-- pcre-devel
-- zlib-devel
-- openssl-devel
+- gcc (-std=c11)
+- g++ (-std=c++11)
 
-`sudo yum install pcre-devel zlib-devel openssl-devel`
-
-or
-
-`sudo apt-get install libpcre3-dev zlib1g-dev libssl-dev`
 
 ## feature
 epoll or epoll + multi-threading
@@ -25,6 +19,7 @@ epoll or epoll + multi-threading
 - leveldb server 
 - lua server
 - sqlite server
+- medis_server (like redis but support sqlite and leveldb)
 - utils
 
 

@@ -4,42 +4,20 @@
 #include <cstdlib>
 #include <ctime>
 
-#include <openssl/evp.h>  
-#include <openssl/bio.h>  
-#include <openssl/buffer.h> 
-#include <openssl/sha.h>
-#include <openssl/md5.h>
-
 #include <string>
 #include <cstring>
 #include <fstream>
 
-
-
+#include "lib/cppcodec/base64_rfc4648.hpp"
+#include "lib/hash/md5.hpp"
 #include "util.hpp"
 
 
 
 
+
+
 namespace mongols {
-
-    std::string md5(const std::string& str) {
-        unsigned char digest[16] = {0};
-        MD5_CTX ctx;
-        MD5_Init(&ctx);
-        MD5_Update(&ctx, str.c_str(), str.size());
-        MD5_Final(digest, &ctx);
-
-        unsigned char tmp[32] = {0}, *dst = &tmp[0], *src = &digest[0];
-        unsigned char hex[] = "0123456789abcdef";
-        int len = 16;
-        while (len--) {
-            *dst++ = hex[*src >> 4];
-            *dst++ = hex[*src++ & 0xf];
-        }
-
-        return std::string((char*) tmp, 32);
-    }
 
     std::string random_string(const std::string& s) {
         time_t now = time(NULL);
@@ -404,58 +382,12 @@ namespace mongols {
             , regular_expression::EMAIL = R"(^[0-9a-zA-Z]+(([-_\.])?[0-9a-zA-Z]+)?\@[0-9a-zA-Z]+[-_]?[0-9a-zA-Z]+(\.[0-9a-zA-Z]+)+$)"
             , regular_expression::URL = R"(^(http[s]?|ftp)://[0-9a-zA-Z\._-]([0-9a-zA-Z]+/?)+\??.*$)";
 
-    std::string base64_encode(const std::string& str, bool newline) {
-        const char* buffer = str.c_str();
-        size_t length = str.size();
-        BIO *bmem = NULL;
-        BIO *b64 = NULL;
-        BUF_MEM *bptr;
-
-        b64 = BIO_new(BIO_f_base64());
-        if (!newline) {
-            BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
-        }
-        bmem = BIO_new(BIO_s_mem());
-        b64 = BIO_push(b64, bmem);
-        BIO_write(b64, buffer, length);
-        BIO_flush(b64);
-        BIO_get_mem_ptr(b64, &bptr);
-        BIO_set_close(b64, BIO_NOCLOSE);
-
-        char buff[bptr->length + 1];
-        memcpy(buff, bptr->data, bptr->length);
-        buff[bptr->length] = 0;
-        BIO_free_all(b64);
-
-        return buff;
+    std::string base64_encode(const std::string& str) {
+        return cppcodec::base64_rfc4648::encode(str.c_str(), str.size());
     }
 
-    std::string base64_decode(const std::string& str, bool newline) {
-        const char* input = str.c_str();
-        size_t length = str.size();
-        BIO *b64 = NULL;
-        BIO *bmem = NULL;
-        char buffer[length];
-        memset(buffer, 0, length);
-        b64 = BIO_new(BIO_f_base64());
-        if (!newline) {
-            BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
-        }
-        bmem = BIO_new_mem_buf(input, length);
-        bmem = BIO_push(b64, bmem);
-        BIO_read(bmem, buffer, length);
-        BIO_free_all(bmem);
-
-        return buffer;
-    }
-
-    std::string sha1(const std::string& str) {
-        SHA_CTX ctx;
-        SHA1_Init(&ctx);
-        SHA1_Update(&ctx, str.c_str(), str.size());
-        unsigned char md[SHA_DIGEST_LENGTH];
-        SHA1_Final(md, &ctx);
-        return std::string((char*) md, SHA_DIGEST_LENGTH);
+    std::string base64_decode(const std::string& str) {
+        return cppcodec::base64_rfc4648::decode<std::string>(str.c_str(), str.size());
     }
 
     std::string bin2hex(const std::string& input) {

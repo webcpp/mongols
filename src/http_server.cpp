@@ -12,6 +12,7 @@
 #include "util.hpp"
 #include "MPFDParser/Parser.h"
 #include "lib/msgpack.hpp"
+#include "lib/hash/md5.hpp"
 
 #define form_urlencoded_type "application/x-www-form-urlencoded"
 #define form_urlencoded_type_len (sizeof(form_urlencoded_type) - 1)
