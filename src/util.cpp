@@ -399,6 +399,11 @@ namespace mongols {
         }
     }
 
+    std::string regular_expression::INTEGER = R"(^[+-]?[1-9]+[0-9]*$)"
+            , regular_expression::NUMBER = R"(^[+-]?[1-9]+[0-9]*\.?[0-9]*$)"
+            , regular_expression::EMAIL = R"(^[0-9a-zA-Z]+(([-_\.])?[0-9a-zA-Z]+)?\@[0-9a-zA-Z]+[-_]?[0-9a-zA-Z]+(\.[0-9a-zA-Z]+)+$)"
+            , regular_expression::URL = R"(^(http[s]?|ftp)://[0-9a-zA-Z\._-]([0-9a-zA-Z]+/?)+\??.*$)";
+
     std::string base64_encode(const std::string& str, bool newline) {
         const char* buffer = str.c_str();
         size_t length = str.size();
