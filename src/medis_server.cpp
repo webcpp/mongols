@@ -157,7 +157,7 @@ namespace mongols {
 
         this->op["SQLCMD"] = &medis_server::sql_cmd;
         this->op["SQLBINDCMD"] = &medis_server::sql_bind_cmd;
-        this->op["SQLTRANCATION"] = &medis_server::sql_trancation;
+        this->op["SQLTRANSACTION"] = &medis_server::sql_transaction;
         this->op["SQLQUERY"] = &medis_server::sql_query;
 
     }
@@ -1767,7 +1767,7 @@ medis_error:
         return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
     }
 
-    std::string medis_server::sql_trancation(const std::vector<std::string>& ret) {
+    std::string medis_server::sql_transaction(const std::vector<std::string>& ret) {
         if (ret.size() == 2) {
             try {
                 {
