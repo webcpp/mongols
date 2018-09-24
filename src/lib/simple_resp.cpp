@@ -9,7 +9,7 @@ namespace simple_resp {
         decode_result result;
         result.status = OK;
 
-        if (input.length() < 0) {
+        if (input.empty()) {
             result.status = EMPTY_INPUT;
             return result;
         }
@@ -65,7 +65,7 @@ namespace simple_resp {
                                 result.response.emplace_back(token);
                                 break;
                             case BULK_STRINGS:
-                                bulk_string_length = static_cast<string_num_type> (std::stoi(token.substr(1, token.length() - 1)));
+                                bulk_string_length = static_cast<string_num_type> (std::stoi(token.substr(1, token.size() - 1)));
                                 state = PARSE_BLUK_STRINGS;
                                 break;
                             default:
@@ -80,7 +80,7 @@ namespace simple_resp {
                             result.status = INVAILID_RESP_FORMAT;
                             return result;
                         }
-                        if (token.length() != bulk_string_length) {
+                        if (token.size() != bulk_string_length) {
                             result.response.clear();
                             result.status = INVAILID_RESP_FORMAT;
                             return result;
