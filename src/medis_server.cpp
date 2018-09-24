@@ -67,14 +67,11 @@ namespace mongols {
         this->op["LFRONT"] = &medis_server::lfront;
         this->op["LBACK"] = &medis_server::lback;
         this->op["LPUSH_FRONT"] = &medis_server::lpush_front;
-        this->op["LPUSH"] = &medis_server::lpush_front;
         this->op["LPUSH_BACK"] = &medis_server::lpush_back;
-        this->op["RPUSH"] = &medis_server::lpush_back;
         this->op["LPOP_FRONT"] = &medis_server::lpop_front;
-        this->op["LPOP"] = &medis_server::lpop_front;
         this->op["LPOP_BACK"] = &medis_server::lpop_back;
-        this->op["RPOP"] = &medis_server::lpop_back;
         this->op["LLEN"] = &medis_server::llen;
+        this->op["LRANGE"] = &medis_server::lrange;
 
 
         this->op["SADD"] = &medis_server::sadd;
@@ -103,16 +100,18 @@ namespace mongols {
         this->op["_HSET"] = &medis_server::_hset;
         this->op["_HDEL"] = &medis_server::_hdel;
         this->op["_HEXISTS"] = &medis_server::_hexists;
+        this->op["_HERASE"] = &medis_server::_herase;
 
         this->op["_LFRONT"] = &medis_server::_lfront;
         this->op["_LBACK"] = &medis_server::_lback;
         this->op["_LPUSH_FRONT"] = &medis_server::_lpush_front;
-        this->op["_LPUSH"] = &medis_server::_lpush_front;
         this->op["_LPUSH_BACK"] = &medis_server::_lpush_back;
         this->op["_LPOP_FRONT"] = &medis_server::_lpop_front;
-        this->op["_LPOP"] = &medis_server::_lpop_front;
         this->op["_LPOP_BACK"] = &medis_server::_lpop_back;
         this->op["_LLEN"] = &medis_server::_llen;
+        this->op["_LERASE"] = &medis_server::_lerase;
+        this->op["_LRANGE"] = &medis_server::_lrange;
+        this->op["_LEXISTS"] = &medis_server::_lexists;
 
         this->op["_SADD"] = &medis_server::_sadd;
         this->op["_SDEL"] = &medis_server::_sdel;
@@ -124,17 +123,22 @@ namespace mongols {
         this->op["_SINTER"] = &medis_server::_sintersection;
         this->op["_SUNION"] = &medis_server::_sunion;
         this->op["_SSYDIFF"] = &medis_server::_ssymmetric_difference;
+        this->op["_SERASE"] = &medis_server::_serase;
 
         this->op["_QPUSH"] = &medis_server::_qpush;
         this->op["_QPOP"] = &medis_server::_qpop;
         this->op["_QFRONT"] = &medis_server::_qfront;
         this->op["_QBACK"] = &medis_server::_qback;
         this->op["_QEMPTY"] = &medis_server::_qempty;
+        this->op["_QERASE"] = &medis_server::_qerase;
+
 
         this->op["_ZPOP"] = &medis_server::_zpop;
         this->op["_ZTOP"] = &medis_server::_ztop;
         this->op["_ZPUSH"] = &medis_server::_zpush;
         this->op["_ZEMPTY"] = &medis_server::_zempty;
+        this->op["_ZERASE"] = &medis_server::_zerase;
+
 
         this->op["_GET"] = &medis_server::_get;
         this->op["_SET"] = &medis_server::_set;
@@ -622,6 +626,49 @@ medis_error:
         return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
     }
 
+    std::string medis_server::lrange(const std::vector<std::string>& ret) {
+        if (ret.size() == 4) {
+            std::string v;
+            if (this->db->Get(leveldb::ReadOptions(), ret[1], &v).ok()) {
+                try {
+                    long start = std::stol(ret[2]), stop = std::stol(ret[3]), n = 0;
+                    if (start <= stop) {
+                        mongols_list l;
+                        this->deserialize(v, l);
+                        std::vector<std::string> vs;
+                        if (start >= 0) {
+                            for (auto& item : l) {
+                                if (n > stop) {
+                                    break;
+                                }
+                                if (n >= start && n <= stop) {
+                                    vs.emplace_back(item);
+                                }
+                                ++n;
+                            }
+                        } else {
+                            n -= (l.size() - 1);
+                            for (mongols_list::reverse_iterator ritem = l.rbegin(); ritem != l.rend(); ++ritem) {
+                                if (n > stop) {
+                                    break;
+                                }
+                                if (n >= start && n <= stop) {
+                                    vs.emplace_back(*ritem);
+                                }
+                                ++n;
+                            }
+                        }
+                        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ARRAYS, vs).response;
+                    }
+
+                } catch (std::exception&) {
+                }
+
+            }
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
     std::string medis_server::sadd(const std::vector<std::string>& ret) {
         size_t len = ret.size();
         if (len > 2) {
@@ -1057,6 +1104,20 @@ medis_error:
         return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
     }
 
+    std::string medis_server::_herase(const std::vector<std::string>& ret) {
+        if (ret.size() == 2) {
+            if (this->mp->exists(ret[1])) {
+                this->mp->erase(ret[1]);
+                this->mp_data.erase(ret[1]);
+                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
+            } else if (this->mp_data.find(ret[1]) != this->mp_data.end()) {
+                this->mp_data.erase(ret[1]);
+            }
+            return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
     std::string medis_server::_lfront(const std::vector<std::string>& ret) {
         if (ret.size() == 2) {
             if (this->lt->exists(ret[1])) {
@@ -1189,6 +1250,76 @@ medis_error:
                 this->lt_data.erase(ret[1]);
             }
 
+            return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
+    std::string medis_server::_lrange(const std::vector<std::string>& ret) {
+        if (ret.size() == 4) {
+            if (this->lt->exists(ret[1])) {
+                try {
+                    long start = std::stol(ret[2]), stop = std::stol(ret[3]), n = 0;
+                    if (start <= stop) {
+                        mongols_list &l = this->lt_data[ret[1]];
+                        std::vector<std::string> vs;
+                        if (start >= 0) {
+                            for (auto& item : l) {
+                                if (n > stop) {
+                                    break;
+                                }
+                                if (n >= start && n <= stop) {
+                                    vs.emplace_back(item);
+                                }
+                                ++n;
+                            }
+                        } else {
+                            n -= (l.size() - 1);
+                            for (mongols_list::reverse_iterator ritem = l.rbegin(); ritem != l.rend(); ++ritem) {
+                                if (n > stop) {
+                                    break;
+                                }
+                                if (n >= start && n <= stop) {
+                                    vs.emplace_back(*ritem);
+                                }
+                                ++n;
+                            }
+                        }
+                        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ARRAYS, vs).response;
+                    }
+
+                } catch (std::exception&) {
+                }
+
+            }
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
+    std::string medis_server::_lerase(const std::vector<std::string>& ret) {
+        if (ret.size() == 2) {
+            if (this->lt->exists(ret[1])) {
+                this->lt->erase(ret[1]);
+                this->lt_data.erase(ret[1]);
+                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
+            } else if (this->lt_data.find(ret[1]) != this->lt_data.end()) {
+                this->lt_data.erase(ret[1]);
+            }
+            return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
+    std::string medis_server::_lexists(const std::vector<std::string>& ret) {
+        if (ret.size() == 3) {
+            if (this->lt->exists(ret[1])) {
+                mongols_list &l = this->lt_data[ret[1]];
+                if (std::find(l.begin(), l.end(), ret[2]) != l.end()) {
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
+                }
+            } else if (this->lt_data.find(ret[1]) != this->lt_data.end()) {
+                this->lt_data.erase(ret[1]);
+            }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
         }
         return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
@@ -1369,6 +1500,20 @@ medis_error:
         return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
     }
 
+    std::string medis_server::_serase(const std::vector<std::string>& ret) {
+        if (ret.size() == 2) {
+            if (this->st->exists(ret[1])) {
+                this->st->erase(ret[1]);
+                this->st_data.erase(ret[1]);
+                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
+            } else if (this->st_data.find(ret[1]) != this->st_data.end()) {
+                this->st_data.erase(ret[1]);
+            }
+            return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
     std::string medis_server::_qfront(const std::vector<std::string>& ret) {
         if (ret.size() == 2) {
             if (this->qe->exists(ret[1])) {
@@ -1458,6 +1603,20 @@ medis_error:
         return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
     }
 
+    std::string medis_server::_qerase(const std::vector<std::string>& ret) {
+        if (ret.size() == 2) {
+            if (this->qe->exists(ret[1])) {
+                this->qe->erase(ret[1]);
+                this->qe_data.erase(ret[1]);
+                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
+            } else if (this->qe_data.find(ret[1]) != this->qe_data.end()) {
+                this->qe_data.erase(ret[1]);
+            }
+            return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
     std::string medis_server::_zpush(const std::vector<std::string>& ret) {
         size_t len = ret.size();
         if (len > 2) {
@@ -1528,6 +1687,20 @@ medis_error:
                 this->sk_data.erase(ret[1]);
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"nil"}).response;
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
+    std::string medis_server::_zerase(const std::vector<std::string>& ret) {
+        if (ret.size() == 2) {
+            if (this->sk->exists(ret[1])) {
+                this->sk->erase(ret[1]);
+                this->sk_data.erase(ret[1]);
+                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
+            } else if (this->sk_data.find(ret[1]) != this->sk_data.end()) {
+                this->sk_data.erase(ret[1]);
+            }
+            return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
         }
         return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
     }

@@ -33,7 +33,7 @@ namespace mongols {
         virtual ~medis_server();
 
 
-        void run(const std::string&,const std::string&);
+        void run(const std::string&, const std::string&);
         void ready();
         void set_max_open_files(int);
         void set_write_buffer_size(size_t);
@@ -119,6 +119,7 @@ namespace mongols {
         virtual std::string lfront(const std::vector<std::string>&);
         virtual std::string lback(const std::vector<std::string>&);
         virtual std::string llen(const std::vector<std::string>&);
+        virtual std::string lrange(const std::vector<std::string>&);
 
         // set
         virtual std::string sadd(const std::vector<std::string>&);
@@ -161,6 +162,7 @@ namespace mongols {
         virtual std::string _hset(const std::vector<std::string>&);
         virtual std::string _hdel(const std::vector<std::string>&);
         virtual std::string _hexists(const std::vector<std::string>&);
+        virtual std::string _herase(const std::vector<std::string>&);
 
         //list
         virtual std::string _lpush_front(const std::vector<std::string>&);
@@ -170,6 +172,9 @@ namespace mongols {
         virtual std::string _lfront(const std::vector<std::string>&);
         virtual std::string _lback(const std::vector<std::string>&);
         virtual std::string _llen(const std::vector<std::string>&);
+        virtual std::string _lrange(const std::vector<std::string>&);
+        virtual std::string _lerase(const std::vector<std::string>&);
+        virtual std::string _lexists(const std::vector<std::string>&);
 
         // set
         virtual std::string _sadd(const std::vector<std::string>&);
@@ -181,6 +186,7 @@ namespace mongols {
         virtual std::string _sintersection(const std::vector<std::string>&);
         virtual std::string _sunion(const std::vector<std::string>&);
         virtual std::string _ssymmetric_difference(const std::vector<std::string>&);
+        virtual std::string _serase(const std::vector<std::string>&);
 
         //queue
         virtual std::string _qpush(const std::vector<std::string>&);
@@ -188,12 +194,14 @@ namespace mongols {
         virtual std::string _qfront(const std::vector<std::string>&);
         virtual std::string _qback(const std::vector<std::string>&);
         virtual std::string _qempty(const std::vector<std::string>&);
+        virtual std::string _qerase(const std::vector<std::string>&);
 
         //stack
         virtual std::string _zpush(const std::vector<std::string>&);
         virtual std::string _zpop(const std::vector<std::string>&);
         virtual std::string _ztop(const std::vector<std::string>&);
         virtual std::string _zempty(const std::vector<std::string>&);
+        virtual std::string _zerase(const std::vector<std::string>&);
 
 
         // incr and  decr
