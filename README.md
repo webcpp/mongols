@@ -72,6 +72,7 @@ result: `{"error":null,"result":[{"id":1,"name":"a"},{"id":2,"name":"b"},{"id":3
 #include <mongols/leveldb_server.hpp>
 #include <mongols/lua_server.hpp>
 #include <mongols/sqlite_server.hpp>
+#include <mongols/medis_server.hpp>
 #include <mongols/util.hpp>
 #include <iostream>
 
@@ -217,6 +218,19 @@ int main(int,char**){
 }
 */
 
+/*
+// medis_server or multi-threading server
+int main(int,char**){
+	int port = 9090;
+	const char* host="127.0.0.1";
+	mongols::medis_server
+	server(host,port,5000,8096,0);
+	server.ready();
+	server.run("html/leveldb","html/sqlite/test.db");
+
+}
+*/
+
 ```
 
 ## apache benchmark
@@ -325,5 +339,7 @@ Percentage of the requests served within a certain time (ms)
 Note: RPS [80000,120000] in linux mint 18(ubuntu 16.04):
 
 ![mongols_3.png](https://github.com/webcpp/mongols/blob/master/ab/mongols_3.png)
+
+![medis_server](https://github.com/webcpp/mongols/blob/master/ab/medis.png)
 
 
