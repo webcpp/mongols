@@ -572,10 +572,12 @@ medis_error:
                 try {
                     mongols_list l;
                     this->deserialize(v, l);
-                    std::string v = std::move(l.front());
-                    l.pop_front();
-                    if (this->db->Put(leveldb::WriteOptions(), ret[1], this->serialize(l)).ok()) {
-                        return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{v}).response;
+                    if (!l.empty()) {
+                        std::string v = std::move(l.front());
+                        l.pop_front();
+                        if (this->db->Put(leveldb::WriteOptions(), ret[1], this->serialize(l)).ok()) {
+                            return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{v}).response;
+                        }
                     }
                 } catch (std::exception& e) {
                 }
@@ -593,10 +595,12 @@ medis_error:
                 try {
                     mongols_list l;
                     this->deserialize(v, l);
-                    std::string v = std::move(l.back());
-                    l.pop_back();
-                    if (this->db->Put(leveldb::WriteOptions(), ret[1], this->serialize(l)).ok()) {
-                        return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{v}).response;
+                    if (!l.empty()) {
+                        std::string v = std::move(l.back());
+                        l.pop_back();
+                        if (this->db->Put(leveldb::WriteOptions(), ret[1], this->serialize(l)).ok()) {
+                            return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{v}).response;
+                        }
                     }
                 } catch (std::exception& e) {
 
@@ -1988,7 +1992,7 @@ medis_error:
         return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
     }
 
-
+   
 
 
 

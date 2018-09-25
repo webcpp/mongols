@@ -84,7 +84,12 @@ namespace mongols {
         typedef std::stack<std::string> mongols_stack;
         typedef std::unordered_map<std::string, mongols_stack> mongols_hash_stack;
 
-        size_t lru_str_max_size, lru_list_max_size, lru_map_max_size, lru_set_max_size, lru_queue_max_size, lru_stack_max_size;
+        size_t lru_str_max_size
+        , lru_list_max_size
+        , lru_map_max_size
+        , lru_set_max_size
+        , lru_queue_max_size
+        , lru_stack_max_size;
         mongols::cache::lru_cache<std::string, size_t> *sr, *lt, *mp, *st, *qe, *sk;
         mongols_map sr_data;
         mongols_hash_list lt_data;
