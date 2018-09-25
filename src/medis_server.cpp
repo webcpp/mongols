@@ -635,31 +635,32 @@ medis_error:
             std::string v;
             if (this->db->Get(leveldb::ReadOptions(), ret[1], &v).ok()) {
                 try {
-                    long start = std::stol(ret[2]), stop = std::stol(ret[3]), n = 0;
-                    if (start <= stop) {
+                    long start = std::stol(ret[2]), count = std::stol(ret[3]), i = 0;
+                    if (count >= 0) {
                         mongols_list l;
                         this->deserialize(v, l);
                         std::vector<std::string> vs;
                         if (start >= 0) {
                             for (auto& item : l) {
-                                if (n > stop) {
+                                long tmp = i - start;
+                                if (tmp >= count) {
                                     break;
-                                }
-                                if (n >= start && n <= stop) {
+                                } else if (tmp >= 0 && tmp < count) {
                                     vs.emplace_back(item);
                                 }
-                                ++n;
+                                ++i;
+
                             }
                         } else {
-                            n -= (l.size() - 1);
+                            i = -1;
                             for (mongols_list::reverse_iterator ritem = l.rbegin(); ritem != l.rend(); ++ritem) {
-                                if (n > stop) {
+                                long tmp =  start-i;
+                                if (tmp >= count) {
                                     break;
-                                }
-                                if (n >= start && n <= stop) {
+                                } else if (tmp >= 0 && tmp < count) {
                                     vs.emplace_back(*ritem);
                                 }
-                                ++n;
+                                --i;
                             }
                         }
                         return this->resp_encoder.encode(simple_resp::RESP_TYPE::ARRAYS, vs).response;
@@ -1263,34 +1264,34 @@ medis_error:
         if (ret.size() == 4) {
             if (this->lt->exists(ret[1])) {
                 try {
-                    long start = std::stol(ret[2]), stop = std::stol(ret[3]), n = 0;
-                    if (start <= stop) {
-                        mongols_list &l = this->lt_data[ret[1]];
-                        std::vector<std::string> vs;
-                        if (start >= 0) {
-                            for (auto& item : l) {
-                                if (n > stop) {
-                                    break;
-                                }
-                                if (n >= start && n <= stop) {
-                                    vs.emplace_back(item);
-                                }
-                                ++n;
+                    long start = std::stol(ret[2]), count = std::stol(ret[3]), i = 0;
+                    mongols_list &l = this->lt_data[ret[1]];
+                    std::vector<std::string> vs;
+                    if (start >= 0) {
+                        for (auto& item : l) {
+                            long tmp = i - start;
+                            if (tmp >= count) {
+                                break;
+                            } else
+                                if (tmp >= 0 && tmp < count) {
+                                vs.emplace_back(item);
                             }
-                        } else {
-                            n -= (l.size() - 1);
-                            for (mongols_list::reverse_iterator ritem = l.rbegin(); ritem != l.rend(); ++ritem) {
-                                if (n > stop) {
-                                    break;
-                                }
-                                if (n >= start && n <= stop) {
-                                    vs.emplace_back(*ritem);
-                                }
-                                ++n;
-                            }
+                            ++i;
                         }
-                        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ARRAYS, vs).response;
+                    } else {
+                        i = -1;
+                        for (mongols_list::reverse_iterator ritem = l.rbegin(); ritem != l.rend(); ++ritem) {
+                            long tmp =  start-i;
+                            if (tmp >= count) {
+                                break;
+                            } else if (tmp >= 0 && tmp < count) {
+                                vs.emplace_back(*ritem);
+                            }
+                            --i;
+                        }
                     }
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::ARRAYS, vs).response;
+
 
                 } catch (std::exception&) {
                 }
@@ -1992,7 +1993,7 @@ medis_error:
         return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
     }
 
-   
+
 
 
 
