@@ -8,6 +8,7 @@
 #include "response.hpp"
 #include "http_request_parser.hpp"
 #include "lib/leveldb/db.h"
+#include "lib/leveldb/options.h"
 
 
 
@@ -35,6 +36,8 @@ namespace mongols {
         void set_max_open_files(int);
         void set_write_buffer_size(size_t);
         void set_max_file_size(size_t);
+        void set_cache_size(size_t);
+        void set_enable_compression(bool);
         void set_db_path(const std::string&);
     private:
         std::string work(

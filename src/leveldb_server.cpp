@@ -4,6 +4,8 @@
 
 #include "util.hpp"
 
+#include "lib/leveldb/cache.h"
+
 #include "leveldb_server.hpp"
 
 
@@ -20,6 +22,9 @@ namespace mongols {
     leveldb_server::~leveldb_server() {
         if (this->db) {
             delete this->db;
+        }
+        if (this->options.block_cache) {
+            delete this->options.block_cache;
         }
         if (this->server) {
             delete this->server;
@@ -41,6 +46,16 @@ namespace mongols {
 
     void leveldb_server::set_write_buffer_size(size_t len) {
         this->options.write_buffer_size = len;
+    }
+
+    void leveldb_server::set_cache_size(size_t len) {
+        this->options.block_cache = leveldb::NewLRUCache(len);
+    }
+
+    void leveldb_server::set_enable_compression(bool b) {
+        if (!b) {
+            this->options.compression = leveldb::kNoCompression;
+        }
     }
 
     void leveldb_server::work(const mongols::request& req, mongols::response& res) {

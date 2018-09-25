@@ -12,6 +12,7 @@
 
 #include "medis_server.hpp"
 #include "lib/msgpack.hpp"
+#include "lib/leveldb/cache.h"
 
 
 namespace mongols {
@@ -177,6 +178,9 @@ namespace mongols {
         if (this->db) {
             delete this->db;
         }
+        if (this->options.block_cache) {
+            delete this->options.block_cache;
+        }
         if (this->sqldb) {
             delete this->sqldb;
         }
@@ -196,6 +200,16 @@ namespace mongols {
 
     void medis_server::set_write_buffer_size(size_t len) {
         this->options.write_buffer_size = len;
+    }
+
+    void medis_server::set_cache_size(size_t len) {
+        this->options.block_cache = leveldb::NewLRUCache(len);
+    }
+
+    void medis_server::set_enable_compression(bool b) {
+        if (!b) {
+            this->options.compression = leveldb::kNoCompression;
+        }
     }
 
     void medis_server::run(const std::string& path, const std::string& db_name) {
@@ -654,7 +668,7 @@ medis_error:
                         } else {
                             i = -1;
                             for (mongols_list::reverse_iterator ritem = l.rbegin(); ritem != l.rend(); ++ritem) {
-                                long tmp =  start-i;
+                                long tmp = start - i;
                                 if (tmp >= count) {
                                     break;
                                 } else if (tmp >= 0 && tmp < count) {
@@ -1281,7 +1295,7 @@ medis_error:
                     } else {
                         i = -1;
                         for (mongols_list::reverse_iterator ritem = l.rbegin(); ritem != l.rend(); ++ritem) {
-                            long tmp =  start-i;
+                            long tmp = start - i;
                             if (tmp >= count) {
                                 break;
                             } else if (tmp >= 0 && tmp < count) {

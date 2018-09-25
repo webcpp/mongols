@@ -38,6 +38,8 @@ namespace mongols {
         void set_max_open_files(int);
         void set_write_buffer_size(size_t);
         void set_max_file_size(size_t);
+        void set_cache_size(size_t);
+        void set_enable_compression(bool);
 
         void set_lru_str_max_size(size_t);
         void set_lru_list_max_size(size_t);

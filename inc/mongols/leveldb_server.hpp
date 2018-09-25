@@ -5,6 +5,7 @@
 
 #include "http_server.hpp"
 #include "lib/leveldb/db.h"
+#include "lib/leveldb/options.h"
 
 namespace mongols {
 
@@ -21,14 +22,16 @@ namespace mongols {
         void set_max_open_files(int);
         void set_write_buffer_size(size_t);
         void set_max_file_size(size_t);
+        void set_cache_size(size_t);
+        void set_enable_compression(bool);
         void run(const std::string&);
     private:
         http_server* server;
         leveldb::DB *db;
         leveldb::Options options;
     protected:
-       virtual void work(const mongols::request& req,mongols::response& res);
-       virtual bool filter(const mongols::request& req);
+        virtual void work(const mongols::request& req, mongols::response& res);
+        virtual bool filter(const mongols::request& req);
 
     };
 }

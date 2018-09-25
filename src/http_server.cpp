@@ -13,6 +13,7 @@
 #include "MPFDParser/Parser.h"
 #include "lib/msgpack.hpp"
 #include "lib/hash/md5.hpp"
+#include "lib/leveldb/cache.h"
 
 #define form_urlencoded_type "application/x-www-form-urlencoded"
 #define form_urlencoded_type_len (sizeof(form_urlencoded_type) - 1)
@@ -45,7 +46,9 @@ namespace mongols {
         if (this->db) {
             delete this->db;
         }
-
+        if (this->db_options.block_cache) {
+            delete this->db_options.block_cache;
+        }
         if (this->server) {
             delete this->server;
         }
@@ -323,6 +326,16 @@ namespace mongols {
 
     void http_server::set_write_buffer_size(size_t len) {
         this->db_options.write_buffer_size = len;
+    }
+
+    void http_server::set_cache_size(size_t len) {
+        this->db_options.block_cache = leveldb::NewLRUCache(len);
+    }
+
+    void http_server::set_enable_compression(bool b) {
+        if (!b) {
+            this->db_options.compression = leveldb::kNoCompression;
+        }
     }
 
     void http_server::set_db_path(const std::string& path) {
