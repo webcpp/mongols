@@ -117,6 +117,10 @@ namespace mongols {
         virtual std::string hset(const std::vector<std::string>&);
         virtual std::string hdel(const std::vector<std::string>&);
         virtual std::string hexists(const std::vector<std::string>&);
+        virtual std::string hgetall(const std::vector<std::string>&);
+        virtual std::string hlen(const std::vector<std::string>&);
+        virtual std::string hmget(const std::vector<std::string>&);
+        virtual std::string hmset(const std::vector<std::string>&);
 
         //list
         virtual std::string lpush_front(const std::vector<std::string>&);
@@ -132,7 +136,7 @@ namespace mongols {
         virtual std::string sadd(const std::vector<std::string>&);
         virtual std::string sdel(const std::vector<std::string>&);
         virtual std::string smembers(const std::vector<std::string>&);
-        virtual std::string scard(const std::vector<std::string>&);
+        virtual std::string slen(const std::vector<std::string>&);
         virtual std::string sexists(const std::vector<std::string>&);
         virtual std::string sdifference(const std::vector<std::string>&);
         virtual std::string sintersection(const std::vector<std::string>&);
@@ -170,6 +174,10 @@ namespace mongols {
         virtual std::string _hdel(const std::vector<std::string>&);
         virtual std::string _hexists(const std::vector<std::string>&);
         virtual std::string _herase(const std::vector<std::string>&);
+        virtual std::string _hgetall(const std::vector<std::string>&);
+        virtual std::string _hlen(const std::vector<std::string>&);
+        virtual std::string _hmget(const std::vector<std::string>&);
+        virtual std::string _hmset(const std::vector<std::string>&);
 
         //list
         virtual std::string _lpush_front(const std::vector<std::string>&);
@@ -187,14 +195,15 @@ namespace mongols {
         virtual std::string _sadd(const std::vector<std::string>&);
         virtual std::string _sdel(const std::vector<std::string>&);
         virtual std::string _smembers(const std::vector<std::string>&);
-        virtual std::string _scard(const std::vector<std::string>&);
         virtual std::string _sexists(const std::vector<std::string>&);
         virtual std::string _sdifference(const std::vector<std::string>&);
         virtual std::string _sintersection(const std::vector<std::string>&);
         virtual std::string _sunion(const std::vector<std::string>&);
         virtual std::string _ssymmetric_difference(const std::vector<std::string>&);
         virtual std::string _serase(const std::vector<std::string>&);
-
+        virtual std::string _slen(const std::vector<std::string>&);
+        
+        
         //queue
         virtual std::string _qpush(const std::vector<std::string>&);
         virtual std::string _qpop(const std::vector<std::string>&);
@@ -202,6 +211,7 @@ namespace mongols {
         virtual std::string _qback(const std::vector<std::string>&);
         virtual std::string _qempty(const std::vector<std::string>&);
         virtual std::string _qerase(const std::vector<std::string>&);
+        virtual std::string _qlen(const std::vector<std::string>&);
 
         //stack
         virtual std::string _zpush(const std::vector<std::string>&);
@@ -209,7 +219,7 @@ namespace mongols {
         virtual std::string _ztop(const std::vector<std::string>&);
         virtual std::string _zempty(const std::vector<std::string>&);
         virtual std::string _zerase(const std::vector<std::string>&);
-
+        virtual std::string _zlen(const std::vector<std::string>&);
 
         // incr and  decr
         virtual std::string _incrby(const std::vector<std::string>&);

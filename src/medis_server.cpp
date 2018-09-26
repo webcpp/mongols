@@ -63,6 +63,10 @@ namespace mongols {
         this->op["HSET"] = &medis_server::hset;
         this->op["HDEL"] = &medis_server::hdel;
         this->op["HEXISTS"] = &medis_server::hexists;
+        this->op["HGETALL"] = &medis_server::hgetall;
+        this->op["HLEN"] = &medis_server::hlen;
+        this->op["HMGET"] = &medis_server::hmget;
+        this->op["HMSET"] = &medis_server::hmset;
 
 
         this->op["LFRONT"] = &medis_server::lfront;
@@ -78,7 +82,7 @@ namespace mongols {
         this->op["SADD"] = &medis_server::sadd;
         this->op["SDEL"] = &medis_server::sdel;
         this->op["SMEMBERS"] = &medis_server::smembers;
-        this->op["SCARD"] = &medis_server::scard;
+        this->op["SLEN"] = &medis_server::slen;
         this->op["SEXISTS"] = &medis_server::sexists;
         this->op["SDIFF"] = &medis_server::sdifference;
         this->op["SINTER"] = &medis_server::sintersection;
@@ -102,6 +106,10 @@ namespace mongols {
         this->op["_HDEL"] = &medis_server::_hdel;
         this->op["_HEXISTS"] = &medis_server::_hexists;
         this->op["_HERASE"] = &medis_server::_herase;
+        this->op["_HGETALL"] = &medis_server::_hgetall;
+        this->op["_HLEN"] = &medis_server::_hlen;
+        this->op["_HMGET"] = &medis_server::_hmget;
+        this->op["_HMSET"] = &medis_server::_hmset;
 
         this->op["_LFRONT"] = &medis_server::_lfront;
         this->op["_LBACK"] = &medis_server::_lback;
@@ -118,7 +126,7 @@ namespace mongols {
         this->op["_SDEL"] = &medis_server::_sdel;
         this->op["_SREM"] = &medis_server::_sdel;
         this->op["_SMEMBERS"] = &medis_server::_smembers;
-        this->op["_SCARD"] = &medis_server::_scard;
+        this->op["_SLEN"] = &medis_server::_slen;
         this->op["_SEXISTS"] = &medis_server::_sexists;
         this->op["_SDIFF"] = &medis_server::_sdifference;
         this->op["_SINTER"] = &medis_server::_sintersection;
@@ -132,6 +140,7 @@ namespace mongols {
         this->op["_QBACK"] = &medis_server::_qback;
         this->op["_QEMPTY"] = &medis_server::_qempty;
         this->op["_QERASE"] = &medis_server::_qerase;
+        this->op["_QLEN"] = &medis_server::_qlen;
 
 
         this->op["_ZPOP"] = &medis_server::_zpop;
@@ -139,6 +148,7 @@ namespace mongols {
         this->op["_ZPUSH"] = &medis_server::_zpush;
         this->op["_ZEMPTY"] = &medis_server::_zempty;
         this->op["_ZERASE"] = &medis_server::_zerase;
+        this->op["_ZLEN"] = &medis_server::_zlen;
 
 
         this->op["_GET"] = &medis_server::_get;
@@ -411,7 +421,7 @@ medis_error:
                     this->deserialize(v, m);
                     m[ret[2]] = ret[3];
                     if (this->db->Put(leveldb::WriteOptions(), ret[1], this->serialize(m)).ok()) {
-                        return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
+                        return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
                     }
                 } catch (std::exception& e) {
                 }
@@ -470,6 +480,84 @@ medis_error:
                 }
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
+    std::string medis_server::hgetall(const std::vector<std::string>& ret) {
+        if (ret.size() == 2) {
+            std::string v;
+            if (this->db->Get(leveldb::ReadOptions(), ret[1], &v).ok()) {
+                mongols_map m;
+                this->deserialize(v, m);
+                std::vector<std::string> vs;
+                for (auto & item : m) {
+                    vs.emplace_back(item.first);
+                    vs.emplace_back(item.second);
+                }
+                return this->resp_encoder.encode(simple_resp::RESP_TYPE::ARRAYS, vs).response;
+            }
+            return this->resp_encoder.encode(simple_resp::RESP_TYPE::ARRAYS,{}).response;
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
+    std::string medis_server::hlen(const std::vector<std::string>& ret) {
+        if (ret.size() == 2) {
+            std::string v;
+            if (this->db->Get(leveldb::ReadOptions(), ret[1], &v).ok()) {
+                mongols_map m;
+                this->deserialize(v, m);
+
+                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(m.size())}).response;
+            }
+            return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
+    std::string medis_server::hmset(const std::vector<std::string>& ret) {
+        size_t len = ret.size();
+        if (len > 2 && (len - 2) % 2 == 0) {
+            std::string v;
+            if (this->db->Get(leveldb::ReadOptions(), ret[1], &v).ok()) {
+                mongols_map m;
+                this->deserialize(v, m);
+                for (size_t i = 2; i < len - 1; ++++i) {
+                    m[ret[i]] = ret[i + 1];
+                }
+                if (this->db->Put(leveldb::WriteOptions(), ret[1], this->serialize(m)).ok()) {
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"OK"}).response;
+                }
+            } else {
+                mongols_map m;
+                for (size_t i = 2; i < len - 1; ++++i) {
+                    m[ret[i]] = ret[i + 1];
+                }
+                if (this->db->Put(leveldb::WriteOptions(), ret[1], this->serialize(m)).ok()) {
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"OK"}).response;
+                }
+
+            }
+            return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"nil"}).response;
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
+    std::string medis_server::hmget(const std::vector<std::string>& ret) {
+        size_t len = ret.size();
+        if (len > 2) {
+            std::string v;
+            if (this->db->Get(leveldb::ReadOptions(), ret[1], &v).ok()) {
+                mongols_map m;
+                this->deserialize(v, m);
+                std::vector<std::string> vs;
+                for (size_t i = 2; i < len; ++i) {
+                    vs.emplace_back(m[ret[i]]);
+                }
+                return this->resp_encoder.encode(simple_resp::RESP_TYPE::ARRAYS, vs).response;
+            }
+            return this->resp_encoder.encode(simple_resp::RESP_TYPE::ARRAYS,{}).response;
         }
         return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
     }
@@ -862,7 +950,7 @@ medis_error:
         return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
     }
 
-    std::string medis_server::scard(const std::vector<std::string>& ret) {
+    std::string medis_server::slen(const std::vector<std::string>& ret) {
         if (ret.size() == 2) {
             std::string v;
             if (this->db->Get(leveldb::ReadOptions(), ret[1], &v).ok()) {
@@ -1137,6 +1225,77 @@ medis_error:
         return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
     }
 
+    std::string medis_server::_hgetall(const std::vector<std::string>& ret) {
+        if (ret.size() == 2) {
+            if (this->mp->exists(ret[1])) {
+                std::vector<std::string> vs;
+                mongols_map &m = this->mp_data[ret[1]];
+                for (auto& item : m) {
+                    vs.emplace_back(item.first);
+                    vs.emplace_back(item.second);
+                }
+                return this->resp_encoder.encode(simple_resp::RESP_TYPE::ARRAYS, vs).response;
+            } else if (this->mp_data.find(ret[1]) != this->mp_data.end()) {
+                this->mp_data.erase(ret[1]);
+            }
+            return this->resp_encoder.encode(simple_resp::RESP_TYPE::ARRAYS,{}).response;
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
+    std::string medis_server::_hlen(const std::vector<std::string>& ret) {
+        if (ret.size() == 2) {
+            if (this->mp->exists(ret[1])) {
+                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(this->mp_data[ret[1]].size())}).response;
+            } else if (this->mp_data.find(ret[1]) != this->mp_data.end()) {
+                this->mp_data.erase(ret[1]);
+            }
+            return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
+    std::string medis_server::_hmset(const std::vector<std::string>& ret) {
+        size_t len = ret.size();
+        if (len > 2 && (len - 2) % 2 == 0) {
+            if (this->mp->exists(ret[1])) {
+                mongols_map &m = this->mp_data[ret[1]];
+                for (size_t i = 2; i < len - 1; ++++i) {
+                    m[ret[i]] = ret[i + 1];
+                }
+                return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"OK"}).response;
+            } else {
+                mongols_map m;
+                for (size_t i = 2; i < len - 1; ++++i) {
+                    m[ret[i]] = ret[i + 1];
+                }
+                this->mp->put(ret[1], 0);
+                this->mp_data[ret[1]] = std::move(m);
+                return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"OK"}).response;
+            }
+            return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"nil"}).response;
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
+    std::string medis_server::_hmget(const std::vector<std::string>& ret) {
+        size_t len = ret.size();
+        if (len > 2) {
+            if (this->mp->exists(ret[1])) {
+                mongols_map &m = this->mp_data[ret[1]];
+                std::vector<std::string> vs;
+                for (size_t i = 2; i < len; ++i) {
+                    vs.emplace_back(m[ret[i]]);
+                }
+                return this->resp_encoder.encode(simple_resp::RESP_TYPE::ARRAYS, vs).response;
+            } else if (this->mp_data.find(ret[1]) != this->mp_data.end()) {
+                this->mp_data.erase(ret[1]);
+            }
+            return this->resp_encoder.encode(simple_resp::RESP_TYPE::ARRAYS,{}).response;
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
     std::string medis_server::_lfront(const std::vector<std::string>& ret) {
         if (ret.size() == 2) {
             if (this->lt->exists(ret[1])) {
@@ -1145,6 +1304,7 @@ medis_error:
                     return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{v.front()}).response;
                 }
             } else if (this->lt_data.find(ret[1]) != this->lt_data.end()) {
+
                 this->lt_data.erase(ret[1]);
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"nil"}).response;
@@ -1160,6 +1320,7 @@ medis_error:
                     return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{v.back()}).response;
                 }
             } else if (this->lt_data.find(ret[1]) != this->lt_data.end()) {
+
                 this->lt_data.erase(ret[1]);
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"nil"}).response;
@@ -1177,6 +1338,7 @@ medis_error:
                     return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{temp}).response;
                 }
             } else if (this->lt_data.find(ret[1]) != this->lt_data.end()) {
+
                 this->lt_data.erase(ret[1]);
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"nil"}).response;
@@ -1194,6 +1356,7 @@ medis_error:
                     return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{temp}).response;
                 }
             } else if (this->lt_data.find(ret[1]) != this->lt_data.end()) {
+
                 this->lt_data.erase(ret[1]);
             }
 
@@ -1223,6 +1386,7 @@ medis_error:
                 }
                 this->lt->put(ret[1], 0);
                 this->lt_data[ret[1]] = std::move(v);
+
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(i)}).response;
 
             }
@@ -1252,6 +1416,7 @@ medis_error:
                 }
                 this->lt->put(ret[1], 0);
                 this->lt_data[ret[1]] = std::move(v);
+
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(i)}).response;
 
             }
@@ -1266,6 +1431,7 @@ medis_error:
                 mongols_list& v = this->lt_data[ret[1]];
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(v.size())}).response;
             } else if (this->lt_data.find(ret[1]) != this->lt_data.end()) {
+
                 this->lt_data.erase(ret[1]);
             }
 
@@ -1312,6 +1478,7 @@ medis_error:
 
             }
         }
+
         return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
     }
 
@@ -1322,6 +1489,7 @@ medis_error:
                 this->lt_data.erase(ret[1]);
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
             } else if (this->lt_data.find(ret[1]) != this->lt_data.end()) {
+
                 this->lt_data.erase(ret[1]);
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
@@ -1337,6 +1505,7 @@ medis_error:
                     return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
                 }
             } else if (this->lt_data.find(ret[1]) != this->lt_data.end()) {
+
                 this->lt_data.erase(ret[1]);
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
@@ -1369,6 +1538,7 @@ medis_error:
                 }
                 this->st->put(ret[1], 0);
                 this->st_data[ret[1]] = std::move(s);
+
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(i)}).response;
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
@@ -1388,6 +1558,7 @@ medis_error:
                 }
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(i)}).response;
             } else if (this->st_data.find(ret[1]) != this->st_data.end()) {
+
                 this->st_data.erase(ret[1]);
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
@@ -1403,6 +1574,7 @@ medis_error:
                     return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
                 }
             } else if (this->st_data.find(ret[1]) != this->st_data.end()) {
+
                 this->st_data.erase(ret[1]);
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
@@ -1423,6 +1595,7 @@ medis_error:
             } else if (!b1 && this->st_data.find(ret[1]) != this->st_data.end()) {
                 this->st_data.erase(ret[1]);
             } else if (!b2 && this->st_data.find(ret[2]) != this->st_data.end()) {
+
                 this->st_data.erase(ret[2]);
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"nil"}).response;
@@ -1442,6 +1615,7 @@ medis_error:
             } else if (!b1 && this->st_data.find(ret[1]) != this->st_data.end()) {
                 this->st_data.erase(ret[1]);
             } else if (!b2 && this->st_data.find(ret[2]) != this->st_data.end()) {
+
                 this->st_data.erase(ret[2]);
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"nil"}).response;
@@ -1461,6 +1635,7 @@ medis_error:
             } else if (!b1 && this->st_data.find(ret[1]) != this->st_data.end()) {
                 this->st_data.erase(ret[1]);
             } else if (!b2 && this->st_data.find(ret[2]) != this->st_data.end()) {
+
                 this->st_data.erase(ret[2]);
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"nil"}).response;
@@ -1480,6 +1655,7 @@ medis_error:
             } else if (!b1 && this->st_data.find(ret[1]) != this->st_data.end()) {
                 this->st_data.erase(ret[1]);
             } else if (!b2 && this->st_data.find(ret[2]) != this->st_data.end()) {
+
                 this->st_data.erase(ret[2]);
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"nil"}).response;
@@ -1487,9 +1663,8 @@ medis_error:
         return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
     }
 
-    std::string medis_server::_scard(const std::vector<std::string>& ret) {
+    std::string medis_server::_slen(const std::vector<std::string>& ret) {
         if (ret.size() == 2) {
-            std::string v;
             if (this->st->exists(ret[1])) {
                 mongols_set &s = this->st_data[ret[1]];
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(s.size())}).response;
@@ -1512,6 +1687,7 @@ medis_error:
                 }
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::ARRAYS, sv).response;
             } else if (this->st_data.find(ret[1]) != this->st_data.end()) {
+
                 this->st_data.erase(ret[1]);
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::ARRAYS,{}).response;
@@ -1526,6 +1702,7 @@ medis_error:
                 this->st_data.erase(ret[1]);
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
             } else if (this->st_data.find(ret[1]) != this->st_data.end()) {
+
                 this->st_data.erase(ret[1]);
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
@@ -1541,6 +1718,7 @@ medis_error:
                     return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{q.front()}).response;
                 }
             } else if (this->qe_data.find(ret[1]) != this->qe_data.end()) {
+
                 this->qe_data.erase(ret[1]);
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"nil"}).response;
@@ -1556,6 +1734,7 @@ medis_error:
                     return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{q.back()}).response;
                 }
             } else if (this->qe_data.find(ret[1]) != this->qe_data.end()) {
+
                 this->qe_data.erase(ret[1]);
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"nil"}).response;
@@ -1571,6 +1750,7 @@ medis_error:
                     return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
                 }
             } else if (this->qe_data.find(ret[1]) != this->qe_data.end()) {
+
                 this->qe_data.erase(ret[1]);
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
@@ -1588,6 +1768,7 @@ medis_error:
                     return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{v}).response;
                 }
             } else if (this->qe_data.find(ret[1]) != this->qe_data.end()) {
+
                 this->qe_data.erase(ret[1]);
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"nil"}).response;
@@ -1615,6 +1796,7 @@ medis_error:
                 }
                 this->qe->put(ret[1], 0);
                 this->qe_data[ret[1]] = std::move(q);
+
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(i)}).response;
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
@@ -1628,6 +1810,19 @@ medis_error:
                 this->qe->erase(ret[1]);
                 this->qe_data.erase(ret[1]);
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
+            } else if (this->qe_data.find(ret[1]) != this->qe_data.end()) {
+
+                this->qe_data.erase(ret[1]);
+            }
+            return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
+    std::string medis_server::_qlen(const std::vector<std::string>& ret) {
+        if (ret.size() == 2) {
+            if (this->qe->exists(ret[1])) {
+                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(this->qe_data[ret[1]].size())}).response;
             } else if (this->qe_data.find(ret[1]) != this->qe_data.end()) {
                 this->qe_data.erase(ret[1]);
             }
@@ -1656,6 +1851,7 @@ medis_error:
                 }
                 this->sk->put(ret[1], 0);
                 this->sk_data[ret[1]] = std::move(z);
+
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(i)}).response;
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
@@ -1671,6 +1867,7 @@ medis_error:
                     return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
                 }
             } else if (this->sk_data.find(ret[1]) != this->sk_data.end()) {
+
                 this->sk_data.erase(ret[1]);
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
@@ -1688,6 +1885,7 @@ medis_error:
                     return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{v}).response;
                 }
             } else if (this->sk_data.find(ret[1]) != this->sk_data.end()) {
+
                 this->sk_data.erase(ret[1]);
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"nil"}).response;
@@ -1703,6 +1901,7 @@ medis_error:
                     return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{z.top()}).response;
                 }
             } else if (this->sk_data.find(ret[1]) != this->sk_data.end()) {
+
                 this->sk_data.erase(ret[1]);
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"nil"}).response;
@@ -1717,6 +1916,19 @@ medis_error:
                 this->sk_data.erase(ret[1]);
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
             } else if (this->sk_data.find(ret[1]) != this->sk_data.end()) {
+
+                this->sk_data.erase(ret[1]);
+            }
+            return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
+    std::string medis_server::_zlen(const std::vector<std::string>& ret) {
+        if (ret.size() == 2) {
+            if (this->sk->exists(ret[1])) {
+                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(this->sk_data[ret[1]].size())}).response;
+            } else if (this->sk_data.find(ret[1]) != this->sk_data.end()) {
                 this->sk_data.erase(ret[1]);
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
@@ -1728,6 +1940,7 @@ medis_error:
         if (ret.size() == 3) {
             this->sr->put(ret[1], 0);
             this->sr_data[ret[1]] = ret[2];
+
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"OK"}).response;
         }
         return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
@@ -1738,6 +1951,7 @@ medis_error:
             if (this->sr->exists(ret[1])) {
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{this->sr_data[ret[1]]}).response;
             } else if (this->sr_data.find(ret[1]) != this->sr_data.end()) {
+
                 this->sr_data.erase(ret[1]);
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"nil"}).response;
@@ -1750,6 +1964,7 @@ medis_error:
             if (this->sr->exists(ret[1])) {
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
             } else if (this->sr_data.find(ret[1]) != this->sr_data.end()) {
+
                 this->sr_data.erase(ret[1]);
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
@@ -1763,6 +1978,7 @@ medis_error:
                 this->sr->erase(ret[1]);
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
             } else if (this->sr_data.find(ret[1]) != this->sr_data.end()) {
+
                 this->sr_data.erase(ret[1]);
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
@@ -1779,6 +1995,7 @@ medis_error:
             } else {
                 this->sr->put(ret[1], 0);
                 this->sr_data[ret[1]] = ret[2];
+
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(ret[2].size())}).response;
 
             }
@@ -1795,6 +2012,7 @@ medis_error:
                 this->sr_data[ret[1]] = ret[2];
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{v}).response;
             } else if (this->sr_data.find(ret[1]) != this->sr_data.end()) {
+
                 this->sr_data.erase(ret[1]);
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"nil"}).response;
@@ -1811,6 +2029,7 @@ medis_error:
                     vs.emplace_back(this->sr_data[ret[i]]);
                 } else {
                     if (this->sr_data.find(ret[1]) != this->sr_data.end()) {
+
                         this->sr_data.erase(ret[1]);
                     }
                     vs.emplace_back("nil");
@@ -1825,6 +2044,7 @@ medis_error:
         size_t len = ret.size();
         if (len >= 2 && (len - 1) % 2 == 0) {
             for (size_t i = 1; i < len - 1; ++++i) {
+
                 this->sr->put(ret[i], 0);
                 this->sr_data[ret[i]] = ret[i + 1];
             }
@@ -1838,6 +2058,7 @@ medis_error:
             if (this->sr->exists(ret[1])) {
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(this->sr_data[ret[1]].size())}).response;
             } else if (this->sr_data.find(ret[1]) != this->sr_data.end()) {
+
                 this->sr_data.erase(ret[1]);
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
@@ -1859,6 +2080,7 @@ medis_error:
             } else {
                 this->sr->put(ret[1], 0);
                 this->sr_data[ret[1]] = std::move("1");
+
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
@@ -1881,6 +2103,7 @@ medis_error:
             } else {
                 this->sr->put(ret[1], 0);
                 this->sr_data[ret[1]] = ret[2];
+
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{ret[2]}).response;
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
@@ -1903,6 +2126,7 @@ medis_error:
             } else {
                 this->sr->put(ret[1], 0);
                 this->sr_data[ret[1]] = std::move("-1");
+
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"-1"}).response;
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
@@ -1926,6 +2150,7 @@ medis_error:
                 std::string v = std::move("-" + ret[2]);
                 this->sr->put(ret[1], 0);
                 this->sr_data[ret[1]] = v;
+
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{v}).response;
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
@@ -1938,6 +2163,7 @@ medis_error:
             int rc = this->sqldb->execute(ret[1].c_str());
             bool b = true;
             if (rc != SQLITE_OK && rc != SQLITE_DONE) {
+
                 b = false;
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{(b ? "1" : "0")}).response;
@@ -1954,6 +2180,7 @@ medis_error:
                 cmd.bind(ret[i].c_str(), ret[i + 1].c_str(), sqlite3pp::nocopy);
             }
             bool b = (cmd.execute_all() == SQLITE_OK);
+
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{(b ? "1" : "0")}).response;
         }
         return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
@@ -1974,6 +2201,7 @@ medis_error:
             } catch (std::exception& e) {
 
             }
+
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
 
         }
