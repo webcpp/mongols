@@ -58,6 +58,8 @@ namespace mongols {
         this->op["GETSET"] = &medis_server::getset;
         this->op["STRLEN"] = &medis_server::strlen;
         this->op["APPEND"] = &medis_server::append;
+        this->op["SETRANGE"] = &medis_server::setrange;
+        this->op["GETRANGE"] = &medis_server::getrange;
 
         this->op["HGET"] = &medis_server::hget;
         this->op["HSET"] = &medis_server::hset;
@@ -161,6 +163,8 @@ namespace mongols {
         this->op["_GETSET"] = &medis_server::_getset;
         this->op["_STRLEN"] = &medis_server::_strlen;
         this->op["_APPEND"] = &medis_server::_append;
+        this->op["_SETRANGE"] = &medis_server::_setrange;
+        this->op["_GETRANGE"] = &medis_server::_getrange;
 
         this->op["_INCR"] = &medis_server::_incr;
         this->op["_INCRBY"] = &medis_server::_incrby;
@@ -323,6 +327,40 @@ medis_error:
                 if (this->db->Put(leveldb::WriteOptions(), ret[1], ret[2]).ok()) {
                     return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(ret[2].size())}).response;
                 }
+            }
+            return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"nil"}).response;
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
+    std::string medis_server::getrange(const std::vector<std::string>& ret) {
+        if (ret.size() == 4) {
+            try {
+                std::string v;
+                size_t start = std::stoul(ret[2]), count = std::stoul(ret[3]);
+                if (this->db->Get(leveldb::ReadOptions(), ret[1], &v).ok()) {
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{v.substr(start, count)}).response;
+                }
+            } catch (std::exception&) {
+
+            }
+            return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"nil"}).response;
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
+    std::string medis_server::setrange(const std::vector<std::string>& ret) {
+        if (ret.size() == 4) {
+            try {
+                std::string v;
+                size_t start = std::stoul(ret[2]);
+                if (this->db->Get(leveldb::ReadOptions(), ret[1], &v).ok()) {
+                    v.replace(start, ret[3].size(), ret[3]);
+                    if (this->db->Put(leveldb::WriteOptions(), ret[1], v).ok()) {
+                        return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(v.size())}).response;
+                    }
+                }
+            } catch (std::exception&) {
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"nil"}).response;
         }
@@ -1998,6 +2036,44 @@ medis_error:
 
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(ret[2].size())}).response;
 
+            }
+            return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"nil"}).response;
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
+    std::string medis_server::_getrange(const std::vector<std::string>& ret) {
+        if (ret.size() == 4) {
+            if (this->sr->exists(ret[1])) {
+                try {
+                    std::string& v = this->sr_data[ret[1]];
+                    size_t start = std::stoul(ret[2]), count = std::stoul(ret[3]);
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{v.substr(start, count)}).response;
+
+                } catch (std::exception&) {
+
+                }
+
+            } else if (this->sr_data.find(ret[1]) != this->sr_data.end()) {
+                this->sr_data.erase(ret[1]);
+            }
+            return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"nil"}).response;
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
+    std::string medis_server::_setrange(const std::vector<std::string>& ret) {
+        if (ret.size() == 4) {
+            if (this->sr->exists(ret[1])) {
+                try {
+                    std::string& v = this->sr_data[ret[1]];
+                    size_t start = std::stoul(ret[2]);
+                    v.replace(start, ret[3].size(), ret[3]);
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(v.size())}).response;
+                } catch (std::exception&) {
+                }
+            } else if (this->sr_data.find(ret[1]) != this->sr_data.end()) {
+                this->sr_data.erase(ret[1]);
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"nil"}).response;
         }

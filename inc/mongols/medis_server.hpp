@@ -111,6 +111,8 @@ namespace mongols {
         virtual std::string mset(const std::vector<std::string>&);
         virtual std::string strlen(const std::vector<std::string>&);
         virtual std::string append(const std::vector<std::string>&);
+        virtual std::string getrange(const std::vector<std::string>&);
+        virtual std::string setrange(const std::vector<std::string>&);
 
         //hash map
         virtual std::string hget(const std::vector<std::string>&);
@@ -167,6 +169,8 @@ namespace mongols {
         virtual std::string _mset(const std::vector<std::string>&);
         virtual std::string _strlen(const std::vector<std::string>&);
         virtual std::string _append(const std::vector<std::string>&);
+        virtual std::string _getrange(const std::vector<std::string>&);
+        virtual std::string _setrange(const std::vector<std::string>&);
 
         //hash map
         virtual std::string _hget(const std::vector<std::string>&);
@@ -202,8 +206,8 @@ namespace mongols {
         virtual std::string _ssymmetric_difference(const std::vector<std::string>&);
         virtual std::string _serase(const std::vector<std::string>&);
         virtual std::string _slen(const std::vector<std::string>&);
-        
-        
+
+
         //queue
         virtual std::string _qpush(const std::vector<std::string>&);
         virtual std::string _qpop(const std::vector<std::string>&);
