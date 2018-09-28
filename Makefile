@@ -1,13 +1,13 @@
 NAME=mongols
 PROJECT=lib$(NAME).so
-CPPSRC=$(shell find . -type f -name *.cpp | sed -e 's/.*indexer\.cpp$$//')
+CPPSRC=$(filter-out indexer.cpp, $(shell find src -type f -name *.cpp))
 CPPOBJ=$(patsubst %.cpp,%.o,$(CPPSRC))
-CCSRC=$(shell find . -type f -name *.cc)
+CCSRC=$(shell find src -type f -name *.cc)
 CCOBJ=$(patsubst %.cc,%.o,$(CCSRC))
-CXXSRC=$(shell find . -type f -name *.cxx)
+CXXSRC=$(shell find src -type f -name *.cxx)
 CXXOBJ=$(patsubst %.cxx,%.o,$(CXXSRC))
 
-CSRC=$(shell find . -type f -name *.c | sed -e 's/.*indexer.c$$//')
+CSRC=$(filter-out indexer.c,$(shell find src -type f -name *.c))
 COBJ=$(patsubst %.c,%.o,$(CSRC))
 
 OBJ=$(COBJ) $(CXXOBJ) $(CCOBJ) $(CPPOBJ)
@@ -53,8 +53,8 @@ endif
 all:$(PROJECT)
 
 $(PROJECT):$(OBJ)
-	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS) 
-
+	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+	
 .c.o:
 	$(CC) $(CFLAGS) -c $< -o $@
 
