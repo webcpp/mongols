@@ -100,6 +100,8 @@ namespace mongols {
         this->op["PING"] = &medis_server::ping;
         this->op["ECHO"] = &medis_server::echo;
 
+        this->op["FLUSHALL"] = &medis_server::flushall;
+
 
         // the vesion with memory
         this->op["_FLUSHALL"] = &medis_server::_flushall;
@@ -1137,6 +1139,24 @@ medis_error:
         }
         return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
     }
+
+    std::string medis_server::flushall(const std::vector<std::string>&ret) {
+        if (ret.size() == 1) {
+            leveldb::Iterator* it = this->db->NewIterator(leveldb::ReadOptions());
+            for (it->SeekToFirst(); it->Valid(); it->Next()) {
+                this->db->Delete(leveldb::WriteOptions(), it->key());
+            }
+
+            if (it->status().ok()) {
+                delete it;
+                return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"OK"}).response;
+            }
+
+            delete it;
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
 
 
 
