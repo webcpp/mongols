@@ -31,3 +31,11 @@
 *.out
 *.app
 nbproject/
+/example/http_server
+/example/leveldb_server
+/example/lua_server
+/example/medis_server
+/example/sqlite_server
+/example/tcp_server
+/example/web_server
+/example/ws_server

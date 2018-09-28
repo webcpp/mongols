@@ -50,7 +50,7 @@ namespace mongols {
     public:
         tcp_server() = delete;
         tcp_server(const std::string& host, int port, int timeout = 5000
-                , size_t buffer_size = 1024
+                , size_t buffer_size = 8192
                 , int max_event_size = 64);
         virtual~tcp_server() = default;
 
