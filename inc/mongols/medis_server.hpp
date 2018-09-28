@@ -17,6 +17,7 @@
 #include "lib/lrucache.hpp"
 #include "lib/sqlite/sqlite3pp.h"
 #include "lib/sqlite/sqlite3ppext.h"
+#include "lib/lua/kaguya.hpp"
 
 
 namespace mongols {
@@ -47,12 +48,15 @@ namespace mongols {
         void set_lru_set_max_size(size_t);
         void set_lru_queue_max_size(size_t);
         void set_lru_stack_max_size(size_t);
+
+        void set_lua_package_path(const std::string& package_path, const std::string& package_cpath);
     private:
 
         tcp_server *server;
         leveldb::DB *db;
         leveldb::Options options;
         sqlite3pp::database *sqldb;
+        kaguya::State vm;
 
     protected:
         typedef std::string(medis_server::*op_funcion)(const std::vector<std::string>&);
@@ -238,6 +242,11 @@ namespace mongols {
         virtual std::string sql_bind_cmd(const std::vector<std::string>&);
         virtual std::string sql_transaction(const std::vector<std::string>&);
         virtual std::string sql_query(const std::vector<std::string>&);
+
+        // lua
+
+        virtual std::string lua_content(const std::vector<std::string>&);
+        virtual std::string lua_script(const std::vector<std::string>&);
 
 
     };

@@ -13,6 +13,7 @@
 #include "medis_server.hpp"
 #include "lib/msgpack.hpp"
 #include "lib/leveldb/cache.h"
+#include "util.hpp"
 
 
 namespace mongols {
@@ -23,7 +24,7 @@ namespace mongols {
             , size_t buffer_size
             , size_t thread_size
             , int max_event_size)
-    : server(0), db(0), options(), sqldb(0), resp_decoder(), resp_encoder(), op()
+    : server(0), db(0), options(), sqldb(0), vm(), resp_decoder(), resp_encoder(), op()
     , lru_str_max_size(1024)
     , lru_list_max_size(1024)
     , lru_map_max_size(1024)
@@ -181,6 +182,59 @@ namespace mongols {
         this->op["SQLTRANSACTION"] = &medis_server::sql_transaction;
         this->op["SQLQUERY"] = &medis_server::sql_query;
 
+        // lua
+        this->op["LUACONTENT"] = &medis_server::lua_content;
+        this->op["LUASCRIPT"] = &medis_server::lua_script;
+
+
+        // lua embed function
+
+        this->vm["medis"] = kaguya::NewTable();
+        kaguya::LuaTable medis_tbl = this->vm["medis"];
+        medis_tbl["SET"] = kaguya::function([&](const std::string& k, const std::string & v) {
+            if (this->db->Put(leveldb::WriteOptions(), k, v).ok()) {
+                return true;
+            }
+            return false;
+        });
+        medis_tbl["GET"] = kaguya::function([&](const std::string & k) {
+            std::string v;
+            if (this->db->Get(leveldb::ReadOptions(), k, &v).ok()) {
+                return v;
+            }
+            return std::string("nil");
+        });
+
+        medis_tbl["DEL"] = kaguya::function([&](const std::string & k) {
+            if (this->db->Delete(leveldb::WriteOptions(), k).ok()) {
+                return true;
+            }
+            return false;
+        });
+        medis_tbl["_SET"] = kaguya::function([&](const std::string& k, const std::string & v) {
+            this->sr->put(k, 0);
+            this->sr_data[k] = v;
+            return true;
+        });
+        medis_tbl["_GET"] = kaguya::function([&](const std::string & k) {
+            if (this->sr->exists(k)) {
+                return this->sr_data[k];
+            } else if (this->sr_data.find(k) != this->sr_data.end()) {
+                this->sr_data.erase(k);
+            }
+            return std::string("nil");
+        });
+        medis_tbl["_DEL"] = kaguya::function([&](const std::string & k) {
+            if (this->sr->exists(k)) {
+                this->sr->erase(k);
+                this->sr_data.erase(k);
+            } else if (this->sr_data.find(k) != this->sr_data.end()) {
+                this->sr_data.erase(k);
+            }
+            return true;
+        });
+
+
     }
 
     medis_server::~medis_server() {
@@ -226,6 +280,16 @@ namespace mongols {
         if (!b) {
             this->options.compression = leveldb::kNoCompression;
         }
+    }
+
+    void medis_server::set_lua_package_path(const std::string& package_path, const std::string& package_cpath) {
+        if (!package_path.empty()) {
+            this->vm("package.path='" + package_path + "'.. package.path");
+        }
+        if (!package_cpath.empty()) {
+            this->vm("package.cpath='" + package_cpath + "'.. package.cpath");
+        }
+
     }
 
     void medis_server::run(const std::string& path, const std::string& db_name) {
@@ -2034,6 +2098,7 @@ medis_error:
         if (ret.size() == 2) {
             if (this->sr->exists(ret[1])) {
                 this->sr->erase(ret[1]);
+                this->sr_data.erase(ret[1]);
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
             } else if (this->sr_data.find(ret[1]) != this->sr_data.end()) {
 
@@ -2330,6 +2395,30 @@ medis_error:
         }
         return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
     }
+
+    std::string medis_server::lua_content(const std::vector<std::string>& ret) {
+        if (ret.size() == 2) {
+            if (this->vm.dostring(ret[1])) {
+                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
+            }
+            return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
+
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
+    std::string medis_server::lua_script(const std::vector<std::string>& ret) {
+        if (ret.size() == 2) {
+            if (mongols::is_file(ret[1]) && this->vm.dofile(ret[1])) {
+                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
+            }
+            return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
+
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
+
 
 
 
