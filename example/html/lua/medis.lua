@@ -1,2 +1,2 @@
 local echo=require('echo')
-medis.CMD('SET','lua',echo.concat('hello',',world'))
+medis.CMD('SET',medis.ARGS[3],echo.concat('hello,',medis.ARGS[4]))
