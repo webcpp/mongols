@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <iostream>
 #include "simple_resp.h"
 
 namespace simple_resp {
@@ -13,21 +15,31 @@ namespace simple_resp {
             result.status = EMPTY_INPUT;
             return result;
         }
-
         switch (input[0]) {
             case SIMPLE_STRINGS:
+                result.response.emplace_back(input.substr(1, input.size() - 3));
                 break;
             case ERRORS:
+                result.response.emplace_back(input.substr(1, input.size() - 3));
                 break;
             case INTEGERS:
+                result.response.emplace_back(input.substr(1, input.size() - 3));
                 break;
             case BULK_STRINGS:
+            {
+                size_t i = input.find("\r\n");
+                if (i != std::string::npos) {
+                    std::string lenstr = std::move(input.substr(1, i - 1));
+                    result.response.emplace_back(input.substr(lenstr.size() + 3, std::stoul(lenstr)));
+                }
+            }
                 break;
             case ARRAYS:
                 result = parse_arrays(input);
                 break;
             default:
                 result.status = INVAILID_RESP_TYPE;
+                break;
         }
         return result;
     }
@@ -133,6 +145,8 @@ namespace simple_resp {
                     tmp.append("$").append(std::to_string(it.size())).append("\r\n").append(it).append("\r\n");
                 }
                 result.response = std::move(tmp);
+                break;
+            default:
                 break;
         }
         return result;
