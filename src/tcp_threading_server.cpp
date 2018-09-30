@@ -85,7 +85,7 @@ namespace mongols {
             }
 
         }
-        return fd > 0 ? false : true;
+        return fd < 0;
     }
 
     bool tcp_threading_server::work(int fd, const handler_function& g) {
@@ -135,7 +135,7 @@ ev_error:
 
             }
         }
-        return fd > 0 ? false : true;
+        return fd < 0;
     }
 
 
