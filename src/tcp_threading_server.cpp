@@ -107,12 +107,12 @@ ev_recv:
                     return true;
                 };
                 bool keepalive = CLOSE_CONNECTION, send_to_all = false;
-                //{
-                // std::lock_guard<std::mutex> lk(this->main_mtx);
-                tcp_server::client_t& client = this->clients[fd];
-                client.u_size = this->clients.size();
-                output = std::move(g(input, keepalive, send_to_all, client, send_to_other_filter));
-                // }
+                {
+                    std::lock_guard<std::mutex> lk(this->main_mtx);
+                    tcp_server::client_t& client = this->clients[fd];
+                    client.u_size = this->clients.size();
+                    output = std::move(g(input, keepalive, send_to_all, client, send_to_other_filter));
+                }
                 size_t n = send(fd, output.c_str(), output.size(), MSG_NOSIGNAL);
                 if (n >= 0) {
                     if (send_to_all) {
