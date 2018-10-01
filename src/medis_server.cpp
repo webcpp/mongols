@@ -2373,10 +2373,31 @@ medis_error:
         if (ret.size() >= 2) {
             kaguya::LuaTable medis_tbl = this->vm["medis"];
             medis_tbl["ARGS"] = ret;
+            medis_tbl["RESULT"] = nullptr;
             if (this->vm.dostring(ret[1])) {
-                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
+                kaguya::LuaRef result = medis_tbl["RESULT"];
+                int result_t = result.type();
+                if (result_t == LUA_TSTRING) {
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{result}).response;
+                } else if (result_t == LUA_TNUMBER) {
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{result}).response;
+                } else if (result_t == LUA_TBOOLEAN) {
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{(result.get<bool>() ? "1" : "0")}).response;
+                } else if (result_t == LUA_TTABLE) {
+                    std::vector<std::string> vs;
+                    if (result.isConvertible<std::map < std::string, std::string >> ()) {
+                        std::map<std::string, std::string> m = result;
+                        for (auto& i : m) {
+                            vs.emplace_back(i.first);
+                            vs.emplace_back(i.second);
+                        }
+                    }
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::ARRAYS, vs).response;
+                } else {
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"OK"}).response;
+                }
             }
-            return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
+            return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"FAILED"}).response;
 
         }
         return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
@@ -2386,10 +2407,31 @@ medis_error:
         if (ret.size() >= 2) {
             kaguya::LuaTable medis_tbl = this->vm["medis"];
             medis_tbl["ARGS"] = ret;
+            medis_tbl["RESULT"] = nullptr;
             if (this->vm.dofile(ret[1])) {
-                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
+                kaguya::LuaRef result = medis_tbl["RESULT"];
+                int result_t = result.type();
+                if (result_t == LUA_TSTRING) {
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{result}).response;
+                } else if (result_t == LUA_TNUMBER) {
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{result}).response;
+                } else if (result_t == LUA_TBOOLEAN) {
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{(result.get<bool>() ? "1" : "0")}).response;
+                } else if (result_t == LUA_TTABLE) {
+                    std::vector<std::string> vs;
+                    if (result.isConvertible<std::map < std::string, std::string >> ()) {
+                        std::map<std::string, std::string> m = result;
+                        for (auto& i : m) {
+                            vs.emplace_back(i.first);
+                            vs.emplace_back(i.second);
+                        }
+                    }
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::ARRAYS, vs).response;
+                } else {
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"OK"}).response;
+                }
             }
-            return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
+            return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"FAILED"}).response;
 
         }
         return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
