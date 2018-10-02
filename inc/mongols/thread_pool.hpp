@@ -32,13 +32,12 @@ namespace mongols {
 
     class thread_pool {
     private:
-        std::atomic_bool done;
         safe_queue<std::function<bool() > > q;
         std::vector<std::thread> th;
         join_thread joiner;
 
         void work() {
-            while (!this->done) {
+            while (true) {
                 std::function<bool() > task;
                 this->q.wait_and_pop(task);
                 if (task()) {
@@ -47,24 +46,28 @@ namespace mongols {
                 std::this_thread::yield();
             }
         }
+
+        void shutdown() {
+            for (size_t i = 0; i < this->th.size(); ++i) {
+                this->submit([]() {
+                    return true;
+                });
+            }
+        }
     public:
 
-        thread_pool(size_t th_size = std::thread::hardware_concurrency()) : done(false), q(), th(), joiner(th) {
+        thread_pool(size_t th_size = std::thread::hardware_concurrency()) : q(), th(), joiner(th) {
             try {
                 for (size_t i = 0; i < th_size; ++i) {
                     this->th.push_back(std::move(std::thread(std::bind(&thread_pool::work, this))));
                 }
             } catch (...) {
-                this->done = true;
+                this->shutdown();
             }
         }
 
         virtual~thread_pool() {
-            this->done = true;
-            std::function<bool() > task;
-            while (this->q.try_pop(task)) {
-                task();
-            }
+            this->shutdown();
         }
 
         template<typename F>

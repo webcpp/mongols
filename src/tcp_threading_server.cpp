@@ -32,28 +32,6 @@ namespace mongols {
 
     }
 
-    tcp_threading_server::~tcp_threading_server() {
-        struct timespec thread_exit_timeout;
-        thread_exit_timeout.tv_sec = 0;
-        thread_exit_timeout.tv_nsec = 200;
-        handler_function g = [](const std::pair<char*, size_t>&
-                , bool& keepalive
-                , bool&
-                , tcp_server::client_t&
-                , filter_handler_function&) {
-            keepalive = CLOSE_CONNECTION;
-            return "";
-        };
-        auto thread_exit_fun = std::bind(&tcp_threading_server::work, this, -1, g);
-        for (size_t i = 0; i<this->work_pool.size(); ++i) {
-            this->work_pool.submit(thread_exit_fun);
-            std::this_thread::yield();
-            if (nanosleep(&thread_exit_timeout, 0) < 0) {
-                --i;
-            }
-        }
-    }
-
     void tcp_threading_server::process(int fd, const handler_function& g) {
         this->work_pool.submit(std::bind(&tcp_threading_server::work, this, fd, g));
         std::this_thread::yield();

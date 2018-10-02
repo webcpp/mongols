@@ -3,6 +3,7 @@
 
 
 #include <netinet/in.h>   
+#include <sys/signal.h>
 #include <string>
 #include <utility>
 #include <unordered_map>
@@ -65,7 +66,7 @@ namespace mongols {
         struct sockaddr_in serveraddr;
 
         static std::atomic_bool done;
-        static void signal_normal_cb(int sig);
+        static void signal_normal_cb(int sig, siginfo_t *, void *);
         void setnonblocking(int fd);
         void main_loop(struct epoll_event *, const handler_function&);
 

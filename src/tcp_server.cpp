@@ -25,16 +25,17 @@
 
 namespace mongols {
 
-    std::atomic_bool tcp_server::done(false);
+    std::atomic_bool tcp_server::done(true);
 
-    void tcp_server::signal_normal_cb(int sig) {
+    void tcp_server::signal_normal_cb(int sig, siginfo_t *, void *) {
         switch (sig) {
             case SIGTERM:
             case SIGHUP:
             case SIGQUIT:
             case SIGINT:
-                tcp_server::done = true;
+                tcp_server::done = false;
                 break;
+            default:break;
         }
     }
 
@@ -84,14 +85,23 @@ namespace mongols {
 
         listen(this->listenfd, 10);
 
-        signal(SIGHUP, tcp_server::signal_normal_cb);
-        signal(SIGTERM, tcp_server::signal_normal_cb);
-        signal(SIGINT, tcp_server::signal_normal_cb);
-        signal(SIGQUIT, tcp_server::signal_normal_cb);
+        const int sig_len = 4;
+        int sigs[sig_len] = {SIGHUP, SIGTERM, SIGINT, SIGQUIT};
+        struct sigaction act;
+        memset(&act, 0, sizeof (struct sigaction));
+        sigemptyset(&act.sa_mask);
+        act.sa_sigaction = tcp_server::signal_normal_cb;
+
+        for (int i = 0; i < sig_len; ++i) {
+            if (sigaction(sigs[i], &act, NULL) < 0) {
+                perror("sigaction error");
+                return;
+            }
+        }
 
         auto main_fun = std::bind(&tcp_server::main_loop, this, std::placeholders::_1, std::cref(g));
 
-        while (!tcp_server::done) {
+        while (tcp_server::done) {
             this->epoll.loop(main_fun);
         }
     }
@@ -176,7 +186,7 @@ ev_error:
         } else if (event->events & EPOLLRDHUP) {
             close(event->data.fd);
         } else if (event->data.fd == this->listenfd) {
-            while (!tcp_server::done) {
+            while (tcp_server::done) {
                 struct sockaddr_in clientaddr;
                 socklen_t clilen;
                 int connfd = accept(listenfd, (struct sockaddr*) &clientaddr, &clilen);
