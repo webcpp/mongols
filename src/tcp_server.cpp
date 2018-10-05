@@ -179,13 +179,7 @@ ev_error:
 
     void tcp_server::main_loop(struct epoll_event * event
             , const handler_function& g) {
-        if ((event->events & EPOLLERR) ||
-                (event->events & EPOLLHUP) ||
-                (!(event->events & EPOLLIN))) {
-            close(event->data.fd);
-        } else if (event->events & EPOLLRDHUP) {
-            close(event->data.fd);
-        } else if (event->data.fd == this->listenfd) {
+        if (event->data.fd == this->listenfd) {
             while (tcp_server::done) {
                 struct sockaddr_in clientaddr;
                 socklen_t clilen;
@@ -193,14 +187,15 @@ ev_error:
                 if (connfd > 0) {
                     this->setnonblocking(connfd);
                     this->epoll.add(connfd, EPOLLIN | EPOLLRDHUP | EPOLLET);
-
                     this->add_client(connfd, inet_ntoa(clientaddr.sin_addr), ntohs(clientaddr.sin_port));
                 } else {
                     break;
                 }
             }
-        } else {
+        } else if (event->events & EPOLLIN) {
             this->process(event->data.fd, g);
+        } else {
+            close(event->data.fd);
         }
     }
 
