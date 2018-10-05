@@ -37,8 +37,8 @@ namespace mongols {
         join_thread joiner;
 
         void work() {
+            std::function<bool() > task;
             while (true) {
-                std::function<bool() > task;
                 this->q.wait_and_pop(task);
                 if (task()) {
                     break;

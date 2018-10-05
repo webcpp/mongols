@@ -22,7 +22,13 @@ namespace mongols {
         }
         virtual~safe_queue() = default;
 
-        void push(T v) {
+        void push(const T& v) {
+            std::lock_guard<std::mutex> lk(this->mtx);
+            this->q.push(v);
+            this->cv.notify_one();
+        }
+
+        void push(T&& v) {
             std::lock_guard<std::mutex> lk(this->mtx);
             this->q.push(std::move(v));
             this->cv.notify_one();
