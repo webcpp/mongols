@@ -54,11 +54,15 @@ result: `{"error":null,"result":[{"id":1,"name":"a"},{"id":2,"name":"b"},{"id":3
 
 ## apache benchmark
 
-2 core,4 GB,centos 7:
+2 core,4 GB,linux mint 18,2 thread:
 
-![mongols_1.png](https://github.com/webcpp/mongols/blob/master/ab/mongols_1.png)
+`ab -kc 10000 -n 500000 -H 'Connection: keep-alive' http://127.0.0.1:9090/`
 
-![mongols_2.png](https://github.com/webcpp/mongols/blob/master/ab/mongols_2.png)
+![ab_http.png](https://github.com/webcpp/mongols/blob/master/ab/ab_http.png)
+
+`wrk -t 50 -d 30s -c 10000 -H 'Connection: keep-alive' http://127.0.0.1:9090/`
+
+![wrk_http.png](https://github.com/webcpp/mongols/blob/master/ab/wrk_http.png)
 
 ## example
 
@@ -232,116 +236,4 @@ int main(int,char**){
 */
 
 ```
-
-## apache benchmark
-
-```
-[centos@localhost demo]$ uname -a
-Linux localhost 3.10.0-862.9.1.el7.x86_64 #1 SMP Mon Jul 16 16:29:36 UTC 2018 x86_64 x86_64 x86_64 GNU/Linux
-[centos@localhost demo]$ cat /proc/cpuinfo| grep "processor"| wc -l
-4
-[centos@localhost demo]$ cat /proc/cpuinfo| grep "cpu cores"| uniq
-cpu cores	: 2
-[centos@localhost demo]$ cat /proc/cpuinfo| grep "physical id"| sort| uniq| wc -l
-1
-
-
-```
-
-### ` ab -c1000 -n100000 http://127.0.0.1:9090/ `
-
-```
-Server Software:        mongols/0.9.0
-Server Hostname:        127.0.0.1
-Server Port:            9090
-
-Document Path:          /
-Document Length:        13 bytes
-
-Concurrency Level:      1000
-Time taken for tests:   8.180 seconds
-Complete requests:      100000
-Failed requests:        0
-Write errors:           0
-Keep-Alive requests:    0
-Total transferred:      13300000 bytes
-HTML transferred:       1300000 bytes
-Requests per second:    12225.00 [#/sec] (mean)
-Time per request:       81.800 [ms] (mean)
-Time per request:       0.082 [ms] (mean, across all concurrent requests)
-Transfer rate:          1587.82 [Kbytes/sec] received
-
-Connection Times (ms)
-              min  mean[+/-sd] median   max
-Connect:        0   66 263.3      7    3020
-Processing:     2   11  11.9      9     831
-Waiting:        0    8  11.5      7     829
-Total:          6   77 265.8     16    3033
-
-Percentage of the requests served within a certain time (ms)
-  50%     16
-  66%     20
-  75%     22
-  80%     23
-  90%     29
-  95%   1017
-  98%   1025
-  99%   1030
- 100%   3033 (longest request)
-
-```
-
-### ` ab -kc1000 -n100000 -H'Connection: keep-alive'  http://127.0.0.1:9090/ `
-
-```
-
-Server Software:        mongols/0.9.0
-Server Hostname:        127.0.0.1
-Server Port:            9090
-
-Document Path:          /
-Document Length:        13 bytes
-
-Concurrency Level:      1000
-Time taken for tests:   1.935 seconds
-Complete requests:      100000
-Failed requests:        0
-Write errors:           0
-Keep-Alive requests:    100000
-Total transferred:      13800000 bytes
-HTML transferred:       1300000 bytes
-Requests per second:    51671.74 [#/sec] (mean)
-Time per request:       19.353 [ms] (mean)
-Time per request:       0.019 [ms] (mean, across all concurrent requests)
-Transfer rate:          6963.57 [Kbytes/sec] received
-
-Connection Times (ms)
-              min  mean[+/-sd] median   max
-Connect:        0    0   3.2      0      48
-Processing:     8   19   1.4     18      48
-Waiting:        0   19   1.4     18      25
-Total:          8   19   3.1     18      64
-
-Percentage of the requests served within a certain time (ms)
-  50%     18
-  66%     19
-  75%     19
-  80%     19
-  90%     20
-  95%     21
-  98%     23
-  99%     28
- 100%     64 (longest request)
-
-
-```
-
-Note: RPS [80000,120000] in linux mint 18(ubuntu 16.04):
-
-![mongols_3.png](https://github.com/webcpp/mongols/blob/master/ab/mongols_3.png)
-
-![medis_server](https://github.com/webcpp/mongols/blob/master/ab/medis.png)
-
-![wrk.png](https://github.com/webcpp/mongols/blob/master/ab/wrk.png)
-
 
