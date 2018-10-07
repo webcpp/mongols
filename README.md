@@ -52,9 +52,11 @@ example: `curl -d'sql_type=query' -d'sql=select * from test limit 3;' http://127
 
 result: `{"error":null,"result":[{"id":1,"name":"a"},{"id":2,"name":"b"},{"id":3,"name":"c"}]}`
 
-## apache benchmark
+## benchmark
 
 2 core,4 GB,linux mint 18,2 thread:
+
+### http
 
 `ab -kc 10000 -n 500000 -H 'Connection: keep-alive' http://127.0.0.1:9090/`
 
@@ -63,6 +65,16 @@ result: `{"error":null,"result":[{"id":1,"name":"a"},{"id":2,"name":"b"},{"id":3
 `wrk -t 50 -d 30s -c 10000 -H 'Connection: keep-alive' http://127.0.0.1:9090/`
 
 ![wrk_http.png](https://github.com/webcpp/mongols/blob/master/ab/wrk_http.png)
+
+### web
+
+![ab_web.png](https://github.com/webcpp/mongols/blob/master/ab/ab_web.png)
+
+![wrk_web.png](https://github.com/webcpp/mongols/blob/master/ab/wrk_web.png)
+
+### medis
+
+![medis.png](https://github.com/webcpp/mongols/blob/master/ab/medis.png)
 
 ## example
 
