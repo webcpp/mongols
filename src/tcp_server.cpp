@@ -120,61 +120,58 @@ namespace mongols {
     }
 
     bool tcp_server::send_to_all_client(int fd, const std::string& str, const filter_handler_function& h) {
-        if (fd > 0) {
-            for (auto i = this->clients.begin(); i != this->clients.end();) {
-                if (i->first != fd && h(i->second) && send(i->first, str.c_str(), str.size(), MSG_NOSIGNAL) < 0) {
-                    close(i->first);
-                    this->del_client(i->first);
-                } else {
-                    ++i;
-                }
+        for (auto i = this->clients.begin(); i != this->clients.end();) {
+            if (i->first != fd && h(i->second) && send(i->first, str.c_str(), str.size(), MSG_NOSIGNAL) < 0) {
+                close(i->first);
+                this->del_client(i->first);
+            } else {
+                ++i;
             }
         }
-        return fd > 0 ? false : true;
+        return false;
     }
 
     bool tcp_server::work(int fd, const handler_function& g) {
-        if (fd > 0) {
-            char buffer[this->buffer_size];
+        char buffer[this->buffer_size];
 ev_recv:
-            ssize_t ret = recv(fd, buffer, this->buffer_size, MSG_WAITALL);
-            if (ret == -1) {
-                if (errno == EAGAIN || errno == EINTR) {
-                    goto ev_recv;
+        ssize_t ret = recv(fd, buffer, this->buffer_size, MSG_WAITALL);
+        if (ret == -1) {
+            if (errno == EAGAIN || errno == EINTR) {
+                goto ev_recv;
+            }
+            goto ev_error;
+        } else if (ret > 0) {
+            std::pair<char*, size_t> input;
+            input.first = &buffer[0];
+            input.second = ret;
+            filter_handler_function send_to_other_filter = [](const client_t&) {
+                return true;
+            };
+
+            bool keepalive = CLOSE_CONNECTION, send_to_all = false;
+            client_t& client = this->clients[fd];
+            client.u_size = this->clients.size();
+            std::string output = std::move(g(input, keepalive, send_to_all, client, send_to_other_filter));
+            size_t n = send(fd, output.c_str(), output.size(), MSG_NOSIGNAL);
+            if (n >= 0) {
+                if (send_to_all) {
+                    this->send_to_all_client(fd, output, send_to_other_filter);
                 }
+            }
+
+            if (n < 0 || keepalive == CLOSE_CONNECTION) {
                 goto ev_error;
-            } else if (ret > 0) {
-                std::pair<char*, size_t> input;
-                input.first = &buffer[0];
-                input.second = ret;
-                filter_handler_function send_to_other_filter = [](const client_t&) {
-                    return true;
-                };
+            }
 
-                bool keepalive = CLOSE_CONNECTION, send_to_all = false;
-                client_t& client = this->clients[fd];
-                client.u_size = this->clients.size();
-                std::string output = std::move(g(input, keepalive, send_to_all, client, send_to_other_filter));
-                size_t n = send(fd, output.c_str(), output.size(), MSG_NOSIGNAL);
-                if (n >= 0) {
-                    if (send_to_all) {
-                        this->send_to_all_client(fd, output, send_to_other_filter);
-                    }
-                }
-
-                if (n < 0 || keepalive == CLOSE_CONNECTION) {
-                    goto ev_error;
-                }
-
-            } else {
+        } else {
 
 ev_error:
-                close(fd);
-                this->del_client(fd);
+            close(fd);
+            this->del_client(fd);
 
-            }
         }
-        return fd > 0 ? false : true;
+
+        return false;
     }
 
     void tcp_server::main_loop(struct epoll_event * event
