@@ -35,19 +35,19 @@ namespace mongols {
         safe_queue<std::function<bool() > > q;
         std::vector<std::thread> th;
         join_thread joiner;
+        std::atomic_bool done;
 
         void work() {
             std::function<bool() > task;
-            while (true) {
+            while (this->done) {
                 this->q.wait_and_pop(task);
-                if (task()) {
-                    break;
-                };
+                task();
                 std::this_thread::yield();
             }
         }
 
         void shutdown() {
+            this->done = false;
             for (size_t i = 0; i < this->th.size(); ++i) {
                 this->submit([]() {
                     return true;
@@ -56,7 +56,7 @@ namespace mongols {
         }
     public:
 
-        thread_pool(size_t th_size = std::thread::hardware_concurrency()) : q(), th(), joiner(th) {
+        thread_pool(size_t th_size = std::thread::hardware_concurrency()) : q(), th(), joiner(th), done(true) {
             try {
                 for (size_t i = 0; i < th_size; ++i) {
                     this->th.push_back(std::move(std::thread(std::bind(&thread_pool::work, this))));
