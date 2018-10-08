@@ -42,7 +42,6 @@ namespace mongols {
             while (this->done) {
                 this->q.wait_and_pop(task);
                 task();
-                std::this_thread::yield();
             }
         }
 
