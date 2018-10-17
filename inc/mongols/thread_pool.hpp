@@ -30,15 +30,16 @@ namespace mongols {
 
     };
 
+    template<typename function_t>
     class thread_pool {
     private:
-        safe_queue<std::function<bool() > > q;
+        safe_queue<function_t > q;
         std::vector<std::thread> th;
         join_thread joiner;
         std::atomic_bool done;
 
         void work() {
-            std::function<bool() > task;
+            function_t task;
             while (this->done) {
                 this->q.wait_and_pop(task);
                 task();
@@ -69,10 +70,9 @@ namespace mongols {
             this->shutdown();
         }
 
-        template<typename F>
-        void submit(F f) {
+        void submit(function_t&& f) {
             if (!this->th.empty()) {
-                this->q.push(f);
+                this->q.push(std::move(f));
             }
         }
 
