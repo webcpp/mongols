@@ -1,7 +1,7 @@
 # mongols
 a library for c++
 
-The best server platform is not nginx,but mongols.
+Libevent, libev, libuv are outdated.
 
 ## dependency
 
