@@ -1,3 +1,4 @@
+-- curl -i -X POST -H 'Content-Type: application/json' --data '{"method":"post"}'  http://127.0.0.1:9090/jsonrpc.lua
 local json=require('JSON')
 
 if mongols_req:has_form('__body__') 
