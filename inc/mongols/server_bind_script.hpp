@@ -44,7 +44,11 @@ namespace mongols {
         }
 
         std::string get_header(const std::string& key)const {
-            return this->req->headers.find(key)->second;
+            auto i = this->req->headers.find(key);
+            if (i != this->req->headers.end()) {
+                return i->second;
+            }
+            return "";
         }
 
         bool has_form(const std::string& key) const {
@@ -52,7 +56,11 @@ namespace mongols {
         }
 
         std::string get_form(const std::string& key)const {
-            return this->req->form.find(key)->second;
+            auto i = this->req->form.find(key);
+            if (i != this->req->form.end()) {
+                return i->second;
+            }
+            return "";
         }
 
         bool has_cookie(const std::string& key) const {
@@ -60,7 +68,11 @@ namespace mongols {
         }
 
         std::string get_cookie(const std::string& key)const {
-            return this->req->cookies.find(key)->second;
+            auto i = this->req->cookies.find(key);
+            if (i != this->req->cookies.end()) {
+                return i->second;
+            }
+            return "";
         }
 
         bool has_session(const std::string& key) const {
@@ -68,7 +80,11 @@ namespace mongols {
         }
 
         std::string get_session(const std::string& key)const {
-            return this->req->session.find(key)->second;
+            auto i = this->req->session.find(key);
+            if (i != this->req->session.end()) {
+                return i->second;
+            }
+            return "";
         }
 
         bool has_cache(const std::string& key) const {
@@ -76,7 +92,11 @@ namespace mongols {
         }
 
         std::string get_cache(const std::string& key)const {
-            return this->req->cache.find(key)->second;
+            auto i = this->req->cache.find(key);
+            if (i != this->req->cache.end()) {
+                return i->second;
+            }
+            return "";
         }
 
     private:

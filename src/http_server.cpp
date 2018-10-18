@@ -16,7 +16,8 @@
 #include "lib/leveldb/cache.h"
 
 #define form_urlencoded_type "application/x-www-form-urlencoded"
-#define form_urlencoded_type_len (sizeof(form_urlencoded_type) - 1)
+#define form_multipart_type "multipart/form-data"
+
 #define TEMP_DIRECTORY "temp"
 #define SESSION_NAME "SESSIONID"
 #define LEVELDB_PATH "mongols_leveldb"
@@ -255,12 +256,13 @@ namespace mongols {
                 }
 
                 if (!body.empty()&& (tmp_iterator = req.headers.find("Content-Type")) != req.headers.end()) {
-                    if (tmp_iterator->second.size() != form_urlencoded_type_len
-                            || tmp_iterator->second != form_urlencoded_type) {
+                    if (tmp_iterator->second.find(form_multipart_type) != std::string::npos) {
                         this->upload(req, body);
                         body.clear();
-                    } else {
+                    } else if (tmp_iterator->second.find(form_urlencoded_type) != std::string::npos) {
                         mongols::parse_param(body, req.form);
+                    } else {
+                        req.form["__body__"] = std::move(body);
                     }
                 }
 
