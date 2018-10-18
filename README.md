@@ -78,4 +78,4 @@ result: `{"error":null,"result":[{"id":1,"name":"a"},{"id":2,"name":"b"},{"id":3
 
 ## example
 
-![example](https://github.com/webcpp/mongols/tree/master/example)
+[example](https://github.com/webcpp/mongols/tree/master/example)
