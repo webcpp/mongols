@@ -45,7 +45,7 @@ namespace mongols {
             , int timeout
             , size_t buffer_size
             , int max_event_size) :
-    host(host), port(port), listenfd(0), timeout(timeout), serveraddr()
+    host(host), port(port), listenfd(0), timeout(timeout), max_event_size(max_event_size), serveraddr()
     , buffer_size(buffer_size), clients() {
         this->listenfd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -90,7 +90,7 @@ namespace mongols {
 
     void tcp_server::run(const handler_function& g) {
 
-        mongols::epoll epoll(64, -1);
+        mongols::epoll epoll(this->max_event_size, -1);
         if (!epoll.is_ready()) {
             perror("epoll error");
             return;

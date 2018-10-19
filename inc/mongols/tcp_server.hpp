@@ -61,7 +61,7 @@ namespace mongols {
         size_t get_buffer_size()const;
     private:
         std::string host;
-        int port, listenfd, timeout;
+        int port, listenfd, timeout, max_event_size;
         struct sockaddr_in serveraddr;
 
         static std::atomic_bool done;
