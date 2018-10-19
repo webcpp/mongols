@@ -5,7 +5,6 @@
 #include <mongols/web_server.hpp>
 #include <iostream>
 
-#include "util.hpp"
 
 static void signal_cb(int sig, siginfo_t *, void *);
 static std::vector<pid_t> pids;
