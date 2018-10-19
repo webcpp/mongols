@@ -1,4 +1,8 @@
+#include <unistd.h>
+#include <sys/wait.h>
 #include <sys/stat.h>
+#include <sched.h>
+
 #include <fcntl.h>
 #include <unistd.h>
 #include <cstdlib>
@@ -7,6 +11,9 @@
 #include <string>
 #include <cstring>
 #include <fstream>
+#include <iostream>
+#include <thread>
+
 
 #include "lib/cppcodec/base64_rfc4648.hpp"
 #include "lib/hash/md5.hpp"
@@ -447,6 +454,27 @@ namespace mongols {
             }
         }
         return ret;
+    }
+
+    void forker(int len, const std::function<void()>& f, std::vector<pid_t>& pids) {
+        pid_t pid = fork();
+        if (pid == 0) {
+            f();
+        } else if (pid > 0) {
+            pids.push_back(pid);
+            if (len > 1) {
+                forker(len - 1, f, pids);
+            }
+        } else {
+            perror("fork error\n");
+        }
+    }
+
+    bool process_bind_cpu(pid_t pid, int cpu) {
+        cpu_set_t set;
+        CPU_ZERO(&set);
+        CPU_SET(cpu, &set);
+        return sched_setaffinity(pid, sizeof (cpu_set_t), &set) == 0;
     }
 
 }

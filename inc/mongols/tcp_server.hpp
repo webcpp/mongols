@@ -60,7 +60,6 @@ namespace mongols {
 
         size_t get_buffer_size()const;
     private:
-        mongols::epoll epoll;
         std::string host;
         int port, listenfd, timeout;
         struct sockaddr_in serveraddr;
@@ -68,7 +67,7 @@ namespace mongols {
         static std::atomic_bool done;
         static void signal_normal_cb(int sig, siginfo_t *, void *);
         void setnonblocking(int fd);
-        void main_loop(struct epoll_event *, const handler_function&);
+        void main_loop(struct epoll_event *, const handler_function&, mongols::epoll&);
 
     protected:
         size_t buffer_size;

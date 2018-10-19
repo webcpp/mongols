@@ -2,7 +2,7 @@
 #define UTIL_HPP
 
 
-
+#include <functional>
 #include <ctime>
 #include <cstdlib>
 #include <cstdio>
@@ -68,6 +68,10 @@ namespace mongols {
     std::string url_encode(const std::string& str);
 
     std::string url_decode(const std::string& str);
+
+    void forker(int, const std::function<void()>&, std::vector<pid_t>&);
+    
+    bool process_bind_cpu(pid_t pid, int cpu);
 }
 
 #endif /* UTIL_HPP */

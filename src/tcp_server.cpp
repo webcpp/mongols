@@ -5,6 +5,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/signal.h>
+#include <sys/wait.h>
 
 #include <cstring>         
 #include <cstdlib> 
@@ -44,14 +45,8 @@ namespace mongols {
             , int timeout
             , size_t buffer_size
             , int max_event_size) :
-    epoll(max_event_size, -1)
-    , host(host), port(port), listenfd(0), timeout(timeout), serveraddr()
+    host(host), port(port), listenfd(0), timeout(timeout), serveraddr()
     , buffer_size(buffer_size), clients() {
-
-    }
-
-    void tcp_server::run(const handler_function& g) {
-
         this->listenfd = socket(AF_INET, SOCK_STREAM, 0);
 
         int on = 1;
@@ -76,13 +71,6 @@ namespace mongols {
 
         this->setnonblocking(this->listenfd);
 
-        if (!this->epoll.is_ready()) {
-            perror("epoll error");
-            return;
-        }
-        this->epoll.add(this->listenfd, EPOLLIN | EPOLLET);
-
-
         listen(this->listenfd, 10);
 
         const int sig_len = 4;
@@ -98,11 +86,20 @@ namespace mongols {
                 return;
             }
         }
+    }
 
-        auto main_fun = std::bind(&tcp_server::main_loop, this, std::placeholders::_1, std::cref(g));
+    void tcp_server::run(const handler_function& g) {
+
+        mongols::epoll epoll(64, -1);
+        if (!epoll.is_ready()) {
+            perror("epoll error");
+            return;
+        }
+        epoll.add(this->listenfd, EPOLLIN | EPOLLET);
+        auto main_fun = std::bind(&tcp_server::main_loop, this, std::placeholders::_1, std::cref(g), std::ref(epoll));
 
         while (tcp_server::done) {
-            this->epoll.loop(main_fun);
+            epoll.loop(main_fun);
         }
     }
 
@@ -175,7 +172,8 @@ ev_error:
     }
 
     void tcp_server::main_loop(struct epoll_event * event
-            , const handler_function& g) {
+            , const handler_function& g
+            , mongols::epoll& epoll) {
         if (event->data.fd == this->listenfd) {
             while (tcp_server::done) {
                 struct sockaddr_in clientaddr;
@@ -183,7 +181,7 @@ ev_error:
                 int connfd = accept(listenfd, (struct sockaddr*) &clientaddr, &clilen);
                 if (connfd > 0) {
                     this->setnonblocking(connfd);
-                    this->epoll.add(connfd, EPOLLIN | EPOLLRDHUP | EPOLLET);
+                    epoll.add(connfd, EPOLLIN | EPOLLRDHUP | EPOLLET);
                     this->add_client(connfd, inet_ntoa(clientaddr.sin_addr), ntohs(clientaddr.sin_port));
                 } else {
                     break;
