@@ -54,7 +54,7 @@ int main(int, char**) {
 
 
 
-    for (auto& i : pids) {
+    for (size_t i=0;i<pids.size();++i) {
         pid_t pid;
         if ((pid = wait(NULL)) > 0) {
 
