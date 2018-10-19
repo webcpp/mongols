@@ -72,6 +72,15 @@ result: `{"error":null,"result":[{"id":1,"name":"a"},{"id":2,"name":"b"},{"id":3
 
 ![wrk_web.png](https://github.com/webcpp/mongols/blob/master/ab/wrk_web.png)
 
+
+### multi-process web
+
+
+![ab_multi_process_web_server.png](https://github.com/webcpp/mongols/blob/master/ab/ab_multi_process_web_server.png)
+
+![wrk_multi_process_web_server.png](https://github.com/webcpp/mongols/blob/master/ab/wrk_multi_process_web_server.png)
+
+
 ### medis
 
 ![medis.png](https://github.com/webcpp/mongols/blob/master/ab/medis.png)

@@ -39,5 +39,6 @@ nbproject/
 /example/tcp_server
 /example/web_server
 /example/ws_server
+/example/multi_process_web_server
 /example/html/leveldb/
 /example/html/sqlite/
