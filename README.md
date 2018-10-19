@@ -80,6 +80,7 @@ result: `{"error":null,"result":[{"id":1,"name":"a"},{"id":2,"name":"b"},{"id":3
 
 ![wrk_multi_process_web_server.png](https://github.com/webcpp/mongols/blob/master/ab/wrk_multi_process_web_server.png)
 
+![nginxVSmongols.png](https://github.com/webcpp/mongols/blob/master/ab/nginxVSmongols.png)
 
 ### medis
 
