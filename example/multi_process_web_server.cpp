@@ -57,13 +57,13 @@ int main(int, char**) {
     for (auto& i : pids) {
         pid_t pid;
         if ((pid = wait(NULL)) > 0) {
-            std::cout << "PID: " << pid << "\n";
+
         }
     }
-
+    
 }
 
-static void signal_cb(int sig, siginfo_t *, void * pids_ptr) {
+static void signal_cb(int sig, siginfo_t *, void * ) {
     switch (sig) {
         case SIGTERM:
         case SIGHUP:
