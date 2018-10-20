@@ -1,7 +1,7 @@
 # mongols
 a library for c++
 
-Libevent, libev, libuv are outdated.
+Libevent, libev and libuv are outdated.
 
 ## dependency
 

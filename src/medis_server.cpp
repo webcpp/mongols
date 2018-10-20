@@ -267,6 +267,13 @@ namespace mongols {
         this->options.create_if_missing = true;
         if (leveldb::DB::Open(this->options, path, &this->db).ok()) {
             try {
+                if (!this->sr)this->sr = new mongols::cache::lru_cache<std::string, size_t>(this->lru_str_max_size);
+                if (!this->lt)this->lt = new mongols::cache::lru_cache<std::string, size_t>(this->lru_list_max_size);
+                if (!this->mp)this->mp = new mongols::cache::lru_cache<std::string, size_t>(this->lru_map_max_size);
+                if (!this->st)this->st = new mongols::cache::lru_cache<std::string, size_t>(this->lru_set_max_size);
+                if (!this->sk)this->sk = new mongols::cache::lru_cache<std::string, size_t>(this->lru_stack_max_size);
+                if (!this->qe)this->qe = new mongols::cache::lru_cache<std::string, size_t>(this->lru_queue_max_size);
+
                 this->sqldb = new sqlite3pp::database(db_name.c_str());
                 this->sqldb->enable_extended_result_codes(true);
                 this->sqldb->enable_foreign_keys(true);
@@ -1223,15 +1230,6 @@ medis_error:
 
     void medis_server::set_lru_stack_max_size(size_t len) {
         this->lru_stack_max_size = len;
-    }
-
-    void medis_server::ready() {
-        if (!this->sr)this->sr = new mongols::cache::lru_cache<std::string, size_t>(this->lru_str_max_size);
-        if (!this->lt)this->lt = new mongols::cache::lru_cache<std::string, size_t>(this->lru_list_max_size);
-        if (!this->mp)this->mp = new mongols::cache::lru_cache<std::string, size_t>(this->lru_map_max_size);
-        if (!this->st)this->st = new mongols::cache::lru_cache<std::string, size_t>(this->lru_set_max_size);
-        if (!this->sk)this->sk = new mongols::cache::lru_cache<std::string, size_t>(this->lru_stack_max_size);
-        if (!this->qe)this->qe = new mongols::cache::lru_cache<std::string, size_t>(this->lru_queue_max_size);
     }
 
     std::string medis_server::_flushall(const std::vector<std::string>& ret) {

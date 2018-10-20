@@ -35,7 +35,6 @@ namespace mongols {
 
 
         void run(const std::string&, const std::string&);
-        void ready();
         void set_max_open_files(int);
         void set_write_buffer_size(size_t);
         void set_max_file_size(size_t);

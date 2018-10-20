@@ -141,10 +141,13 @@ namespace mongols {
 ev_recv:
         ssize_t ret = recv(fd, buffer, this->buffer_size, MSG_WAITALL);
         if (ret == -1) {
-            if (errno == EAGAIN || errno == EINTR) {
+            if (errno == EINTR) {
                 goto ev_recv;
+            } else if (errno == EAGAIN) {
+                return false;
+            } else {
+                goto ev_error;
             }
-            goto ev_error;
         } else if (ret > 0) {
             std::pair<char*, size_t> input;
             input.first = &buffer[0];
