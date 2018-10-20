@@ -11,7 +11,7 @@ Libevent, libev, libuv are outdated.
 
 
 ## feature
-epoll or epoll + multi-threading
+epoll or epoll + multi-threading + epoll + multi-process
 - tcp sever 
 - http server
 - websocket server 
