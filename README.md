@@ -60,31 +60,31 @@ result: `{"error":null,"result":[{"id":1,"name":"a"},{"id":2,"name":"b"},{"id":3
 
 `ab -kc 10000 -n 500000 -H 'Connection: keep-alive' http://127.0.0.1:9090/`
 
-![ab_http.png](https://github.com/webcpp/mongols/blob/master/ab/ab_http.png)
+![ab_http.png](https://raw.githubusercontent.com/webcpp/mongols/master/ab/ab_http.png)
 
 `wrk -t 50 -d 30s -c 10000 -H 'Connection: keep-alive' http://127.0.0.1:9090/`
 
-![wrk_http.png](https://github.com/webcpp/mongols/blob/master/ab/wrk_http.png)
+![wrk_http.png](https://raw.githubusercontent.com/webcpp/mongols/master/ab/wrk_http.png)
 
 ### web
 
-![ab_web.png](https://github.com/webcpp/mongols/blob/master/ab/ab_web.png)
+![ab_web.png](https://raw.githubusercontent.com/webcpp/mongols/master/ab/ab_web.png)
 
-![wrk_web.png](https://github.com/webcpp/mongols/blob/master/ab/wrk_web.png)
+![wrk_web.png](https://raw.githubusercontent.com/webcpp/mongols/master/ab/wrk_web.png)
 
 
 ### multi-process web
 
 
-![ab_multi_process_web_server.png](https://github.com/webcpp/mongols/blob/master/ab/ab_multi_process_web_server.png)
+![ab_multi_process_web_server.png](https://raw.githubusercontent.com/webcpp/mongols/master/ab/ab_multi_process_web_server.png)
 
-![wrk_multi_process_web_server.png](https://github.com/webcpp/mongols/blob/master/ab/wrk_multi_process_web_server.png)
+![wrk_multi_process_web_server.png](https://raw.githubusercontent.com/webcpp/mongols/master/ab/wrk_multi_process_web_server.png)
 
-![nginxVSmongols.png](https://github.com/webcpp/mongols/blob/master/ab/nginxVSmongols.png)
+![nginxVSmongols.png](https://raw.githubusercontent.com/webcpp/mongols/master/ab/nginxVSmongols.png)
 
 ### medis
 
-![medis.png](https://github.com/webcpp/mongols/blob/master/ab/medis.png)
+![medis.png](https://raw.githubusercontent.com/webcpp/mongols/master/ab/medis.png)
 
 ## example
 
