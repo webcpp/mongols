@@ -28,7 +28,6 @@ namespace mongols {
     private:
 
         std::mutex main_mtx;
-        mongols::thread_pool<std::function<bool() >> work_pool;
 
 
 

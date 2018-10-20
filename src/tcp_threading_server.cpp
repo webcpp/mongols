@@ -28,12 +28,12 @@ namespace mongols {
     : tcp_server(host, port
     , timeout, buffer_size
     , max_event_size)
-    , main_mtx(), work_pool(thread_size == 0 ? std::thread::hardware_concurrency() : thread_size) {
-
+    , main_mtx() {
+        this->thread_size = (thread_size == 0 ? std::thread::hardware_concurrency() : thread_size);
     }
 
     void tcp_threading_server::process(int fd, const handler_function& g) {
-        this->work_pool.submit(std::bind(&tcp_threading_server::work, this, fd, g));
+        this->work_pool->submit(std::bind(&tcp_threading_server::work, this, fd, g));
     }
 
     void tcp_threading_server::add_client(int fd, const std::string& ip, int port) {
@@ -57,7 +57,7 @@ namespace mongols {
     bool tcp_threading_server::send_to_all_client(int fd, const std::string& str, const filter_handler_function& h) {
         std::lock_guard<std::mutex> lk(this->main_mtx);
         for (auto &i : this->clients) {
-            this->work_pool.submit(std::bind(&tcp_threading_server::send_to_other_client, this, fd, i.first, i.second, str, h));
+            this->work_pool->submit(std::bind(&tcp_threading_server::send_to_other_client, this, fd, i.first, i.second, str, h));
         }
         return false;
     }
@@ -89,7 +89,7 @@ ev_recv:
             size_t n = send(fd, output.c_str(), output.size(), MSG_NOSIGNAL);
             if (n >= 0) {
                 if (send_to_all) {
-                    this->work_pool.submit(std::bind(&tcp_threading_server::send_to_all_client, this, fd, output, send_to_other_filter));
+                    this->work_pool->submit(std::bind(&tcp_threading_server::send_to_all_client, this, fd, output, send_to_other_filter));
                 }
             }
             if (n < 0 || keepalive == CLOSE_CONNECTION) {

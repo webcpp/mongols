@@ -46,7 +46,7 @@ namespace mongols {
             , size_t buffer_size
             , int max_event_size) :
     host(host), port(port), listenfd(0), timeout(timeout), max_event_size(max_event_size), serveraddr()
-    , buffer_size(buffer_size), clients() {
+    , buffer_size(buffer_size), thread_size(0), clients(), work_pool(0) {
         this->listenfd = socket(AF_INET, SOCK_STREAM, 0);
 
         int on = 1;
@@ -88,6 +88,12 @@ namespace mongols {
         }
     }
 
+    tcp_server::~tcp_server() {
+        if (this->work_pool) {
+            delete this->work_pool;
+        }
+    }
+
     void tcp_server::run(const handler_function& g) {
 
         mongols::epoll epoll(this->max_event_size, -1);
@@ -97,7 +103,9 @@ namespace mongols {
         }
         epoll.add(this->listenfd, EPOLLIN | EPOLLET);
         auto main_fun = std::bind(&tcp_server::main_loop, this, std::placeholders::_1, std::cref(g), std::ref(epoll));
-
+        if (this->thread_size > 0) {
+            this->work_pool = new mongols::thread_pool < std::function<bool() >>(this->thread_size);
+        }
         while (tcp_server::done) {
             epoll.loop(main_fun);
         }
