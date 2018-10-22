@@ -74,22 +74,39 @@ namespace mongols {
                     && root.isMember("ufilter")
                     && root["ufilter"].isArray()
                     && root.isMember("gfilter")
-                    && root["ufilter"].isArray()) {
-                int64_t gid = root["gid"].asInt64(), uid = root["uid"].asInt64();
-                bool gid_is_uint64 = (gid >= 0);
-                std::list<size_t>::iterator gid_iter = std::find(client.gid.begin(), client.gid.end(), (gid_is_uint64 ? gid : -gid));
-                if (gid_iter == client.gid.end()) {
-                    if (gid_is_uint64) {
-                        client.gid.emplace_back(gid);
-                    }
-                } else {
-                    if (!gid_is_uint64) {
-                        client.gid.erase(gid_iter);
-                    }
-                }
+                    && root["gfilter"].isArray()) {
+
+                int64_t uid = root["uid"].asInt64();
                 if (client.uid == 0 && uid > 0) {
                     client.uid = uid;
                 }
+
+                std::function<void(const Json::Value &) > gid_filter = [&](const Json::Value & v) {
+                    if (v.isNumeric()) {
+                        int64_t gid = v.asInt64();
+                        bool gid_is_uint64 = (gid >= 0);
+                        std::list<size_t>::iterator gid_iter = std::find(client.gid.begin(), client.gid.end(), (gid_is_uint64 ? gid : -gid));
+                        if (gid_iter == client.gid.end()) {
+                            if (gid_is_uint64) {
+                                client.gid.emplace_back(gid);
+                            }
+                        } else {
+                            if (!gid_is_uint64) {
+                                client.gid.erase(gid_iter);
+                            }
+                        }
+                    } else if (v.isArray()) {
+                        Json::ArrayIndex gid_v_size = v.size();
+                        for (Json::ArrayIndex i = 0; i < gid_v_size; ++i) {
+                            gid_filter(v[i]);
+
+                        }
+                    }
+                };
+                const Json::Value& gid_v = root["gid"];
+                gid_filter(gid_v);
+
+
                 keepalive = KEEPALIVE_CONNECTION;
                 send_to_other = true;
                 std::vector<size_t> gfilter, ufilter;
