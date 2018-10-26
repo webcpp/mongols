@@ -63,7 +63,7 @@ namespace mongols {
 
 
 
-        memset(&this->serveraddr, '\0', sizeof (this->serveraddr));
+        memset(&this->serveraddr, 0, sizeof (this->serveraddr));
         this->serveraddr.sin_family = AF_INET;
         inet_aton(this->host.c_str(), &serveraddr.sin_addr);
         this->serveraddr.sin_port = htons(this->port);
@@ -75,12 +75,12 @@ namespace mongols {
 
         const int sig_len = 4;
         int sigs[sig_len] = {SIGHUP, SIGTERM, SIGINT, SIGQUIT};
-        struct sigaction act;
-        memset(&act, 0, sizeof (struct sigaction));
-        sigemptyset(&act.sa_mask);
-        act.sa_sigaction = tcp_server::signal_normal_cb;
 
+        struct sigaction act;
         for (int i = 0; i < sig_len; ++i) {
+            memset(&act, 0, sizeof (struct sigaction));
+            sigemptyset(&act.sa_mask);
+            act.sa_sigaction = tcp_server::signal_normal_cb;
             if (sigaction(sigs[i], &act, NULL) < 0) {
                 perror("sigaction error");
                 return;

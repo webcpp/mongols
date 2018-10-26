@@ -11,6 +11,19 @@ static std::vector<pid_t> pids;
 
 int main(int, char**) {
     //    daemon(1, 0);
+
+    std::vector<int> sigs = {SIGHUP, SIGTERM, SIGINT, SIGQUIT};
+    struct sigaction act;
+    for (auto& i : sigs) {
+        memset(&act, 0, sizeof (struct sigaction));
+        sigemptyset(&act.sa_mask);
+        act.sa_sigaction = signal_cb;
+        if (sigaction(i, &act, NULL) < 0) {
+            perror("sigaction error");
+            return -1;
+        }
+    }
+
     auto f = [](const mongols::request & req) {
         if (req.method == "GET" && req.uri.find("..") == std::string::npos) {
             return true;
@@ -37,32 +50,25 @@ int main(int, char**) {
         mongols::process_bind_cpu(pids[i], i);
     }
 
-    const int sig_len = 4;
-    int sigs[sig_len] = {SIGHUP, SIGTERM, SIGINT, SIGQUIT};
-    struct sigaction act;
-    memset(&act, 0, sizeof (struct sigaction));
-    sigemptyset(&act.sa_mask);
-    act.sa_sigaction = signal_cb;
 
-    for (int i = 0; i < sig_len; ++i) {
-        if (sigaction(sigs[i], &act, NULL) < 0) {
-            perror("sigaction error");
-            return -1;
-        }
-    }
-
-
-
-    for (size_t i=0;i<pids.size();++i) {
+    for (size_t i = 0; i < pids.size(); ++i) {
         pid_t pid;
-        if ((pid = wait(NULL)) > 0) {
-
+        int status;
+        if ((pid = wait(&status)) > 0) {
+            if (WIFSIGNALED(status)) {
+                if (WTERMSIG(status) == SIGSEGV || WTERMSIG(status) == SIGABRT)
+                    mongols::forker(1
+                        , [&]() {
+                            server.run(f);
+                        }
+                , pids);
+            }
         }
     }
-    
+
 }
 
-static void signal_cb(int sig, siginfo_t *, void * ) {
+static void signal_cb(int sig, siginfo_t *, void *) {
     switch (sig) {
         case SIGTERM:
         case SIGHUP:
