@@ -73,11 +73,11 @@ namespace mongols {
 
         listen(this->listenfd, 10);
 
-        const int sig_len = 4;
-        int sigs[sig_len] = {SIGHUP, SIGTERM, SIGINT, SIGQUIT};
+
+        std::vector<int> sigs = {SIGHUP, SIGTERM, SIGINT, SIGQUIT};
 
         struct sigaction act;
-        for (int i = 0; i < sig_len; ++i) {
+        for (size_t i = 0; i < sigs.size(); ++i) {
             memset(&act, 0, sizeof (struct sigaction));
             sigemptyset(&act.sa_mask);
             act.sa_sigaction = tcp_server::signal_normal_cb;
