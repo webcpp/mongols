@@ -4,6 +4,7 @@
 #include <mongols/util.hpp>
 #include <mongols/web_server.hpp>
 #include <iostream>
+#include <algorithm>
 
 
 static void signal_cb(int sig, siginfo_t *, void *);
@@ -56,7 +57,11 @@ int main(int, char**) {
         int status;
         if ((pid = wait(&status)) > 0) {
             if (WIFSIGNALED(status)) {
-                if (WTERMSIG(status) == SIGSEGV || WTERMSIG(status) == SIGABRT)
+                std::vector<int>::iterator p = std::find(pids.begin(), pids.end(), pid);
+                if (p != pids.end()) {
+                    *p = -1 * pid;
+                }
+                if (std::find(sigs.begin(), sigs.end(), WTERMSIG(status)) == sigs.end())
                     mongols::forker(1
                         , [&]() {
                             server.run(f);
@@ -75,7 +80,9 @@ static void signal_cb(int sig, siginfo_t *, void *) {
         case SIGQUIT:
         case SIGINT:
             for (auto & i : pids) {
-                kill(i, SIGTERM);
+                if (i > 0) {
+                    kill(i, SIGTERM);
+                }
             }
             break;
         default:break;
