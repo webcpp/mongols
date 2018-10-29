@@ -19,6 +19,7 @@ int main(int, char**) {
         memset(&act, 0, sizeof (struct sigaction));
         sigemptyset(&act.sa_mask);
         act.sa_sigaction = signal_cb;
+        act.sa_flags = SA_SIGINFO;
         if (sigaction(i, &act, NULL) < 0) {
             perror("sigaction error");
             return -1;

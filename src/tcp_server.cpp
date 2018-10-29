@@ -81,6 +81,7 @@ namespace mongols {
             memset(&act, 0, sizeof (struct sigaction));
             sigemptyset(&act.sa_mask);
             act.sa_sigaction = tcp_server::signal_normal_cb;
+            act.sa_flags = SA_SIGINFO;
             if (sigaction(sigs[i], &act, NULL) < 0) {
                 perror("sigaction error");
                 return;
