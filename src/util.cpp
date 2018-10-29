@@ -457,16 +457,16 @@ namespace mongols {
     }
 
     void forker(int len, const std::function<void()>& f, std::vector<pid_t>& pids) {
-        for (int i = 0; i < len; ++i) {
-            pid_t pid = fork();
-            if (pid == -1) {
-                perror("fork error.");
-                return;
-            } else if (pid == 0) {
-                f();
-            } else {
-                pids.push_back(pid);
+        pid_t pid = fork();
+        if (pid == 0) {
+            f();
+        } else if (pid > 0) {
+            pids.push_back(pid);
+            if (len > 1) {
+                forker(len - 1, f, pids);
             }
+        } else {
+            perror("fork error.");
         }
     }
 
