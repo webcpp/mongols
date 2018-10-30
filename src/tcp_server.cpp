@@ -73,7 +73,15 @@ namespace mongols {
 
         listen(this->listenfd, 10);
 
+    }
 
+    tcp_server::~tcp_server() {
+        if (this->work_pool) {
+            delete this->work_pool;
+        }
+    }
+
+    void tcp_server::run(const handler_function& g) {
         std::vector<int> sigs = {SIGHUP, SIGTERM, SIGINT, SIGQUIT};
 
         struct sigaction act;
@@ -87,16 +95,6 @@ namespace mongols {
                 return;
             }
         }
-    }
-
-    tcp_server::~tcp_server() {
-        if (this->work_pool) {
-            delete this->work_pool;
-        }
-    }
-
-    void tcp_server::run(const handler_function& g) {
-
         mongols::epoll epoll(this->max_event_size, -1);
         if (!epoll.is_ready()) {
             perror("epoll error");

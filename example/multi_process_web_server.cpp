@@ -4,10 +4,14 @@
 #include <mongols/util.hpp>
 #include <mongols/web_server.hpp>
 #include <iostream>
+#include <algorithm>
+
+#include "util.hpp"
 
 
-static void signal_cb(int sig, siginfo_t *, void *);
+static void signal_cb(int sig);
 static std::vector<pid_t> pids;
+static void set_signal();
 
 int main(int, char**) {
     //    daemon(1, 0);
@@ -26,53 +30,51 @@ int main(int, char**) {
     server.set_list_directory(true);
     server.set_enable_mmap(false);
 
-
-    int child_process_len = std::thread::hardware_concurrency();
-    mongols::forker(child_process_len
-            , [&]() {
-                server.run(f);
-            }
-    , pids);
-    
-    for (int i = 0; i < child_process_len; ++i) {
+    std::function<void() > process_work = [&]() {
+        server.run(f);
+    };
+    mongols::forker(std::thread::hardware_concurrency(), process_work, pids);
+    set_signal();
+    for (size_t i = 0; i < pids.size(); ++i) {
         mongols::process_bind_cpu(pids[i], i);
     }
 
-    const int sig_len = 4;
-    int sigs[sig_len] = {SIGHUP, SIGTERM, SIGINT, SIGQUIT};
-    struct sigaction act;
-    memset(&act, 0, sizeof (struct sigaction));
-    sigemptyset(&act.sa_mask);
-    act.sa_sigaction = signal_cb;
-
-    for (int i = 0; i < sig_len; ++i) {
-        if (sigaction(sigs[i], &act, NULL) < 0) {
-            perror("sigaction error");
-            return -1;
+    pid_t pid;
+    int status;
+    while ((pid = wait(&status)) > 0) {
+        if (WIFSIGNALED(status)) {
+            if (WTERMSIG(status) == SIGSEGV) {
+                std::vector<int>::iterator p = std::find(pids.begin(), pids.end(), pid);
+                if (p != pids.end()) {
+                    *p = -1 * pid;
+                }
+                mongols::forker(1, process_work, pids);
+            }
         }
     }
 
 
-
-    for (size_t i=0;i<pids.size();++i) {
-        pid_t pid;
-        if ((pid = wait(NULL)) > 0) {
-
-        }
-    }
-    
 }
 
-static void signal_cb(int sig, siginfo_t *, void * ) {
+static void signal_cb(int sig) {
     switch (sig) {
         case SIGTERM:
         case SIGHUP:
         case SIGQUIT:
         case SIGINT:
             for (auto & i : pids) {
-                kill(i, SIGTERM);
+                if (i > 0) {
+                    kill(i, SIGTERM);
+                }
             }
             break;
         default:break;
+    }
+}
+
+static void set_signal() {
+    std::vector<int> sigs = {SIGHUP, SIGTERM, SIGINT, SIGQUIT};
+    for (size_t i = 0; i < sigs.size(); ++i) {
+        signal(sigs[i], signal_cb);
     }
 }
