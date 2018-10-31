@@ -52,7 +52,7 @@ int main(int, char**) {
     while ((pid = wait(&status)) > 0) {
         if (WIFSIGNALED(status)) {
             if (WCOREDUMP(status)) {
-                std::cout << strsignal(WTERMSIG(status)) << std::endl;
+                //std::cout << strsignal(WTERMSIG(status)) << std::endl;
             } else if (WTERMSIG(status) == SIGSEGV || WTERMSIG(status) == SIGBUS) {
                 refork(pid);
             }
