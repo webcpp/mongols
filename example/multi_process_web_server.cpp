@@ -53,6 +53,8 @@ int main(int, char**) {
         if (WIFSIGNALED(status)) {
             if (WCOREDUMP(status)) {
                 //std::cout << strsignal(WTERMSIG(status)) << std::endl;
+                // or 
+                // refork(pid);
             } else if (WTERMSIG(status) == SIGSEGV || WTERMSIG(status) == SIGBUS) {
                 refork(pid);
             }

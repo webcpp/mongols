@@ -167,12 +167,11 @@ http_500:
     }
 
     void web_server::res_filter_with_mmap(const mongols::request& req, mongols::response& res) {
-        std::string path = std::move(this->root_path + req.uri);
+        std::string path = std::move(this->root_path + req.uri), mmap_key = std::move(mongols::md5(path));
+        std::unordered_map<std::string, std::pair<char*, struct stat>>::const_iterator iter;
         struct stat st;
         if (stat(path.c_str(), &st) >= 0) {
             if (S_ISREG(st.st_mode)) {
-                std::string mmap_key = std::move(mongols::md5(path));
-                std::unordered_map<std::string, std::pair<char*, struct stat>>::const_iterator iter;
                 if ((iter = this->file_mmap.find(mmap_key)) != this->file_mmap.end()) {
                     if (iter->second.second.st_mtime != st.st_mtime) {
                         munmap(iter->second.first, iter->second.second.st_size);
@@ -212,6 +211,9 @@ http_500:
                     res.content = std::move("Forbidden");
                 }
             }
+        } else if ((iter = this->file_mmap.find(mmap_key)) != this->file_mmap.end()) {
+            munmap(iter->second.first, iter->second.second.st_size);
+            this->file_mmap.erase(iter);
         }
     }
 
