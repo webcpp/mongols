@@ -34,8 +34,6 @@ namespace mongols {
             case SIGHUP:
             case SIGQUIT:
             case SIGINT:
-            case SIGUSR1:
-            case SIGUSR2:
                 tcp_server::done = false;
                 break;
             default:break;
