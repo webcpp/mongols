@@ -40,19 +40,21 @@ int main(int, char**) {
         mongols::process_bind_cpu(pids[i], i);
     }
 
+    std::function<void(pid_t) > refork = [&](pid_t pid) {
+        std::vector<int>::iterator p = std::find(pids.begin(), pids.end(), pid);
+        if (p != pids.end()) {
+            *p = -1 * pid;
+        }
+        mongols::forker(1, process_work, pids);
+    };
     pid_t pid;
     int status;
     while ((pid = wait(&status)) > 0) {
         if (WIFSIGNALED(status)) {
-            if (WTERMSIG(status) == SIGSEGV
-                    || WTERMSIG(status) == SIGBUS
-                    || WTERMSIG(status) == SIGUSR1
-                    || WTERMSIG(status) == SIGUSR2) {
-                std::vector<int>::iterator p = std::find(pids.begin(), pids.end(), pid);
-                if (p != pids.end()) {
-                    *p = -1 * pid;
-                }
-                mongols::forker(1, process_work, pids);
+            if (WCOREDUMP(status)) {
+                std::cout << strsignal(WTERMSIG(status)) << std::endl;
+            } else if (WTERMSIG(status) == SIGSEGV || WTERMSIG(status) == SIGBUS) {
+                refork(pid);
             }
         }
     }
@@ -73,11 +75,16 @@ static void signal_cb(int sig) {
             }
             break;
         case SIGUSR1:
+            for (auto & i : pids) {
+                if (i > 0) {
+                    kill(i, SIGSEGV);
+                }
+            }
+            break;
         case SIGUSR2:
             for (auto & i : pids) {
                 if (i > 0) {
-                    kill(i, SIGUSR1);
-                    usleep(100);
+                    kill(i, SIGSEGV);
                 }
             }
             break;
