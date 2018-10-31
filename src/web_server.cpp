@@ -14,15 +14,19 @@
 #include "util.hpp"
 #include "response.hpp"
 #include "lib/mustache.hpp"
+#include "lib/hash/md5.hpp"
 
 namespace mongols {
 
     web_server::web_server(const std::string& host, int port, int timeout, size_t buffer_size, size_t thread_size, size_t max_body_size, int max_event_size)
-    : cache_expires(3600), root_path(), mime_type(), server(0), list_directory(false), enable_mmap(false) {
+    : cache_expires(3600), root_path(), mime_type(), file_mmap(), server(0), list_directory(false), enable_mmap(false) {
         this->server = new http_server(host, port, timeout, buffer_size, thread_size, max_body_size, max_event_size);
     }
 
     web_server::~web_server() {
+        for (auto& i : this->file_mmap) {
+            munmap(i.second.first, i.second.second);
+        }
         if (this->server) {
             delete this->server;
         }
@@ -162,12 +166,17 @@ http_500:
     }
 
     void web_server::res_filter_with_mmap(const mongols::request& req, mongols::response& res) {
-        std::string path = this->root_path + req.uri;
+        std::string path = std::move(this->root_path + req.uri), mmap_key = std::move(mongols::md5(path));
+        std::unordered_map<std::string, std::pair<char*, size_t>>::const_iterator iter;
         struct stat st;
-        if (stat(path.c_str(), &st) >= 0 && S_ISREG(st.st_mode)) {
+        if ((iter = this->file_mmap.find(mmap_key)) != this->file_mmap.end()) {
+            res.status = 200;
+            res.headers.find("Content-Type")->second = std::move(this->get_mime_type(path));
+            res.content.assign(iter->second.first, iter->second.second);
+        } else if (stat(path.c_str(), &st) >= 0 && S_ISREG(st.st_mode)) {
             int ffd = open(path.c_str(), O_RDONLY | O_NONBLOCK);
             if (ffd > 0) {
-                char *mmap_ptr = (char*) mmap(0, st.st_size, PROT_READ, MAP_PRIVATE, ffd, 0);
+                char *mmap_ptr = (char*) mmap(0, st.st_size, PROT_READ, MAP_PRIVATE | MAP_POPULATE, ffd, 0);
                 if (mmap_ptr == MAP_FAILED) {
                     close(ffd);
                     goto http_500;
@@ -176,7 +185,7 @@ http_500:
                     res.status = 200;
                     res.headers.find("Content-Type")->second = std::move(this->get_mime_type(path));
                     res.content.assign(mmap_ptr, st.st_size);
-                    munmap(mmap_ptr, st.st_size);
+                    this->file_mmap[mmap_key] = std::move(std::make_pair(mmap_ptr, st.st_size));
                 }
             } else {
 http_500:
