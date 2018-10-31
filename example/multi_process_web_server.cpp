@@ -69,12 +69,20 @@ static void signal_cb(int sig) {
                 }
             }
             break;
+        case SIGUSR1:
+            for (auto & i : pids) {
+                if (i > 0) {
+                    kill(i, SIGSEGV);
+                    usleep(100);
+                }
+            }
+            break;
         default:break;
     }
 }
 
 static void set_signal() {
-    std::vector<int> sigs = {SIGHUP, SIGTERM, SIGINT, SIGQUIT};
+    std::vector<int> sigs = {SIGHUP, SIGTERM, SIGINT, SIGQUIT, SIGUSR1};
     for (size_t i = 0; i < sigs.size(); ++i) {
         signal(sigs[i], signal_cb);
     }
