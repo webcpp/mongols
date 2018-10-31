@@ -3,6 +3,7 @@
 
 #include <unordered_map>
 #include <utility>
+#include <sys/stat.h>
 #include "http_server.hpp"
 
 
@@ -28,7 +29,7 @@ namespace mongols {
         long long cache_expires;
         std::string root_path;
         std::unordered_map<std::string, std::string> mime_type;
-        std::unordered_map<std::string, std::pair<char*, size_t>> file_mmap;
+        std::unordered_map<std::string, std::pair<char*, struct stat>> file_mmap;
         http_server *server;
         bool list_directory, enable_mmap;
         std::string get_mime_type(const std::string&);

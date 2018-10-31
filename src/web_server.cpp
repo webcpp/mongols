@@ -25,7 +25,7 @@ namespace mongols {
 
     web_server::~web_server() {
         for (auto& i : this->file_mmap) {
-            munmap(i.second.first, i.second.second);
+            munmap(i.second.first, i.second.second.st_size);
         }
         if (this->server) {
             delete this->server;
@@ -46,41 +46,42 @@ namespace mongols {
     void web_server::res_filter(const mongols::request& req, mongols::response& res) {
         std::string path = this->root_path + req.uri;
         struct stat st;
-        if (stat(path.c_str(), &st) >= 0 && S_ISREG(st.st_mode)) {
-            int ffd = open(path.c_str(), O_RDONLY | O_NONBLOCK);
-            if (ffd > 0) {
-                char ffd_buffer[st.st_size];
+        if (stat(path.c_str(), &st) >= 0) {
+            if (S_ISREG(st.st_mode)) {
+                int ffd = open(path.c_str(), O_RDONLY | O_NONBLOCK);
+                if (ffd > 0) {
+                    char ffd_buffer[st.st_size];
 http_read:
-                if (read(ffd, ffd_buffer, st.st_size) < 0) {
-                    if (errno == EAGAIN || errno == EINTR) {
-                        goto http_read;
-                    }
+                    if (read(ffd, ffd_buffer, st.st_size) < 0) {
+                        if (errno == EAGAIN || errno == EINTR) {
+                            goto http_read;
+                        }
 
-                    close(ffd);
-                    goto http_500;
+                        close(ffd);
+                        goto http_500;
+                    } else {
+                        res.status = 200;
+                        res.headers.find("Content-Type")->second = std::move(this->get_mime_type(path));
+                        time_t now = time(0);
+                        res.headers.insert(std::move(std::make_pair(std::move("Last-Modified"), mongols::http_time(&now))));
+                        res.content.assign(ffd_buffer, st.st_size);
+                        close(ffd);
+                    }
                 } else {
-                    res.status = 200;
-                    res.headers.find("Content-Type")->second = std::move(this->get_mime_type(path));
-                    time_t now = time(0);
-                    res.headers.insert(std::move(std::make_pair(std::move("Last-Modified"), mongols::http_time(&now))));
-                    res.content.assign(ffd_buffer, st.st_size);
-                    close(ffd);
-                }
-            } else {
 http_500:
-                res.status = 500;
-                res.content = std::move("Internal Server Error");
-            }
-        } else if (S_ISDIR(st.st_mode)) {
-            if (this->list_directory) {
-                res.content = std::move(this->create_list_directory_response(path));
-                res.status = 200;
-            } else {
-                res.status = 403;
-                res.content = std::move("Forbidden");
+                    res.status = 500;
+                    res.content = std::move("Internal Server Error");
+                }
+            } else if (S_ISDIR(st.st_mode)) {
+                if (this->list_directory) {
+                    res.content = std::move(this->create_list_directory_response(path));
+                    res.status = 200;
+                } else {
+                    res.status = 403;
+                    res.content = std::move("Forbidden");
+                }
             }
         }
-
     }
 
     std::string web_server::get_mime_type(const std::string& path) {
@@ -166,42 +167,52 @@ http_500:
     }
 
     void web_server::res_filter_with_mmap(const mongols::request& req, mongols::response& res) {
-        std::string path = std::move(this->root_path + req.uri), mmap_key = std::move(mongols::md5(path));
-        std::unordered_map<std::string, std::pair<char*, size_t>>::const_iterator iter;
+        std::string path = std::move(this->root_path + req.uri);
         struct stat st;
-        if ((iter = this->file_mmap.find(mmap_key)) != this->file_mmap.end()) {
-            res.status = 200;
-            res.headers.find("Content-Type")->second = std::move(this->get_mime_type(path));
-            res.content.assign(iter->second.first, iter->second.second);
-        } else if (stat(path.c_str(), &st) >= 0 && S_ISREG(st.st_mode)) {
-            int ffd = open(path.c_str(), O_RDONLY | O_NONBLOCK);
-            if (ffd > 0) {
-                char *mmap_ptr = (char*) mmap(0, st.st_size, PROT_READ, MAP_PRIVATE | MAP_POPULATE, ffd, 0);
-                if (mmap_ptr == MAP_FAILED) {
-                    close(ffd);
-                    goto http_500;
-                } else {
-                    close(ffd);
+        if (stat(path.c_str(), &st) >= 0) {
+            if (S_ISREG(st.st_mode)) {
+                std::string mmap_key = std::move(mongols::md5(path));
+                std::unordered_map<std::string, std::pair<char*, struct stat>>::const_iterator iter;
+                if ((iter = this->file_mmap.find(mmap_key)) != this->file_mmap.end()) {
+                    if (iter->second.second.st_mtime != st.st_mtime) {
+                        munmap(iter->second.first, iter->second.second.st_size);
+                        this->file_mmap.erase(iter);
+                        goto http_read;
+                    }
                     res.status = 200;
                     res.headers.find("Content-Type")->second = std::move(this->get_mime_type(path));
-                    res.content.assign(mmap_ptr, st.st_size);
-                    this->file_mmap[mmap_key] = std::move(std::make_pair(mmap_ptr, st.st_size));
-                }
-            } else {
+                    res.content.assign(iter->second.first, iter->second.second.st_size);
+                } else {
+http_read:
+                    int ffd = open(path.c_str(), O_RDONLY | O_NONBLOCK);
+                    if (ffd > 0) {
+                        char *mmap_ptr = (char*) mmap(0, st.st_size, PROT_READ, MAP_PRIVATE | MAP_POPULATE, ffd, 0);
+                        if (mmap_ptr == MAP_FAILED) {
+                            close(ffd);
+                            goto http_500;
+                        } else {
+                            close(ffd);
+                            res.status = 200;
+                            res.headers.find("Content-Type")->second = std::move(this->get_mime_type(path));
+                            res.content.assign(mmap_ptr, st.st_size);
+                            this->file_mmap[mmap_key] = std::move(std::make_pair(mmap_ptr, st));
+                        }
+                    } else {
 http_500:
-                res.status = 500;
-                res.content = std::move("Internal Server Error");
-            }
-        } else if (S_ISDIR(st.st_mode)) {
-            if (this->list_directory) {
-                res.content = std::move(this->create_list_directory_response(path));
-                res.status = 200;
-            } else {
-                res.status = 403;
-                res.content = std::move("Forbidden");
+                        res.status = 500;
+                        res.content = std::move("Internal Server Error");
+                    }
+                }
+            } else if (S_ISDIR(st.st_mode)) {
+                if (this->list_directory) {
+                    res.content = std::move(this->create_list_directory_response(path));
+                    res.status = 200;
+                } else {
+                    res.status = 403;
+                    res.content = std::move("Forbidden");
+                }
             }
         }
-
     }
 
     void web_server::set_cache_expires(long long expires) {
