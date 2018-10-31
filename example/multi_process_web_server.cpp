@@ -44,7 +44,10 @@ int main(int, char**) {
     int status;
     while ((pid = wait(&status)) > 0) {
         if (WIFSIGNALED(status)) {
-            if (WTERMSIG(status) == SIGSEGV || WTERMSIG(status) == SIGBUS) {
+            if (WTERMSIG(status) == SIGSEGV
+                    || WTERMSIG(status) == SIGBUS
+                    || WTERMSIG(status) == SIGUSR1
+                    || WTERMSIG(status) == SIGUSR2) {
                 std::vector<int>::iterator p = std::find(pids.begin(), pids.end(), pid);
                 if (p != pids.end()) {
                     *p = -1 * pid;
@@ -70,9 +73,10 @@ static void signal_cb(int sig) {
             }
             break;
         case SIGUSR1:
+        case SIGUSR2:
             for (auto & i : pids) {
                 if (i > 0) {
-                    kill(i, SIGSEGV);
+                    kill(i, SIGUSR1);
                     usleep(100);
                 }
             }
@@ -82,7 +86,7 @@ static void signal_cb(int sig) {
 }
 
 static void set_signal() {
-    std::vector<int> sigs = {SIGHUP, SIGTERM, SIGINT, SIGQUIT, SIGUSR1};
+    std::vector<int> sigs = {SIGHUP, SIGTERM, SIGINT, SIGQUIT, SIGUSR1, SIGUSR2};
     for (size_t i = 0; i < sigs.size(); ++i) {
         signal(sigs[i], signal_cb);
     }
