@@ -36,14 +36,6 @@ int main(int, char**) {
     pthread_mutexattr_t *mtx_attr = 0;
     size_t *data = 0;
 
-
-    data = (size_t*) mmap(0, sizeof (size_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
-    if (data == MAP_FAILED) {
-        return -1;
-    } else {
-        *data = 0;
-    }
-
     mtx = (pthread_mutex_t*) mmap(0, sizeof (pthread_mutex_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     if (mtx == MAP_FAILED) {
         return -1;
@@ -59,6 +51,14 @@ int main(int, char**) {
         pthread_mutex_init(mtx, mtx_attr);
     }
 
+    data = (size_t*) mmap(0, sizeof (size_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    if (data == MAP_FAILED) {
+        return -1;
+    } else {
+        pthread_mutex_lock(mtx);
+        *data = 0;
+        pthread_mutex_unlock(mtx);
+    }
 
 
     std::function<void() > process_work = [&]() {
