@@ -37,7 +37,7 @@ int main(int, char**) {
     size_t *data = 0;
 
 
-    data = (size_t*) mmap(0, sizeof (int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    data = (size_t*) mmap(0, sizeof (size_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     if (data == MAP_FAILED) {
         return -1;
     } else {
