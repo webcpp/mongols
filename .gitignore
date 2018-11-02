@@ -42,3 +42,4 @@ nbproject/
 /example/multi_process_web_server
 /example/html/leveldb/
 /example/html/sqlite/
+/example/multi_process_http_server
