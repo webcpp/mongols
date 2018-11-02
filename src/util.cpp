@@ -43,12 +43,12 @@ namespace mongols {
 
     bool is_file(const std::string& s) {
         struct stat st;
-        return stat(s.c_str(), &st) >= 0 && S_ISREG(st.st_mode);
+        return stat(s.c_str(), &st) == 0 && S_ISREG(st.st_mode);
     }
 
     bool is_dir(const std::string& s) {
         struct stat st;
-        return stat(s.c_str(), &st) >= 0 && S_ISDIR(st.st_mode);
+        return stat(s.c_str(), &st) == 0 && S_ISDIR(st.st_mode);
     }
 
     static unsigned mday[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};

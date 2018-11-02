@@ -46,7 +46,7 @@ namespace mongols {
     void web_server::res_filter(const mongols::request& req, mongols::response& res) {
         std::string path = this->root_path + req.uri;
         struct stat st;
-        if (stat(path.c_str(), &st) >= 0) {
+        if (stat(path.c_str(), &st) == 0) {
             if (S_ISREG(st.st_mode)) {
                 int ffd = open(path.c_str(), O_RDONLY | O_NONBLOCK);
                 if (ffd > 0) {
@@ -170,7 +170,7 @@ http_500:
         std::string path = std::move(this->root_path + req.uri), mmap_key = std::move(mongols::md5(path));
         std::unordered_map<std::string, std::pair<char*, struct stat>>::const_iterator iter;
         struct stat st;
-        if (stat(path.c_str(), &st) >= 0) {
+        if (stat(path.c_str(), &st) == 0) {
             if (S_ISREG(st.st_mode)) {
                 if ((iter = this->file_mmap.find(mmap_key)) != this->file_mmap.end()) {
                     if (iter->second.second.st_mtime != st.st_mtime) {
