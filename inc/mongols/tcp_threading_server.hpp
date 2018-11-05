@@ -21,7 +21,6 @@ namespace mongols {
 
         virtual void add_client(int, const std::string&, int);
         virtual void del_client(int);
-        virtual void process(int, const handler_function&);
         virtual bool send_to_all_client(int, const std::string&, const filter_handler_function&);
         virtual bool work(int, const handler_function&);
         bool send_to_other_client(int, int, const client_t&, const std::string&, const filter_handler_function&);

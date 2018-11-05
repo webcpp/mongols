@@ -69,7 +69,7 @@ namespace mongols {
         static void signal_normal_cb(int sig, siginfo_t *, void *);
         void setnonblocking(int fd);
         void main_loop(struct epoll_event *, const handler_function&, mongols::epoll&);
-
+        void process(int, const handler_function&);
     protected:
         size_t buffer_size, thread_size;
         std::unordered_map<int, client_t > clients;
@@ -78,7 +78,6 @@ namespace mongols {
         virtual void del_client(int);
         virtual bool send_to_all_client(int, const std::string&, const filter_handler_function&);
         virtual bool work(int, const handler_function&);
-        virtual void process(int, const handler_function&);
     };
 }
 

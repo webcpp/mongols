@@ -32,10 +32,6 @@ namespace mongols {
         this->thread_size = (thread_size == 0 ? std::thread::hardware_concurrency() : thread_size);
     }
 
-    void tcp_threading_server::process(int fd, const handler_function& g) {
-        this->work_pool->submit(std::bind(&tcp_threading_server::work, this, fd, g));
-    }
-
     void tcp_threading_server::add_client(int fd, const std::string& ip, int port) {
         std::lock_guard<std::mutex> lk(this->main_mtx);
         this->clients.insert(std::move(std::make_pair(fd, std::move(client_t(ip, port, 0, 0)))));
