@@ -198,7 +198,7 @@ ev_error:
                 }
             }
         } else if (event->events & EPOLLIN) {
-            this->process(event->data.fd, g);
+            this->work(event->data.fd, g);
         } else {
             close(event->data.fd);
         }
@@ -208,9 +208,6 @@ ev_error:
         return this->buffer_size;
     }
 
-    void tcp_server::process(int fd, const handler_function& g) {
-        this->work(fd, g);
-    }
 
 
 
