@@ -1,6 +1,11 @@
+#include <functional>
 #include "lua_server.hpp"
 #include "util.hpp"
 #include "server_bind_script.hpp"
+#include "lib/re2/re2.h"
+#include "posix_regex.hpp"
+
+
 
 
 namespace mongols {
@@ -10,21 +15,7 @@ namespace mongols {
     : vm(), server(0), root_path() {
 
         this->server = new http_server(host, port, timeout, buffer_size, thread_size, max_body_size, max_event_size);
-    }
 
-    lua_server::~lua_server() {
-        if (this->server) {
-            delete this->server;
-        }
-    }
-
-    void lua_server::run(const std::string& package_path, const std::string& package_cpath) {
-        if (!package_path.empty()) {
-            this->vm("package.path='" + package_path + "'.. package.path");
-        }
-        if (!package_cpath.empty()) {
-            this->vm("package.cpath='" + package_cpath + "'.. package.cpath");
-        }
         this->vm["mongols_request"].setClass(
                 kaguya::UserdataMetatable<server_bind_script_request>()
                 .setConstructors < server_bind_script_request()>()
@@ -52,6 +43,39 @@ namespace mongols {
                 .addFunction("session", &mongols::server_bind_script_response::session)
                 .addFunction("cache", &mongols::server_bind_script_response::cache)
                 );
+
+        this->vm["mongols_regex"] = kaguya::NewTable();
+        kaguya::LuaTable regex_tbl = this->vm["mongols_regex"];
+        regex_tbl["full_match"] = kaguya::function([](const std::string& pattern, const std::string & str) {
+            return RE2::FullMatch(str, pattern);
+        });
+        regex_tbl["partial_match"] = kaguya::function([](const std::string& pattern, const std::string & str) {
+            return RE2::PartialMatch(str, pattern);
+        });
+        regex_tbl["match"] = kaguya::function([](const std::string& pattern, const std::string & str) {
+            mongols::posix_regex regex(pattern);
+            std::vector<std::string> v;
+            if (regex.match(str, v)) {
+                return v;
+            }
+            return v;
+        });
+
+    }
+
+    lua_server::~lua_server() {
+        if (this->server) {
+            delete this->server;
+        }
+    }
+
+    void lua_server::run(const std::string& package_path, const std::string& package_cpath) {
+        if (!package_path.empty()) {
+            this->vm("package.path='" + package_path + "'.. package.path");
+        }
+        if (!package_cpath.empty()) {
+            this->vm("package.cpath='" + package_cpath + "'.. package.cpath");
+        }
 
 
         this->server->run(std::bind(&lua_server::filter, this, std::placeholders::_1)

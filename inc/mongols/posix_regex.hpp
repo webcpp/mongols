@@ -3,7 +3,7 @@
 
 #include <regex.h>
 #include <string>
-#include <list>
+#include <vector>
 #include <iostream>
 
 namespace mongols {
@@ -21,7 +21,7 @@ namespace mongols {
             if (this->ok)regfree(&this->reg);
         }
 
-        bool match(const std::string& subject, std::list<std::string>& matches, size_t n = 30) {
+        bool match(const std::string& subject, std::vector<std::string>& matches, size_t n = 30) {
             bool result = false;
             if (n > 1) {
                 regmatch_t m[n];

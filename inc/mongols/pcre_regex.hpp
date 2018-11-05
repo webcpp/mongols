@@ -3,7 +3,7 @@
 
 #include <pcre.h>
 #include <string>
-#include <list>
+#include <vector>
 
 namespace mongols {
 
@@ -25,7 +25,7 @@ namespace mongols {
             if (this->reg_extra)pcre_free_study(this->reg_extra);
         }
 
-        void match_all(const std::string& subject, std::list<std::string>& matches, size_t n = 30) {
+        void match_all(const std::string& subject, std::vector<std::string>& matches, size_t n = 30) {
             int ovector[n], rc, offset = 0;
             while ((rc = pcre_exec(this->reg, this->reg_extra, subject.c_str(), subject.size(), offset, 0, ovector, n)) >= 0) {
                 int start, len;
@@ -38,7 +38,7 @@ namespace mongols {
             }
         }
 
-        bool match(const std::string& subject, std::list<std::string>& matches, size_t n = 30) {
+        bool match(const std::string& subject, std::vector<std::string>& matches, size_t n = 30) {
             bool result = false;
             int ovector[n];
             int rc = pcre_exec(this->reg, this->reg_extra, subject.c_str(), subject.size(), 0, 0, ovector, n);
