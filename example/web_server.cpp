@@ -14,6 +14,6 @@ int main(int, char**) {
     server.set_root_path("html");
     server.set_mime_type_file("html/mime.conf");
     server.set_list_directory(true);
-    server.set_enable_mmap(false);
+    server.set_enable_mmap(true);
     server.run(f);
 }
