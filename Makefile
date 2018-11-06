@@ -28,6 +28,7 @@ CFLAGS+=-Iinc/mongols/lib/sqlite  -DSQLITE_THREADSAFE=1 \
 	-DHAVE_READLINE
 CFLAGS+=-Iinc/mongols/lib/z
 CFLAGS+=-Iinc/mongols/lib/hash
+CFLAGS+=-Iinc/mongols/lib/WjCryptLib
 
 
 
