@@ -9,12 +9,13 @@
 #include <set>
 #include <stack>
 #include <functional>
+#include <memory>
 
 #include "tcp_threading_server.hpp"
 #include "lib/simple_resp.h"
 #include "lib/leveldb/db.h"
 #include "lib/leveldb/options.h"
-#include "lib/lrucache.hpp"
+#include "lib/LRUCache11.hpp"
 #include "lib/sqlite/sqlite3pp.h"
 #include "lib/sqlite/sqlite3ppext.h"
 #include "lib/lua/kaguya.hpp"
@@ -78,30 +79,30 @@ namespace mongols {
 
 
     protected:
+        typedef std::shared_ptr<std::string> shared_mongols_string;
         typedef std::unordered_map<std::string, std::string> mongols_map;
-        typedef std::unordered_map<std::string, mongols_map> mongols_hash_map;
+        typedef std::shared_ptr<mongols_map> shared_mongols_map;
         typedef std::list<std::string> mongols_list;
-        typedef std::unordered_map<std::string, mongols_list> mongols_hash_list;
+        typedef std::shared_ptr<mongols_list> shared_mongols_list;
         typedef std::set<std::string> mongols_set;
-        typedef std::unordered_map<std::string, mongols_set> mongols_hash_set;
+        typedef std::shared_ptr<mongols_set> shared_mongols_set;
         typedef std::queue<std::string> mongols_queue;
-        typedef std::unordered_map<std::string, mongols_queue> mongols_hash_queue;
+        typedef std::shared_ptr<mongols_queue> shared_mongols_queue;
         typedef std::stack<std::string> mongols_stack;
-        typedef std::unordered_map<std::string, mongols_stack> mongols_hash_stack;
+        typedef std::shared_ptr<mongols_stack> shared_mongols_stack;
 
-        size_t lru_str_max_size
-        , lru_list_max_size
+        size_t lru_string_max_size
         , lru_map_max_size
+        , lru_list_max_size
         , lru_set_max_size
         , lru_queue_max_size
         , lru_stack_max_size;
-        mongols::cache::lru_cache<std::string, size_t> *sr, *lt, *mp, *st, *qe, *sk;
-        mongols_map sr_data;
-        mongols_hash_list lt_data;
-        mongols_hash_map mp_data;
-        mongols_hash_set st_data;
-        mongols_hash_queue qe_data;
-        mongols_hash_stack sk_data;
+        lru11::Cache<std::string, shared_mongols_string> string_data;
+        lru11::Cache<std::string, shared_mongols_map> map_data;
+        lru11::Cache<std::string, shared_mongols_list> list_data;
+        lru11::Cache<std::string, shared_mongols_set> set_data;
+        lru11::Cache<std::string, shared_mongols_queue> queue_data;
+        lru11::Cache<std::string, shared_mongols_stack> stack_data;
 
     protected:
         //string
