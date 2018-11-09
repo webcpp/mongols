@@ -97,12 +97,12 @@ namespace mongols {
         , lru_set_max_size
         , lru_queue_max_size
         , lru_stack_max_size;
-        lru11::Cache<std::string, shared_mongols_string> string_data;
-        lru11::Cache<std::string, shared_mongols_map> map_data;
-        lru11::Cache<std::string, shared_mongols_list> list_data;
-        lru11::Cache<std::string, shared_mongols_set> set_data;
-        lru11::Cache<std::string, shared_mongols_queue> queue_data;
-        lru11::Cache<std::string, shared_mongols_stack> stack_data;
+        std::shared_ptr<lru11::Cache<std::string, shared_mongols_string>> string_data;
+        std::shared_ptr<lru11::Cache<std::string, shared_mongols_map>> map_data;
+        std::shared_ptr<lru11::Cache<std::string, shared_mongols_list>> list_data;
+        std::shared_ptr<lru11::Cache<std::string, shared_mongols_set>> set_data;
+        std::shared_ptr<lru11::Cache<std::string, shared_mongols_queue>> queue_data;
+        std::shared_ptr<lru11::Cache<std::string, shared_mongols_stack>> stack_data;
 
     protected:
         //string
