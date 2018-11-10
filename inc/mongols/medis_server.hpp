@@ -1,6 +1,7 @@
 #ifndef MEDIS_SERVER_HPP
 #define MEDIS_SERVER_HPP
 
+#include <ctime>
 #include <unordered_map>
 #include <string>
 #include <vector>
@@ -77,17 +78,7 @@ namespace mongols {
         void deserialize(const std::string&, T&);
 
 
-        typedef std::shared_ptr<std::string> shared_mongols_string;
-        typedef std::unordered_map<std::string, std::string> mongols_map;
-        typedef std::shared_ptr<mongols_map> shared_mongols_map;
-        typedef std::list<std::string> mongols_list;
-        typedef std::shared_ptr<mongols_list> shared_mongols_list;
-        typedef std::set<std::string> mongols_set;
-        typedef std::shared_ptr<mongols_set> shared_mongols_set;
-        typedef std::queue<std::string> mongols_queue;
-        typedef std::shared_ptr<mongols_queue> shared_mongols_queue;
-        typedef std::stack<std::string> mongols_stack;
-        typedef std::shared_ptr<mongols_stack> shared_mongols_stack;
+
 
         size_t lru_string_max_size
         , lru_map_max_size
@@ -95,6 +86,36 @@ namespace mongols {
         , lru_set_max_size
         , lru_queue_max_size
         , lru_stack_max_size;
+
+        template<class value_t>
+        class cache_t {
+        public:
+
+            cache_t();
+
+            cache_t(const value_t& v);
+            virtual~cache_t() = default;
+
+            bool expired()const;
+            long long ttl()const;
+        public:
+            value_t data;
+            time_t t;
+            long long expires;
+        };
+
+        typedef std::shared_ptr<cache_t<std::string>> shared_mongols_string;
+        typedef std::unordered_map<std::string, std::string> mongols_map;
+        typedef std::shared_ptr<cache_t<mongols_map>> shared_mongols_map;
+        typedef std::list<std::string> mongols_list;
+        typedef std::shared_ptr<cache_t<mongols_list>> shared_mongols_list;
+        typedef std::set<std::string> mongols_set;
+        typedef std::shared_ptr<cache_t<mongols_set>> shared_mongols_set;
+        typedef std::queue<std::string> mongols_queue;
+        typedef std::shared_ptr<cache_t<mongols_queue>> shared_mongols_queue;
+        typedef std::stack<std::string> mongols_stack;
+        typedef std::shared_ptr<cache_t<mongols_stack>> shared_mongols_stack;
+
         std::shared_ptr<lru11::Cache<std::string, shared_mongols_string>> string_data;
         std::shared_ptr<lru11::Cache<std::string, shared_mongols_map>> map_data;
         std::shared_ptr<lru11::Cache<std::string, shared_mongols_list>> list_data;
@@ -174,6 +195,8 @@ namespace mongols {
         std::string _append(const std::vector<std::string>&);
         std::string _getrange(const std::vector<std::string>&);
         std::string _setrange(const std::vector<std::string>&);
+        std::string _expire(const std::vector<std::string>&);
+        std::string _ttl(const std::vector<std::string>&);
 
         //hash map
         std::string _hget(const std::vector<std::string>&);
@@ -185,6 +208,8 @@ namespace mongols {
         std::string _hlen(const std::vector<std::string>&);
         std::string _hmget(const std::vector<std::string>&);
         std::string _hmset(const std::vector<std::string>&);
+        std::string _hexpire(const std::vector<std::string>&);
+        std::string _httl(const std::vector<std::string>&);
 
         //list
         std::string _lpush_front(const std::vector<std::string>&);
@@ -197,6 +222,8 @@ namespace mongols {
         std::string _lrange(const std::vector<std::string>&);
         std::string _lerase(const std::vector<std::string>&);
         std::string _lexists(const std::vector<std::string>&);
+        std::string _lexpire(const std::vector<std::string>&);
+        std::string _lttl(const std::vector<std::string>&);
 
         // set
         std::string _sadd(const std::vector<std::string>&);
@@ -209,6 +236,8 @@ namespace mongols {
         std::string _ssymmetric_difference(const std::vector<std::string>&);
         std::string _serase(const std::vector<std::string>&);
         std::string _slen(const std::vector<std::string>&);
+        std::string _sexpire(const std::vector<std::string>&);
+        std::string _sttl(const std::vector<std::string>&);
 
 
         //queue
@@ -219,6 +248,8 @@ namespace mongols {
         std::string _qempty(const std::vector<std::string>&);
         std::string _qerase(const std::vector<std::string>&);
         std::string _qlen(const std::vector<std::string>&);
+        std::string _qexpire(const std::vector<std::string>&);
+        std::string _qttl(const std::vector<std::string>&);
 
         //stack
         std::string _zpush(const std::vector<std::string>&);
@@ -227,6 +258,8 @@ namespace mongols {
         std::string _zempty(const std::vector<std::string>&);
         std::string _zerase(const std::vector<std::string>&);
         std::string _zlen(const std::vector<std::string>&);
+        std::string _zexpire(const std::vector<std::string>&);
+        std::string _zttl(const std::vector<std::string>&);
 
         // incr and  decr
         std::string _incrby(const std::vector<std::string>&);

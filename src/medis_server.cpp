@@ -111,6 +111,8 @@ namespace mongols {
         this->op["_HLEN"] = &medis_server::_hlen;
         this->op["_HMGET"] = &medis_server::_hmget;
         this->op["_HMSET"] = &medis_server::_hmset;
+        this->op["_HEXPIRE"] = &medis_server::_hexpire;
+        this->op["_HTTL"] = &medis_server::_httl;
 
         this->op["_LFRONT"] = &medis_server::_lfront;
         this->op["_LBACK"] = &medis_server::_lback;
@@ -122,6 +124,8 @@ namespace mongols {
         this->op["_LERASE"] = &medis_server::_lerase;
         this->op["_LRANGE"] = &medis_server::_lrange;
         this->op["_LEXISTS"] = &medis_server::_lexists;
+        this->op["_LEXPIRE"] = &medis_server::_lexpire;
+        this->op["_LTTL"] = &medis_server::_lttl;
 
         this->op["_SADD"] = &medis_server::_sadd;
         this->op["_SDEL"] = &medis_server::_sdel;
@@ -134,6 +138,8 @@ namespace mongols {
         this->op["_SUNION"] = &medis_server::_sunion;
         this->op["_SSYDIFF"] = &medis_server::_ssymmetric_difference;
         this->op["_SERASE"] = &medis_server::_serase;
+        this->op["_SEXPIRE"] = &medis_server::_sexpire;
+        this->op["_STTL"] = &medis_server::_sttl;
 
         this->op["_QPUSH"] = &medis_server::_qpush;
         this->op["_QPOP"] = &medis_server::_qpop;
@@ -142,6 +148,8 @@ namespace mongols {
         this->op["_QEMPTY"] = &medis_server::_qempty;
         this->op["_QERASE"] = &medis_server::_qerase;
         this->op["_QLEN"] = &medis_server::_qlen;
+        this->op["_QEXPIRE"] = &medis_server::_qexpire;
+        this->op["_QTTL"] = &medis_server::_qttl;
 
 
         this->op["_ZPOP"] = &medis_server::_zpop;
@@ -150,12 +158,16 @@ namespace mongols {
         this->op["_ZEMPTY"] = &medis_server::_zempty;
         this->op["_ZERASE"] = &medis_server::_zerase;
         this->op["_ZLEN"] = &medis_server::_zlen;
+        this->op["_ZEXPIRE"] = &medis_server::_zexpire;
+        this->op["_ZTTL"] = &medis_server::_zttl;
 
 
         this->op["_GET"] = &medis_server::_get;
         this->op["_SET"] = &medis_server::_set;
         this->op["_DEL"] = &medis_server::_del;
         this->op["_EXISTS"] = &medis_server::_exists;
+        this->op["_EXPIRE"] = &medis_server::_expire;
+        this->op["_TTL"] = &medis_server::_ttl;
 
         this->op["_MGET"] = &medis_server::_mget;
         this->op["_MSET"] = &medis_server::_mset;
@@ -1253,11 +1265,11 @@ medis_error:
     std::string medis_server::_hset(const std::vector<std::string>& ret) {
         if (ret.size() == 4) {
             shared_mongols_map m;
-            if (this->map_data->contains(ret[1]) && this->map_data->tryGet(ret[1], m)) {
-                (*m)[ret[2]] = ret[3];
+            if (this->map_data->contains(ret[1]) && this->map_data->tryGet(ret[1], m) && !m->expired()) {
+                m->data[ret[2]] = ret[3];
             } else {
-                m = std::make_shared<mongols_map>();
-                m->insert(std::make_pair(ret[2], ret[3]));
+                m = std::make_shared<cache_t < mongols_map >> ();
+                m->data.insert(std::make_pair(ret[2], ret[3]));
                 this->map_data->insert(ret[1], m);
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
@@ -1268,8 +1280,8 @@ medis_error:
     std::string medis_server::_hget(const std::vector<std::string>& ret) {
         if (ret.size() == 3) {
             shared_mongols_map m;
-            if (this->map_data->contains(ret[1]) && this->map_data->tryGet(ret[1], m)) {
-                return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{(*m)[ret[2]]}).response;
+            if (this->map_data->contains(ret[1]) && this->map_data->tryGet(ret[1], m) && !m->expired()) {
+                return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{m->data[ret[2]]}).response;
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"nil"}).response;
         }
@@ -1280,10 +1292,10 @@ medis_error:
         size_t len = ret.size();
         if (len > 2) {
             shared_mongols_map m;
-            if (this->map_data->contains(ret[1]) && this->map_data->tryGet(ret[1], m)) {
+            if (this->map_data->contains(ret[1]) && this->map_data->tryGet(ret[1], m) && !m->expired()) {
                 size_t n = 0;
                 for (size_t i = 2; i < len; ++i) {
-                    n += m->erase(ret[i]);
+                    n += m->data.erase(ret[i]);
                 }
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(n)}).response;
             }
@@ -1295,8 +1307,8 @@ medis_error:
     std::string medis_server::_hexists(const std::vector<std::string>& ret) {
         if (ret.size() == 3) {
             shared_mongols_map m;
-            if (this->map_data->contains(ret[1]) && this->map_data->tryGet(ret[1], m)) {
-                if (m->find(ret[2]) != m->end()) {
+            if (this->map_data->contains(ret[1]) && this->map_data->tryGet(ret[1], m) && !m->expired()) {
+                if (m->data.find(ret[2]) != m->data.end()) {
                     return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
                 }
             }
@@ -1319,9 +1331,9 @@ medis_error:
     std::string medis_server::_hgetall(const std::vector<std::string>& ret) {
         if (ret.size() == 2) {
             shared_mongols_map m;
-            if (this->map_data->contains(ret[1]) && this->map_data->tryGet(ret[1], m)) {
+            if (this->map_data->contains(ret[1]) && this->map_data->tryGet(ret[1], m) && !m->expired()) {
                 std::vector<std::string> vs;
-                for (auto& item : *m) {
+                for (auto& item : m->data) {
                     vs.emplace_back(item.first);
                     vs.emplace_back(item.second);
                 }
@@ -1335,8 +1347,8 @@ medis_error:
     std::string medis_server::_hlen(const std::vector<std::string>& ret) {
         if (ret.size() == 2) {
             shared_mongols_map m;
-            if (this->map_data->contains(ret[1]) && this->map_data->tryGet(ret[1], m)) {
-                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(m->size())}).response;
+            if (this->map_data->contains(ret[1]) && this->map_data->tryGet(ret[1], m) && !m->expired()) {
+                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(m->data.size())}).response;
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
         }
@@ -1347,15 +1359,15 @@ medis_error:
         size_t len = ret.size();
         if (len > 2 && (len - 2) % 2 == 0) {
             shared_mongols_map m;
-            if (this->map_data->contains(ret[1]) && this->map_data->tryGet(ret[1], m)) {
+            if (this->map_data->contains(ret[1]) && this->map_data->tryGet(ret[1], m) && !m->expired()) {
                 for (size_t i = 2; i < len - 1; ++++i) {
-                    (*m)[ret[i]] = ret[i + 1];
+                    m->data[ret[i]] = ret[i + 1];
                 }
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"OK"}).response;
             } else {
-                m = std::make_shared<mongols_map>();
+                m = std::make_shared<cache_t < mongols_map >> ();
                 for (size_t i = 2; i < len - 1; ++++i) {
-                    (*m)[ret[i]] = ret[i + 1];
+                    m->data[ret[i]] = ret[i + 1];
                 }
                 this->map_data->insert(ret[1], m);
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"OK"}).response;
@@ -1369,10 +1381,10 @@ medis_error:
         size_t len = ret.size();
         if (len > 2) {
             shared_mongols_map m;
-            if (this->map_data->contains(ret[1]) && this->map_data->tryGet(ret[1], m)) {
+            if (this->map_data->contains(ret[1]) && this->map_data->tryGet(ret[1], m) && !m->expired()) {
                 std::vector<std::string> vs;
                 for (size_t i = 2; i < len; ++i) {
-                    vs.emplace_back((*m)[ret[i]]);
+                    vs.emplace_back(m->data[ret[i]]);
                 }
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::ARRAYS, vs).response;
             }
@@ -1384,9 +1396,9 @@ medis_error:
     std::string medis_server::_lfront(const std::vector<std::string>& ret) {
         if (ret.size() == 2) {
             shared_mongols_list l;
-            if (this->list_data->contains(ret[1]) && this->list_data->tryGet(ret[1], l)) {
-                if (!l->empty()) {
-                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{l->front()}).response;
+            if (this->list_data->contains(ret[1]) && this->list_data->tryGet(ret[1], l) && !l->expired()) {
+                if (!l->data.empty()) {
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{l->data.front()}).response;
                 }
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"nil"}).response;
@@ -1397,9 +1409,9 @@ medis_error:
     std::string medis_server::_lback(const std::vector<std::string>& ret) {
         if (ret.size() == 2) {
             shared_mongols_list l;
-            if (this->list_data->contains(ret[1]) && this->list_data->tryGet(ret[1], l)) {
-                if (!l->empty()) {
-                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{l->back()}).response;
+            if (this->list_data->contains(ret[1]) && this->list_data->tryGet(ret[1], l) && !l->expired()) {
+                if (!l->data.empty()) {
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{l->data.back()}).response;
                 }
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"nil"}).response;
@@ -1410,10 +1422,10 @@ medis_error:
     std::string medis_server::_lpop_front(const std::vector<std::string>& ret) {
         if (ret.size() == 2) {
             shared_mongols_list l;
-            if (this->list_data->contains(ret[1]) && this->list_data->tryGet(ret[1], l)) {
-                if (!l->empty()) {
-                    std::string temp = std::move(l->front());
-                    l->pop_front();
+            if (this->list_data->contains(ret[1]) && this->list_data->tryGet(ret[1], l) && !l->expired()) {
+                if (!l->data.empty()) {
+                    std::string temp = std::move(l->data.front());
+                    l->data.pop_front();
                     return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{temp}).response;
                 }
             }
@@ -1425,10 +1437,10 @@ medis_error:
     std::string medis_server::_lpop_back(const std::vector<std::string>& ret) {
         if (ret.size() == 2) {
             shared_mongols_list l;
-            if (this->list_data->contains(ret[1]) && this->list_data->tryGet(ret[1], l)) {
-                if (!l->empty()) {
-                    std::string temp = std::move(l->back());
-                    l->pop_back();
+            if (this->list_data->contains(ret[1]) && this->list_data->tryGet(ret[1], l) && !l->expired()) {
+                if (!l->data.empty()) {
+                    std::string temp = std::move(l->data.back());
+                    l->data.pop_back();
                     return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{temp}).response;
                 }
             }
@@ -1442,19 +1454,19 @@ medis_error:
         size_t len = ret.size();
         if (len > 2) {
             shared_mongols_list l;
-            if (this->list_data->contains(ret[1]) && this->list_data->tryGet(ret[1], l)) {
+            if (this->list_data->contains(ret[1]) && this->list_data->tryGet(ret[1], l) && !l->expired()) {
                 size_t i = 0;
                 for (size_t j = 2; j < len; ++j) {
-                    l->emplace_front(ret[j]);
+                    l->data.emplace_front(ret[j]);
                     ++i;
                 }
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(i)}).response;
 
             } else {
-                l = std::make_shared<mongols_list>();
+                l = std::make_shared<cache_t < mongols_list >> ();
                 size_t i = 0;
                 for (size_t j = 2; j < len; ++j) {
-                    l->emplace_front(ret[j]);
+                    l->data.emplace_front(ret[j]);
                     ++i;
                 }
                 this->list_data->insert(ret[1], l);
@@ -1471,19 +1483,19 @@ medis_error:
         size_t len = ret.size();
         if (len > 2) {
             shared_mongols_list l;
-            if (this->list_data->contains(ret[1]) && this->list_data->tryGet(ret[1], l)) {
+            if (this->list_data->contains(ret[1]) && this->list_data->tryGet(ret[1], l) && !l->expired()) {
                 size_t i = 0;
                 for (size_t j = 2; j < len; ++j) {
-                    l->emplace_back(ret[j]);
+                    l->data.emplace_back(ret[j]);
                     ++i;
                 }
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(i)}).response;
 
             } else {
-                l = std::make_shared<mongols_list>();
+                l = std::make_shared<cache_t < mongols_list >> ();
                 size_t i = 0;
                 for (size_t j = 2; j < len; ++j) {
-                    l->emplace_back(ret[j]);
+                    l->data.emplace_back(ret[j]);
                     ++i;
                 }
                 this->list_data->insert(ret[1], l);
@@ -1499,8 +1511,8 @@ medis_error:
     std::string medis_server::_llen(const std::vector<std::string>& ret) {
         if (ret.size() == 2) {
             shared_mongols_list l;
-            if (this->list_data->contains(ret[1]) && this->list_data->tryGet(ret[1], l)) {
-                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(l->size())}).response;
+            if (this->list_data->contains(ret[1]) && this->list_data->tryGet(ret[1], l) && !l->expired()) {
+                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(l->data.size())}).response;
             }
 
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
@@ -1511,12 +1523,12 @@ medis_error:
     std::string medis_server::_lrange(const std::vector<std::string>& ret) {
         if (ret.size() == 4) {
             shared_mongols_list l;
-            if (this->list_data->contains(ret[1]) && this->list_data->tryGet(ret[1], l)) {
+            if (this->list_data->contains(ret[1]) && this->list_data->tryGet(ret[1], l) && !l->expired()) {
                 try {
                     long start = std::stol(ret[2]), count = std::stol(ret[3]), i = 0;
                     std::vector<std::string> vs;
                     if (start >= 0) {
-                        for (auto& item : *l) {
+                        for (auto& item : l->data) {
                             long tmp = i - start;
                             if (tmp >= count) {
                                 break;
@@ -1528,7 +1540,7 @@ medis_error:
                         }
                     } else {
                         i = -1;
-                        for (mongols_list::reverse_iterator ritem = l->rbegin(); ritem != l->rend(); ++ritem) {
+                        for (mongols_list::reverse_iterator ritem = l->data.rbegin(); ritem != l->data.rend(); ++ritem) {
                             long tmp = start - i;
                             if (tmp >= count) {
                                 break;
@@ -1565,8 +1577,8 @@ medis_error:
     std::string medis_server::_lexists(const std::vector<std::string>& ret) {
         if (ret.size() == 3) {
             shared_mongols_list l;
-            if (this->list_data->contains(ret[1]) && this->list_data->tryGet(ret[1], l)) {
-                if (std::find(l->begin(), l->end(), ret[2]) != l->end()) {
+            if (this->list_data->contains(ret[1]) && this->list_data->tryGet(ret[1], l) && !l->expired()) {
+                if (std::find(l->data.begin(), l->data.end(), ret[2]) != l->data.end()) {
                     return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
                 }
             }
@@ -1579,20 +1591,20 @@ medis_error:
         size_t len = ret.size();
         if (len > 2) {
             shared_mongols_set s;
-            if (this->set_data->contains(ret[1]) && this->set_data->tryGet(ret[1], s)) {
+            if (this->set_data->contains(ret[1]) && this->set_data->tryGet(ret[1], s) && !s->expired()) {
                 size_t i = 0;
                 for (size_t j = 2; j < len; ++j) {
-                    auto tmp = s->emplace(ret[j]);
+                    auto tmp = s->data.emplace(ret[j]);
                     if (tmp.second) {
                         ++i;
                     }
                 }
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(i)}).response;
             } else {
-                s = std::make_shared<mongols_set>();
+                s = std::make_shared<cache_t < mongols_set >> ();
                 size_t i = 0;
                 for (size_t j = 2; j < len; ++j) {
-                    auto tmp = s->emplace(ret[j]);
+                    auto tmp = s->data.emplace(ret[j]);
                     if (tmp.second) {
                         ++i;
                     }
@@ -1610,10 +1622,10 @@ medis_error:
         size_t len = ret.size();
         if (len > 2) {
             shared_mongols_set s;
-            if (this->set_data->contains(ret[1]) && this->set_data->tryGet(ret[1], s)) {
+            if (this->set_data->contains(ret[1]) && this->set_data->tryGet(ret[1], s) && !s->expired()) {
                 size_t i = 0;
                 for (size_t j = 2; j < len; ++j) {
-                    i += s->erase(ret[j]);
+                    i += s->data.erase(ret[j]);
                 }
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(i)}).response;
             }
@@ -1625,8 +1637,8 @@ medis_error:
     std::string medis_server::_sexists(const std::vector<std::string>& ret) {
         if (ret.size() == 3) {
             shared_mongols_set s;
-            if (this->set_data->contains(ret[1]) && this->set_data->tryGet(ret[1], s)) {
-                if (s->find(ret[2]) != s->end()) {
+            if (this->set_data->contains(ret[1]) && this->set_data->tryGet(ret[1], s) && !s->expired()) {
+                if (s->data.find(ret[2]) != s->data.end()) {
                     return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
                 }
             }
@@ -1639,9 +1651,9 @@ medis_error:
         if (ret.size() == 3) {
             shared_mongols_set s1, s2;
             bool b1 = this->set_data->contains(ret[1]), b2 = this->set_data->contains(ret[2]);
-            if (b1 && b2 && this->set_data->tryGet(ret[1], s1) && this->set_data->tryGet(ret[2], s2)) {
-                std::vector<std::string> v(s1->size() + s2->size());
-                auto iter = std::set_difference(s1->begin(), s1->end(), s2->begin(), s2->end(), v.begin());
+            if (b1 && b2 && this->set_data->tryGet(ret[1], s1) && !s1->expired() && this->set_data->tryGet(ret[2], s2) && !s2->expired()) {
+                std::vector<std::string> v(s1->data.size() + s2->data.size());
+                auto iter = std::set_difference(s1->data.begin(), s1->data.end(), s2->data.begin(), s2->data.end(), v.begin());
                 v.resize(iter - v.begin());
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::ARRAYS, v).response;
             }
@@ -1654,9 +1666,9 @@ medis_error:
         if (ret.size() == 3) {
             shared_mongols_set s1, s2;
             bool b1 = this->set_data->contains(ret[1]), b2 = this->set_data->contains(ret[2]);
-            if (b1 && b2 && this->set_data->tryGet(ret[1], s1) && this->set_data->tryGet(ret[2], s2)) {
-                std::vector<std::string> v(s1->size() + s2->size());
-                auto iter = std::set_intersection(s1->begin(), s1->end(), s2->begin(), s2->end(), v.begin());
+            if (b1 && b2 && this->set_data->tryGet(ret[1], s1) && !s1->expired() && this->set_data->tryGet(ret[2], s2) && !s2->expired()) {
+                std::vector<std::string> v(s1->data.size() + s2->data.size());
+                auto iter = std::set_intersection(s1->data.begin(), s1->data.end(), s2->data.begin(), s2->data.end(), v.begin());
                 v.resize(iter - v.begin());
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::ARRAYS, v).response;
             }
@@ -1669,9 +1681,9 @@ medis_error:
         if (ret.size() == 3) {
             shared_mongols_set s1, s2;
             bool b1 = this->set_data->contains(ret[1]), b2 = this->set_data->contains(ret[2]);
-            if (b1 && b2 && this->set_data->tryGet(ret[1], s1) && this->set_data->tryGet(ret[2], s2)) {
-                std::vector<std::string> v(s1->size() + s2->size());
-                auto iter = std::set_symmetric_difference(s1->begin(), s1->end(), s2->begin(), s2->end(), v.begin());
+            if (b1 && b2 && this->set_data->tryGet(ret[1], s1) && !s1->expired() && this->set_data->tryGet(ret[2], s2) && !s2->expired()) {
+                std::vector<std::string> v(s1->data.size() + s2->data.size());
+                auto iter = std::set_symmetric_difference(s1->data.begin(), s1->data.end(), s2->data.begin(), s2->data.end(), v.begin());
                 v.resize(iter - v.begin());
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::ARRAYS, v).response;
             }
@@ -1684,9 +1696,9 @@ medis_error:
         if (ret.size() == 3) {
             shared_mongols_set s1, s2;
             bool b1 = this->set_data->contains(ret[1]), b2 = this->set_data->contains(ret[2]);
-            if (b1 && b2 && this->set_data->tryGet(ret[1], s1) && this->set_data->tryGet(ret[2], s2)) {
-                std::vector<std::string> v(s1->size() + s2->size());
-                auto iter = std::set_union(s1->begin(), s1->end(), s2->begin(), s2->end(), v.begin());
+            if (b1 && b2 && this->set_data->tryGet(ret[1], s1) && !s1->expired() && this->set_data->tryGet(ret[2], s2) && !s2->expired()) {
+                std::vector<std::string> v(s1->data.size() + s2->data.size());
+                auto iter = std::set_union(s1->data.begin(), s1->data.end(), s2->data.begin(), s2->data.end(), v.begin());
                 v.resize(iter - v.begin());
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::ARRAYS, v).response;
             }
@@ -1698,8 +1710,8 @@ medis_error:
     std::string medis_server::_slen(const std::vector<std::string>& ret) {
         if (ret.size() == 2) {
             shared_mongols_set s;
-            if (this->set_data->contains(ret[1]) && this->set_data->tryGet(ret[1], s)) {
-                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(s->size())}).response;
+            if (this->set_data->contains(ret[1]) && this->set_data->tryGet(ret[1], s) && !s->expired()) {
+                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(s->data.size())}).response;
 
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
@@ -1710,9 +1722,9 @@ medis_error:
     std::string medis_server::_smembers(const std::vector<std::string>& ret) {
         if (ret.size() == 2) {
             shared_mongols_set s;
-            if (this->set_data->contains(ret[1]) && this->set_data->tryGet(ret[1], s)) {
+            if (this->set_data->contains(ret[1]) && this->set_data->tryGet(ret[1], s) && !s->expired()) {
                 std::vector<std::string> sv;
-                for (auto& i : *s) {
+                for (auto& i : s->data) {
                     sv.emplace_back(i);
                 }
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::ARRAYS, sv).response;
@@ -1736,9 +1748,9 @@ medis_error:
     std::string medis_server::_qfront(const std::vector<std::string>& ret) {
         if (ret.size() == 2) {
             shared_mongols_queue q;
-            if (this->queue_data->contains(ret[1]) && this->queue_data->tryGet(ret[1], q)) {
-                if (!q->empty()) {
-                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{q->front()}).response;
+            if (this->queue_data->contains(ret[1]) && this->queue_data->tryGet(ret[1], q) && !q->expired()) {
+                if (!q->data.empty()) {
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{q->data.front()}).response;
                 }
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"nil"}).response;
@@ -1749,9 +1761,9 @@ medis_error:
     std::string medis_server::_qback(const std::vector<std::string>& ret) {
         if (ret.size() == 2) {
             shared_mongols_queue q;
-            if (this->queue_data->contains(ret[1]) && this->queue_data->tryGet(ret[1], q)) {
-                if (!q->empty()) {
-                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{q->back()}).response;
+            if (this->queue_data->contains(ret[1]) && this->queue_data->tryGet(ret[1], q) && !q->expired()) {
+                if (!q->data.empty()) {
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{q->data.back()}).response;
                 }
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"nil"}).response;
@@ -1762,8 +1774,8 @@ medis_error:
     std::string medis_server::_qempty(const std::vector<std::string>& ret) {
         if (ret.size() == 2) {
             shared_mongols_queue q;
-            if (this->queue_data->contains(ret[1]) && this->queue_data->tryGet(ret[1], q)) {
-                if (q->empty()) {
+            if (this->queue_data->contains(ret[1]) && this->queue_data->tryGet(ret[1], q) && !q->expired()) {
+                if (q->data.empty()) {
                     return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
                 }
             }
@@ -1775,10 +1787,10 @@ medis_error:
     std::string medis_server::_qpop(const std::vector<std::string>& ret) {
         if (ret.size() == 2) {
             shared_mongols_queue q;
-            if (this->queue_data->contains(ret[1]) && this->queue_data->tryGet(ret[1], q)) {
-                if (!q->empty()) {
-                    std::string v = std::move(q->front());
-                    q->pop();
+            if (this->queue_data->contains(ret[1]) && this->queue_data->tryGet(ret[1], q) && !q->expired()) {
+                if (!q->data.empty()) {
+                    std::string v = std::move(q->data.front());
+                    q->data.pop();
                     return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{v}).response;
                 }
             }
@@ -1791,18 +1803,18 @@ medis_error:
         size_t len = ret.size();
         if (len > 2) {
             shared_mongols_queue q;
-            if (this->queue_data->contains(ret[1]) && this->queue_data->tryGet(ret[1], q)) {
+            if (this->queue_data->contains(ret[1]) && this->queue_data->tryGet(ret[1], q) && !q->expired()) {
                 size_t i = 0;
                 for (size_t j = 2; j < len; ++j) {
-                    q->emplace(ret[j]);
+                    q->data.emplace(ret[j]);
                     ++i;
                 }
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(i)}).response;
             } else {
-                q = std::make_shared<mongols_queue>();
+                q = std::make_shared<cache_t < mongols_queue >> ();
                 size_t i = 0;
                 for (size_t j = 2; j < len; ++j) {
-                    q->emplace(ret[j]);
+                    q->data.emplace(ret[j]);
                     ++i;
                 }
                 this->queue_data->insert(ret[1], q);
@@ -1827,8 +1839,8 @@ medis_error:
     std::string medis_server::_qlen(const std::vector<std::string>& ret) {
         if (ret.size() == 2) {
             shared_mongols_queue q;
-            if (this->queue_data->contains(ret[1]) && this->queue_data->tryGet(ret[1], q)) {
-                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(q->size())}).response;
+            if (this->queue_data->contains(ret[1]) && this->queue_data->tryGet(ret[1], q) && !q->expired()) {
+                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(q->data.size())}).response;
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
         }
@@ -1839,18 +1851,18 @@ medis_error:
         size_t len = ret.size();
         if (len > 2) {
             shared_mongols_stack z;
-            if (this->stack_data->contains(ret[1]) && this->stack_data->tryGet(ret[1], z)) {
+            if (this->stack_data->contains(ret[1]) && this->stack_data->tryGet(ret[1], z) && !z->expired()) {
                 size_t i = 0;
                 for (size_t j = 2; j < len; ++j) {
-                    z->emplace(ret[j]);
+                    z->data.emplace(ret[j]);
                     ++i;
                 }
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(i)}).response;
             } else {
-                z = std::make_shared<mongols_stack>();
+                z = std::make_shared<cache_t < mongols_stack >> ();
                 size_t i = 0;
                 for (size_t j = 2; j < len; ++j) {
-                    z->emplace(ret[j]);
+                    z->data.emplace(ret[j]);
                     ++i;
                 }
                 this->stack_data->insert(ret[1], z);
@@ -1865,8 +1877,8 @@ medis_error:
     std::string medis_server::_zempty(const std::vector<std::string>& ret) {
         if (ret.size() == 2) {
             shared_mongols_stack z;
-            if (this->stack_data->contains(ret[1]) && this->stack_data->tryGet(ret[1], z)) {
-                if (z->empty()) {
+            if (this->stack_data->contains(ret[1]) && this->stack_data->tryGet(ret[1], z) && !z->expired()) {
+                if (z->data.empty()) {
                     return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
                 }
             }
@@ -1878,10 +1890,10 @@ medis_error:
     std::string medis_server::_zpop(const std::vector<std::string>& ret) {
         if (ret.size() == 2) {
             shared_mongols_stack z;
-            if (this->stack_data->contains(ret[1]) && this->stack_data->tryGet(ret[1], z)) {
-                if (!z->empty()) {
-                    std::string v = std::move(z->top());
-                    z->pop();
+            if (this->stack_data->contains(ret[1]) && this->stack_data->tryGet(ret[1], z) && !z->expired()) {
+                if (!z->data.empty()) {
+                    std::string v = std::move(z->data.top());
+                    z->data.pop();
                     return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{v}).response;
                 }
             }
@@ -1893,9 +1905,9 @@ medis_error:
     std::string medis_server::_ztop(const std::vector<std::string>& ret) {
         if (ret.size() == 2) {
             shared_mongols_stack z;
-            if (this->stack_data->contains(ret[1]) && this->stack_data->tryGet(ret[1], z)) {
-                if (!z->empty()) {
-                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{z->top()}).response;
+            if (this->stack_data->contains(ret[1]) && this->stack_data->tryGet(ret[1], z) && !z->expired()) {
+                if (!z->data.empty()) {
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{z->data.top()}).response;
                 }
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"nil"}).response;
@@ -1917,8 +1929,8 @@ medis_error:
     std::string medis_server::_zlen(const std::vector<std::string>& ret) {
         if (ret.size() == 2) {
             shared_mongols_stack z;
-            if (this->stack_data->contains(ret[1]) && this->stack_data->tryGet(ret[1], z)) {
-                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(z->size())}).response;
+            if (this->stack_data->contains(ret[1]) && this->stack_data->tryGet(ret[1], z) && !z->expired()) {
+                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(z->data.size())}).response;
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
         }
@@ -1928,11 +1940,11 @@ medis_error:
     std::string medis_server::_set(const std::vector<std::string>& ret) {
         if (ret.size() == 3) {
             shared_mongols_string v;
-            if (this->string_data->contains(ret[1]) && this->string_data->tryGet(ret[1], v)) {
-                v->assign(ret[2]);
+            if (this->string_data->contains(ret[1]) && this->string_data->tryGet(ret[1], v) && !v->expired()) {
+                v->data.assign(ret[2]);
             } else {
-                v = std::make_shared<std::string>();
-                v->assign(ret[2]);
+                v = std::make_shared<cache_t < std::string >> ();
+                v->data.assign(ret[2]);
                 this->string_data->insert(ret[1], v);
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"OK"}).response;
@@ -1943,8 +1955,8 @@ medis_error:
     std::string medis_server::_get(const std::vector<std::string>& ret) {
         if (ret.size() == 2) {
             shared_mongols_string v;
-            if (this->string_data->contains(ret[1]) && this->string_data->tryGet(ret[1], v)) {
-                return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{*v}).response;
+            if (this->string_data->contains(ret[1]) && this->string_data->tryGet(ret[1], v) && !v->expired()) {
+                return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{v->data}).response;
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"nil"}).response;
         }
@@ -1975,13 +1987,14 @@ medis_error:
     std::string medis_server::_append(const std::vector<std::string>& ret) {
         if (ret.size() == 3) {
             shared_mongols_string v;
-            if (this->string_data->contains(ret[1]) && this->string_data->tryGet(ret[1], v)) {
-                v->append(ret[2]);
-                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(v->size())}).response;
+            if (this->string_data->contains(ret[1]) && this->string_data->tryGet(ret[1], v) && !v->expired()) {
+                v->data.append(ret[2]);
+                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(v->data.size())}).response;
             } else {
-                v = std::make_shared<std::string>(ret[2]);
+                v = std::make_shared<cache_t < std::string >> ();
+                v->data.assign(ret[2]);
                 this->string_data->insert(ret[1], v);
-                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(v->size())}).response;
+                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(v->data.size())}).response;
 
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"nil"}).response;
@@ -1992,10 +2005,10 @@ medis_error:
     std::string medis_server::_getrange(const std::vector<std::string>& ret) {
         if (ret.size() == 4) {
             shared_mongols_string v;
-            if (this->string_data->contains(ret[1]) && this->string_data->tryGet(ret[1], v)) {
+            if (this->string_data->contains(ret[1]) && this->string_data->tryGet(ret[1], v) && !v->expired()) {
                 try {
                     size_t start = std::stoul(ret[2]), count = std::stoul(ret[3]);
-                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{v->substr(start, count)}).response;
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{v->data.substr(start, count)}).response;
 
                 } catch (std::exception&) {
 
@@ -2010,11 +2023,11 @@ medis_error:
     std::string medis_server::_setrange(const std::vector<std::string>& ret) {
         if (ret.size() == 4) {
             shared_mongols_string v;
-            if (this->string_data->contains(ret[1]) && this->string_data->tryGet(ret[1], v)) {
+            if (this->string_data->contains(ret[1]) && this->string_data->tryGet(ret[1], v) && !v->expired()) {
                 try {
                     size_t start = std::stoul(ret[2]);
-                    v->replace(start, ret[3].size(), ret[3]);
-                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(v->size())}).response;
+                    v->data.replace(start, ret[3].size(), ret[3]);
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(v->data.size())}).response;
                 } catch (std::exception&) {
                 }
             }
@@ -2026,9 +2039,9 @@ medis_error:
     std::string medis_server::_getset(const std::vector<std::string>& ret) {
         if (ret.size() == 3) {
             shared_mongols_string v;
-            if (this->string_data->contains(ret[1]) && this->string_data->tryGet(ret[1], v)) {
-                std::string tmp_v = std::move(*v);
-                v->assign(ret[2]);
+            if (this->string_data->contains(ret[1]) && this->string_data->tryGet(ret[1], v) && !v->expired()) {
+                std::string tmp_v = std::move(v->data);
+                v->data.assign(ret[2]);
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::BULK_STRINGS,{tmp_v}).response;
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"nil"}).response;
@@ -2042,8 +2055,8 @@ medis_error:
             std::vector<std::string> vs;
             for (size_t i = 1; i < len; ++i) {
                 shared_mongols_string v;
-                if (this->string_data->contains(ret[i]) && this->string_data->tryGet(ret[i], v)) {
-                    vs.emplace_back(*v);
+                if (this->string_data->contains(ret[i]) && this->string_data->tryGet(ret[i], v) && !v->expired()) {
+                    vs.emplace_back(v->data);
                 } else {
                     vs.emplace_back("nil");
                 }
@@ -2057,7 +2070,7 @@ medis_error:
         size_t len = ret.size();
         if (len >= 2 && (len - 1) % 2 == 0) {
             for (size_t i = 1; i < len - 1; ++++i) {
-                shared_mongols_string v = std::make_shared<std::string>(ret[i + 1]);
+                shared_mongols_string v = std::make_shared<cache_t < std::string >> (ret[i + 1]);
                 this->string_data->insert(ret[1], v);
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::SIMPLE_STRINGS,{"OK"}).response;
@@ -2068,8 +2081,8 @@ medis_error:
     std::string medis_server::_strlen(const std::vector<std::string>& ret) {
         if (ret.size() == 2) {
             shared_mongols_string v;
-            if (this->string_data->contains(ret[1]) && this->string_data->tryGet(ret[1], v)) {
-                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(v->size())}).response;
+            if (this->string_data->contains(ret[1]) && this->string_data->tryGet(ret[1], v) && !v->expired()) {
+                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(v->data.size())}).response;
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
         }
@@ -2079,15 +2092,15 @@ medis_error:
     std::string medis_server::_incr(const std::vector<std::string>& ret) {
         if (ret.size() == 2) {
             shared_mongols_string v;
-            if (this->string_data->contains(ret[1]) && this->string_data->tryGet(ret[1], v)) {
+            if (this->string_data->contains(ret[1]) && this->string_data->tryGet(ret[1], v) && !v->expired()) {
                 try {
-                    long s = std::stol(*v);
-                    *v = std::move(std::to_string(++s));
-                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{*v}).response;
+                    long s = std::stol(v->data);
+                    v->data = std::move(std::to_string(++s));
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{v->data}).response;
                 } catch (std::exception&) {
                 }
             } else {
-                v = std::make_shared<std::string>("1");
+                v = std::make_shared<cache_t < std::string >> ("1");
                 this->string_data->insert(ret[1], v);
 
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
@@ -2100,16 +2113,16 @@ medis_error:
     std::string medis_server::_incrby(const std::vector<std::string>& ret) {
         if (ret.size() == 3) {
             shared_mongols_string v;
-            if (this->string_data->contains(ret[1]) && this->string_data->tryGet(ret[1], v)) {
+            if (this->string_data->contains(ret[1]) && this->string_data->tryGet(ret[1], v) && !v->expired()) {
                 try {
-                    long s = std::stol(*v) + std::stol(ret[2]);
-                    *v = std::move(std::to_string(s));
-                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{*v}).response;
+                    long s = std::stol(v->data) + std::stol(ret[2]);
+                    v->data = std::move(std::to_string(s));
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{v->data}).response;
                 } catch (std::exception&) {
 
                 }
             } else {
-                v = std::make_shared<std::string>(ret[2]);
+                v = std::make_shared<cache_t < std::string >> (ret[2]);
                 this->string_data->insert(ret[1], v);
 
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{ret[2]}).response;
@@ -2122,16 +2135,16 @@ medis_error:
     std::string medis_server::_decr(const std::vector<std::string>& ret) {
         if (ret.size() == 2) {
             shared_mongols_string v;
-            if (this->string_data->contains(ret[1]) && this->string_data->tryGet(ret[1], v)) {
+            if (this->string_data->contains(ret[1]) && this->string_data->tryGet(ret[1], v) && !v->expired()) {
                 try {
-                    long s = std::stol(*v);
-                    *v = std::move(std::to_string(--s));
-                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{*v}).response;
+                    long s = std::stol(v->data);
+                    v->data = std::move(std::to_string(--s));
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{v->data}).response;
                 } catch (std::exception&) {
 
                 }
             } else {
-                v = std::make_shared<std::string>("-1");
+                v = std::make_shared<cache_t < std::string >> ("-1");
                 this->string_data->insert(ret[1], v);
 
                 return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"-1"}).response;
@@ -2144,21 +2157,220 @@ medis_error:
     std::string medis_server::_decrby(const std::vector<std::string>& ret) {
         if (ret.size() == 3) {
             shared_mongols_string v;
-            if (this->string_data->contains(ret[1]) && this->string_data->tryGet(ret[1], v)) {
+            if (this->string_data->contains(ret[1]) && this->string_data->tryGet(ret[1], v) && !v->expired()) {
                 try {
-                    long s = std::stol(*v) - std::stol(ret[2]);
-                    *v = std::move(std::to_string(s));
-                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{*v}).response;
+                    long s = std::stol(v->data) - std::stol(ret[2]);
+                    v->data = std::move(std::to_string(s));
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{v->data}).response;
                 } catch (std::exception&) {
 
                 }
             } else {
-                v = std::make_shared<std::string>("-" + ret[2]);
+                v = std::make_shared<cache_t < std::string >> ("-" + ret[2]);
                 this->string_data->insert(ret[1], v);
 
-                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{*v}).response;
+                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{v->data}).response;
             }
             return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
+    std::string medis_server::_expire(const std::vector<std::string>& ret) {
+        if (ret.size() == 3) {
+            shared_mongols_string v;
+            if (this->string_data->contains(ret[1]) && this->string_data->tryGet(ret[1], v) && !v->expired()) {
+                try {
+                    v->expires = std::stoll(ret[2]);
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
+                } catch (std::exception&) {
+
+                }
+                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
+            }
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
+    std::string medis_server::_hexpire(const std::vector<std::string>& ret) {
+        if (ret.size() == 3) {
+            shared_mongols_map v;
+            if (this->map_data->contains(ret[1]) && this->map_data->tryGet(ret[1], v) && !v->expired()) {
+                try {
+                    v->expires = std::stoll(ret[2]);
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
+                } catch (std::exception&) {
+
+                }
+                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
+            }
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
+    std::string medis_server::_lexpire(const std::vector<std::string>& ret) {
+        if (ret.size() == 3) {
+            shared_mongols_list v;
+            if (this->list_data->contains(ret[1]) && this->list_data->tryGet(ret[1], v) && !v->expired()) {
+                try {
+                    v->expires = std::stoll(ret[2]);
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
+                } catch (std::exception&) {
+
+                }
+                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
+            }
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
+    std::string medis_server::_qexpire(const std::vector<std::string>& ret) {
+        if (ret.size() == 3) {
+            shared_mongols_queue v;
+            if (this->queue_data->contains(ret[1]) && this->queue_data->tryGet(ret[1], v) && !v->expired()) {
+                try {
+                    v->expires = std::stoll(ret[2]);
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
+                } catch (std::exception&) {
+
+                }
+                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
+            }
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
+    std::string medis_server::_sexpire(const std::vector<std::string>& ret) {
+        if (ret.size() == 3) {
+            shared_mongols_set v;
+            if (this->set_data->contains(ret[1]) && this->set_data->tryGet(ret[1], v) && !v->expired()) {
+                try {
+                    v->expires = std::stoll(ret[2]);
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
+                } catch (std::exception&) {
+
+                }
+                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
+            }
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
+    std::string medis_server::_zexpire(const std::vector<std::string>& ret) {
+        if (ret.size() == 3) {
+            shared_mongols_stack v;
+            if (this->stack_data->contains(ret[1]) && this->stack_data->tryGet(ret[1], v) && !v->expired()) {
+                try {
+                    v->expires = std::stoll(ret[2]);
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"1"}).response;
+                } catch (std::exception&) {
+
+                }
+                return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"0"}).response;
+            }
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
+    std::string medis_server::_ttl(const std::vector<std::string>& ret) {
+        if (ret.size() == 2) {
+            shared_mongols_string v;
+            if (this->string_data->contains(ret[1]) && this->string_data->tryGet(ret[1], v)) {
+                long long ttl = v->ttl();
+                if (ttl > 0) {
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(ttl)}).response;
+                } else {
+                    this->string_data->remove(ret[1]);
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"-1"}).response;
+                }
+            }
+            return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"-2"}).response;
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
+    std::string medis_server::_httl(const std::vector<std::string>& ret) {
+        if (ret.size() == 2) {
+            shared_mongols_map v;
+            if (this->map_data->contains(ret[1]) && this->map_data->tryGet(ret[1], v)) {
+                long long ttl = v->ttl();
+                if (ttl > 0) {
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(ttl)}).response;
+                } else {
+                    this->map_data->remove(ret[1]);
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"-1"}).response;
+                }
+            }
+            return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"-2"}).response;
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
+    std::string medis_server::_lttl(const std::vector<std::string>& ret) {
+        if (ret.size() == 2) {
+            shared_mongols_list v;
+            if (this->list_data->contains(ret[1]) && this->list_data->tryGet(ret[1], v)) {
+                long long ttl = v->ttl();
+                if (ttl > 0) {
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(ttl)}).response;
+                } else {
+                    this->list_data->remove(ret[1]);
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"-1"}).response;
+                }
+
+            }
+            return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"-2"}).response;
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
+    std::string medis_server::_qttl(const std::vector<std::string>& ret) {
+        if (ret.size() == 2) {
+            shared_mongols_queue v;
+            if (this->queue_data->contains(ret[1]) && this->queue_data->tryGet(ret[1], v)) {
+                long long ttl = v->ttl();
+                if (ttl > 0) {
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(ttl)}).response;
+                } else {
+                    this->queue_data->remove(ret[1]);
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"-1"}).response;
+                }
+            }
+            return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"-2"}).response;
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
+    std::string medis_server::_sttl(const std::vector<std::string>& ret) {
+        if (ret.size() == 2) {
+            shared_mongols_set v;
+            if (this->set_data->contains(ret[1]) && this->set_data->tryGet(ret[1], v)) {
+                long long ttl = v->ttl();
+                if (ttl > 0) {
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(ttl)}).response;
+                } else {
+                    this->set_data->remove(ret[1]);
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"-1"}).response;
+                }
+            }
+            return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"-2"}).response;
+        }
+        return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
+    }
+
+    std::string medis_server::_zttl(const std::vector<std::string>& ret) {
+        if (ret.size() == 2) {
+            shared_mongols_stack v;
+            if (this->stack_data->contains(ret[1]) && this->stack_data->tryGet(ret[1], v)) {
+                long long ttl = v->ttl();
+                if (ttl > 0) {
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{std::to_string(ttl)}).response;
+                } else {
+                    this->stack_data->remove(ret[1]);
+                    return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"-1"}).response;
+                }
+            }
+            return this->resp_encoder.encode(simple_resp::RESP_TYPE::INTEGERS,{"-2"}).response;
         }
         return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
     }
@@ -2307,6 +2519,26 @@ medis_error:
         }
         return this->resp_encoder.encode(simple_resp::RESP_TYPE::ERRORS,{"ERROR"}).response;
     }
+
+    template<class value_t>
+    medis_server::cache_t<value_t>::cache_t() : data(), t(time(0)), expires(-1) {
+    }
+
+    template<class value_t>
+    medis_server::cache_t<value_t>::cache_t(const value_t& v) : data(v), t(time(0)), expires(-1) {
+    }
+
+    template<class value_t>
+    bool medis_server::cache_t<value_t>::expired() const {
+        return difftime(time(0), this->t) > (this->expires > 0 ? this->expires : 300);
+    }
+
+    template<class value_t>
+    long long medis_server::cache_t<value_t>::ttl() const {
+        return (this->expires > 0 ? this->expires : 300)-difftime(time(0), this->t);
+    }
+
+
 
 
 
