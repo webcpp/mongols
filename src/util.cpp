@@ -13,6 +13,7 @@
 #include <fstream>
 #include <iostream>
 #include <thread>
+#include <sstream>
 
 
 #include "lib/cppcodec/base64_rfc4648.hpp"
@@ -382,6 +383,16 @@ namespace mongols {
                 v.push_back(std::move(tmp));
             }
         }
+    }
+
+    std::vector<std::string> split(const std::string& s, char delimiter) {
+        std::vector<std::string> tokens;
+        std::string token;
+        std::istringstream tokenStream(s);
+        while (std::getline(tokenStream, token, delimiter)) {
+            tokens.emplace_back(token);
+        }
+        return tokens;
     }
 
     std::string regular_expression::INTEGER = R"(^[+-]?[1-9]+[0-9]*$)"

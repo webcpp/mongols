@@ -34,6 +34,7 @@ namespace mongols {
 
     void split(const std::string& s, char delim, std::vector<std::string>& v);
     void split(const std::string& s, const std::string& delim, std::vector<std::string>& v);
+    std::vector<std::string> split(const std::string& s, char delimiter);
 
     class random {
     public:
@@ -70,7 +71,7 @@ namespace mongols {
     std::string url_decode(const std::string& str);
 
     void forker(int, const std::function<void()>&, std::vector<pid_t>&);
-    
+
     bool process_bind_cpu(pid_t pid, int cpu);
 }
 
