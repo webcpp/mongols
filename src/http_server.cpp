@@ -30,8 +30,10 @@ namespace mongols {
             , size_t thread_size
             , size_t max_body_size
             , int max_event_size)
-    : server(0), max_body_size(max_body_size), db(0), db_options()
-    , session_expires(3600), cache_expires(3600), enable_session(false), enable_cache(false), db_path(LEVELDB_PATH) {
+    : server(0), max_body_size(max_body_size), lru_cache_size(1024), db(0), db_options()
+    , session_expires(3600), cache_expires(3600), lru_cache_expires(300)
+    , enable_session(false), enable_cache(false), enable_lru_cache(false)
+    , db_path(LEVELDB_PATH), lru_cache(0) {
         if (thread_size > 0) {
             this->server = new tcp_threading_server(host, port, timeout, buffer_size, thread_size, max_event_size);
         } else {
@@ -44,6 +46,9 @@ namespace mongols {
     }
 
     http_server::~http_server() {
+        if (this->lru_cache) {
+            delete this->lru_cache;
+        }
         if (this->db) {
             delete this->db;
         }
@@ -68,6 +73,9 @@ namespace mongols {
                 , std::placeholders::_5);
         if (this->enable_cache || this->enable_session) {
             leveldb::DB::Open(this->db_options, this->db_path, &this->db);
+        }
+        if (this->enable_lru_cache) {
+            this->lru_cache = new lru11::Cache<std::string, std::shared_ptr < cache_t >> (this->lru_cache_size, 0);
         }
         this->server->run(g);
     }
@@ -188,13 +196,6 @@ namespace mongols {
         mongols::http_request_parser parser(req);
         if (parser.parse(input.first, input.second)) {
             std::unordered_map<std::string, std::string>::const_iterator tmp_iterator;
-            if ((tmp_iterator = req.headers.find("If-Modified-Since")) != req.headers.end()
-                    && difftime(time(0), mongols::parse_http_time((u_char*) tmp_iterator->second.c_str(), tmp_iterator->second.size()))
-                    <= this->cache_expires) {
-                res.status = 304;
-                res.content.clear();
-                return this->create_response(res, keepalive);
-            }
             std::string& body = parser.get_body();
             req.client = client.ip;
             if ((tmp_iterator = req.headers.find("User-Agent")) != req.headers.end()) {
@@ -213,11 +214,36 @@ namespace mongols {
                         keepalive = KEEPALIVE_CONNECTION;
                     }
                 }
+
+                if ((tmp_iterator = req.headers.find("If-Modified-Since")) != req.headers.end()
+                        && difftime(time(0), mongols::parse_http_time((u_char*) tmp_iterator->second.c_str(), tmp_iterator->second.size()))
+                        <= this->lru_cache_expires) {
+                    res.status = 304;
+                    res.content.clear();
+                    return this->create_response(res, keepalive);
+                }
+                std::string cache_k = std::move(mongols::md5(req.method + req.uri + "?" + req.param));
+                if (req.method == "GET" && this->enable_lru_cache) {
+                    if (this->lru_cache->contains(cache_k)) {
+                        auto cache_ele = this->lru_cache->get(cache_k);
+                        if (cache_ele->expired(this->lru_cache_expires)) {
+                            this->lru_cache->remove(cache_k);
+                        } else {
+                            res.status = cache_ele->status;
+                            res.content = cache_ele->content;
+                            res.headers.find("Content-Type")->second = cache_ele->content_type;
+                            time_t now = time(0);
+                            res.headers.insert(std::move(std::make_pair("Last-Modified", mongols::http_time(&now))));
+                            return this->create_response(res, keepalive);
+                        }
+                    }
+                }
+
                 if (!req.param.empty()) {
                     mongols::parse_param(req.param, req.form);
                 }
 
-                std::string session_val, cache_k;
+                std::string session_val, cache_v;
 
                 if (this->db) {
                     if (this->enable_session) {
@@ -245,8 +271,6 @@ namespace mongols {
                     }
 
                     if (this->enable_cache) {
-                        cache_k = std::move(mongols::md5(req.method + req.uri + "?" + req.param));
-                        std::string cache_v;
                         if (this->db->Get(leveldb::ReadOptions(), cache_k, &cache_v).ok()) {
                             this->deserialize(cache_v, req.cache);
                         } else {
@@ -293,6 +317,15 @@ namespace mongols {
                         ptr = &res.cache;
                     }
                     this->db->Put(leveldb::WriteOptions(), cache_k, this->serialize(*ptr));
+                }
+                if (req.method == "GET" && this->enable_lru_cache && res.status == 200 && this->lru_cache_expires > 0) {
+                    std::shared_ptr<cache_t> cache_ele = std::make_shared<cache_t>();
+                    cache_ele->content = res.content;
+                    cache_ele->status = res.status;
+                    cache_ele->content_type = res.headers.find("Content-Type")->second;
+                    this->lru_cache->insert(cache_k, cache_ele);
+                    time_t now = time(0);
+                    res.headers.insert(std::move(std::make_pair("Last-Modified", mongols::http_time(&now))));
                 }
 
             }
@@ -344,6 +377,18 @@ namespace mongols {
         this->db_path = path;
     }
 
+    void http_server::set_enable_lru_cache(bool b) {
+        this->enable_lru_cache = b;
+    }
+
+    void http_server::set_lru_cache_expires(long long expires) {
+        this->lru_cache_expires = expires;
+    }
+
+    void http_server::set_lru_cache_size(size_t len) {
+        this->lru_cache_size = len;
+    }
+
     std::string http_server::serialize(const std::unordered_map<std::string, std::string>& m) {
         std::stringstream ss;
         msgpack::pack(ss, m);
@@ -356,7 +401,12 @@ namespace mongols {
         msgpack::unpack(str.c_str(), str.size()).get().convert(m);
     }
 
+    http_server::cache_t::cache_t() : status(200), t(time(0)), content_type(), content() {
+    }
 
+    bool http_server::cache_t::expired(long long expires) const {
+        return difftime(time(0), this->t) > expires;
+    }
 
 }
 

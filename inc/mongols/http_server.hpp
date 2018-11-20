@@ -2,13 +2,16 @@
 #define HTTP_SERVER_HPP
 
 
-
+#include <string>
+#include <ctime>
+#include <memory>
 #include "tcp_server.hpp"
 #include "request.hpp"
 #include "response.hpp"
 #include "http_request_parser.hpp"
 #include "lib/leveldb/db.h"
 #include "lib/leveldb/options.h"
+#include "lib/LRUCache11.hpp"
 
 
 
@@ -39,6 +42,9 @@ namespace mongols {
         void set_cache_size(size_t);
         void set_enable_compression(bool);
         void set_db_path(const std::string&);
+        void set_enable_lru_cache(bool);
+        void set_lru_cache_expires(long long);
+        void set_lru_cache_size(size_t);
     private:
         std::string work(
                 const std::function<bool(const mongols::request&)>& req_filter
@@ -56,13 +62,27 @@ namespace mongols {
         std::string serialize(const std::unordered_map<std::string, std::string>&);
         void deserialize(const std::string&, std::unordered_map<std::string, std::string>&);
     private:
+
+        class cache_t {
+        public:
+
+            cache_t();
+            ~cache_t() = default;
+            int status;
+            time_t t;
+            std::string content_type, content;
+
+            bool expired(long long expires)const;
+        };
+    private:
         mongols::tcp_server *server;
-        size_t max_body_size;
+        size_t max_body_size, lru_cache_size;
         leveldb::DB *db;
         leveldb::Options db_options;
-        long long session_expires, cache_expires;
-        bool enable_session, enable_cache;
+        long long session_expires, cache_expires, lru_cache_expires;
+        bool enable_session, enable_cache, enable_lru_cache;
         std::string db_path;
+        lru11::Cache<std::string, std::shared_ptr<cache_t>>*lru_cache;
 
 
     };
