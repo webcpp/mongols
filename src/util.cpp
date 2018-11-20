@@ -34,12 +34,10 @@ namespace mongols {
     }
 
     void read_file(const std::string& path, std::string& out) {
-        std::ifstream fs(path, std::ios_base::binary);
-        fs.seekg(0, std::ios_base::end);
-        auto size = fs.tellg();
-        fs.seekg(0);
-        out.resize(static_cast<size_t> (size));
-        fs.read(&out[0], size);
+        std::ifstream ifs(path.c_str());
+        if (ifs) {
+            out = std::move(std::string((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>()));
+        }
     }
 
     bool is_file(const std::string& s) {
