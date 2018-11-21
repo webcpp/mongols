@@ -2,8 +2,7 @@
 #include "lua_server.hpp"
 #include "util.hpp"
 #include "server_bind_script.hpp"
-#include "lib/re2/re2.h"
-#include "posix_regex.hpp"
+#include "lib/lua/kaguya_ext.hpp"
 
 
 
@@ -44,22 +43,7 @@ namespace mongols {
                 .addFunction("cache", &mongols::server_bind_script_response::cache)
                 );
 
-        this->vm["mongols_regex"] = kaguya::NewTable();
-        kaguya::LuaTable regex_tbl = this->vm["mongols_regex"];
-        regex_tbl["full_match"] = kaguya::function([](const std::string& pattern, const std::string & str) {
-            return RE2::FullMatch(str, pattern);
-        });
-        regex_tbl["partial_match"] = kaguya::function([](const std::string& pattern, const std::string & str) {
-            return RE2::PartialMatch(str, pattern);
-        });
-        regex_tbl["match"] = kaguya::function([](const std::string& pattern, const std::string & str) {
-            mongols::posix_regex regex(pattern);
-            std::vector<std::string> v;
-            if (regex.match(str, v)) {
-                return v;
-            }
-            return v;
-        });
+        mongols::lua_ext(this->vm);
 
     }
 

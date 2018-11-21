@@ -19,7 +19,7 @@ if mongols_req:has_form('test') then
         end
     end
 else 
-    mongols_res:content('not found test variable')
+    mongols_res:content(mongols_hash.md5('not found test variable'))
 end
 
 

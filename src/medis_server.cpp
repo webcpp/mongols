@@ -13,8 +13,7 @@
 #include "medis_server.hpp"
 #include "lib/msgpack.hpp"
 #include "lib/leveldb/cache.h"
-#include "lib/re2/re2.h"
-#include "posix_regex.hpp"
+#include "lib/lua/kaguya_ext.hpp"
 #include "util.hpp"
 
 
@@ -199,22 +198,8 @@ namespace mongols {
         this->vm.setErrorHandler([&](int errCode, const char * szError) {
 
         });
-        this->vm["mongols_regex"] = kaguya::NewTable();
-        kaguya::LuaTable regex_tbl = this->vm["mongols_regex"];
-        regex_tbl["full_match"] = kaguya::function([](const std::string& pattern, const std::string & str) {
-            return RE2::FullMatch(str, pattern);
-        });
-        regex_tbl["partial_match"] = kaguya::function([](const std::string& pattern, const std::string & str) {
-            return RE2::PartialMatch(str, pattern);
-        });
-        regex_tbl["match"] = kaguya::function([](const std::string& pattern, const std::string & str) {
-            mongols::posix_regex regex(pattern);
-            std::vector<std::string> v;
-            if (regex.match(str, v)) {
-                return v;
-            }
-            return v;
-        });
+        mongols::lua_ext(this->vm);
+
         this->vm["medis"] = kaguya::NewTable();
         kaguya::LuaTable medis_tbl = this->vm["medis"];
         medis_tbl["CMD"] = kaguya::function([&](kaguya::VariadicArgType args) {
