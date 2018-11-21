@@ -118,6 +118,10 @@ namespace mongols {
         this->server->set_enable_session(b);
     }
 
+    void lua_server::set_enable_lru_cache(bool b) {
+        this->server->set_enable_lru_cache(b);
+    }
+
     void lua_server::set_max_file_size(size_t len) {
         this->server->set_max_file_size(len);
     }
@@ -128,6 +132,10 @@ namespace mongols {
 
     void lua_server::set_session_expires(long long expires) {
         this->server->set_session_expires(expires);
+    }
+
+    void lua_server::set_lru_cache_expires(long long expires) {
+        this->server->set_lru_cache_expires(expires);
     }
 
     void lua_server::set_write_buffer_size(size_t len) {

@@ -24,6 +24,8 @@ namespace mongols {
         void set_max_file_size(size_t);
         void set_cache_size(size_t);
         void set_enable_compression(bool);
+        void set_enable_lru_cache(bool);
+        void set_lru_cache_expires(long long);
         void run(const std::string&);
     private:
         http_server* server;

@@ -23,15 +23,16 @@ namespace mongols {
         void set_mime_type_file(const std::string&);
         void set_list_directory(bool);
         void set_enable_mmap(bool);
-        void set_cache_expires(long long);
+        void set_lru_cache_expires(long long);
+        void set_enable_lru_cache(bool);
         void run(const std::function<bool(const mongols::request&)>& req_filter);
     private:
-        long long cache_expires;
+        long long lru_cache_expires;
         std::string root_path;
         std::unordered_map<std::string, std::string> mime_type;
         std::unordered_map<std::string, std::pair<char*, struct stat>> file_mmap;
         http_server *server;
-        bool list_directory, enable_mmap;
+        bool list_directory, enable_mmap, enable_lru_cache;
         std::string get_mime_type(const std::string&);
         void res_filter(const mongols::request&, mongols::response&);
         std::string create_list_directory_response(const std::string&);
