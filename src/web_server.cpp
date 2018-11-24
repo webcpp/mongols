@@ -52,7 +52,7 @@ namespace mongols {
         if (stat(path.c_str(), &st) == 0) {
             if (S_ISREG(st.st_mode)) {
                 int ffd = open(path.c_str(), O_RDONLY | O_NONBLOCK);
-                if (ffd > 0) {
+                if (ffd > 0 && posix_fadvise(ffd, 0, 0, POSIX_FADV_SEQUENTIAL) == 0) {
                     char ffd_buffer[st.st_size];
 http_read:
                     if (read(ffd, ffd_buffer, st.st_size) < 0) {
@@ -198,10 +198,15 @@ http_read:
                             goto http_500;
                         } else {
                             close(ffd);
-                            res.status = 200;
-                            res.headers.find("Content-Type")->second = std::move(this->get_mime_type(path));
-                            res.content.assign(mmap_ptr, st.st_size);
-                            this->file_mmap[mmap_key] = std::move(std::make_pair(mmap_ptr, st));
+                            if (madvise(mmap_ptr, st.st_size, MADV_SEQUENTIAL) == 0) {
+                                res.status = 200;
+                                res.headers.find("Content-Type")->second = std::move(this->get_mime_type(path));
+                                res.content.assign(mmap_ptr, st.st_size);
+                                this->file_mmap[mmap_key] = std::move(std::make_pair(mmap_ptr, st));
+                            } else {
+                                munmap(mmap_ptr, st.st_size);
+                                goto http_500;
+                            }
                         }
                     } else {
 http_500:
