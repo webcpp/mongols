@@ -72,6 +72,9 @@ result: `{"error":null,"result":[{"id":1,"name":"a"},{"id":2,"name":"b"},{"id":3
 
 ![wrk_web.png](https://raw.githubusercontent.com/webcpp/mongols/master/benchmark/wrk_web.png)
 
+#### 同等使用单进程的情况
+
+![mongolsVSnginx.png](https://raw.githubusercontent.com/webcpp/mongols/master/benchmark/mongolsVSnginx.png)
 
 ### multi-process web
 
