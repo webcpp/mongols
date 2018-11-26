@@ -133,7 +133,7 @@ class arg_converter: public function<void> {
 // unsigned).
 template <typename T, typename Context, typename Char>
 void convert_arg(basic_format_arg<Context> &arg, Char type) {
-  visit(arg_converter<T, Context>(arg, type), arg);
+  fmt::visit(arg_converter<T, Context>(arg, type), arg);
 }
 
 // Converts an integer argument to char for printf.
@@ -141,8 +141,6 @@ template <typename Context>
 class char_converter: public function<void> {
  private:
   basic_format_arg<Context> &arg_;
-
-  FMT_DISALLOW_COPY_AND_ASSIGN(char_converter);
 
  public:
   explicit char_converter(basic_format_arg<Context> &arg) : arg_(arg) {}
@@ -168,8 +166,6 @@ class printf_width_handler: public function<unsigned> {
   typedef basic_format_specs<Char> format_specs;
 
   format_specs &spec_;
-
-  FMT_DISALLOW_COPY_AND_ASSIGN(printf_width_handler);
 
  public:
   explicit printf_width_handler(format_specs &spec) : spec_(spec) {}
@@ -226,12 +222,12 @@ class printf_arg_formatter:
   context_type &context_;
 
   void write_null_pointer(char) {
-    this->spec().type_ = 0;
+    this->spec()->type_ = 0;
     this->write("(nil)");
   }
 
   void write_null_pointer(wchar_t) {
-    this->spec().type_ = 0;
+    this->spec()->type_ = 0;
     this->write(L"(nil)");
   }
 
@@ -247,7 +243,7 @@ class printf_arg_formatter:
    */
   printf_arg_formatter(internal::basic_buffer<char_type> &buffer,
                        format_specs &spec, context_type &ctx)
-    : base(back_insert_range<internal::basic_buffer<char_type>>(buffer), spec),
+    : base(back_insert_range<internal::basic_buffer<char_type>>(buffer), &spec),
       context_(ctx) {}
 
   template <typename T>
@@ -256,13 +252,13 @@ class printf_arg_formatter:
     // MSVC2013 fails to compile separate overloads for bool and char_type so
     // use std::is_same instead.
     if (std::is_same<T, bool>::value) {
-      format_specs &fmt_spec = this->spec();
+      format_specs &fmt_spec = *this->spec();
       if (fmt_spec.type_ != 's')
         return base::operator()(value ? 1 : 0);
       fmt_spec.type_ = 0;
       this->write(value != 0);
     } else if (std::is_same<T, char_type>::value) {
-      format_specs &fmt_spec = this->spec();
+      format_specs &fmt_spec = *this->spec();
       if (fmt_spec.type_ && fmt_spec.type_ != 'c')
         return (*this)(static_cast<int>(value));
       fmt_spec.flags_ = 0;
@@ -284,7 +280,7 @@ class printf_arg_formatter:
   iterator operator()(const char *value) {
     if (value)
       base::operator()(value);
-    else if (this->spec().type_ == 'p')
+    else if (this->spec()->type_ == 'p')
       write_null_pointer(char_type());
     else
       this->write("(null)");
@@ -295,7 +291,7 @@ class printf_arg_formatter:
   iterator operator()(const wchar_t *value) {
     if (value)
       base::operator()(value);
-    else if (this->spec().type_ == 'p')
+    else if (this->spec()->type_ == 'p')
       write_null_pointer(char_type());
     else
       this->write(L"(null)");
@@ -314,7 +310,7 @@ class printf_arg_formatter:
   iterator operator()(const void *value) {
     if (value)
       return base::operator()(value);
-    this->spec().type_ = 0;
+    this->spec()->type_ = 0;
     write_null_pointer(char_type());
     return this->out();
   }
@@ -341,7 +337,9 @@ struct printf_formatter {
 /** This template formats data and writes the output to a writer. */
 template <typename OutputIt, typename Char, typename ArgFormatter>
 class basic_printf_context :
-  private internal::context_base<
+  // Inherit publicly as a workaround for the icc bug
+  // https://software.intel.com/en-us/forums/intel-c-compiler/topic/783476.
+  public internal::context_base<
     OutputIt, basic_printf_context<OutputIt, Char, ArgFormatter>, Char> {
  public:
   /** The character type for the output. */
@@ -456,7 +454,7 @@ unsigned basic_printf_context<OutputIt, Char, AF>::parse_header(
   } else if (*it == '*') {
     ++it;
     spec.width_ =
-        visit(internal::printf_width_handler<char_type>(spec), get_arg(it));
+        fmt::visit(internal::printf_width_handler<char_type>(spec), get_arg(it));
   }
   return arg_index;
 }
@@ -492,14 +490,14 @@ void basic_printf_context<OutputIt, Char, AF>::format() {
       } else if (*it == '*') {
         ++it;
         spec.precision_ =
-            visit(internal::printf_precision_handler(), get_arg(it));
+            fmt::visit(internal::printf_precision_handler(), get_arg(it));
       } else {
         spec.precision_ = 0;
       }
     }
 
     format_arg arg = get_arg(it, arg_index);
-    if (spec.flag(HASH_FLAG) && visit(internal::is_zero_int(), arg))
+    if (spec.flag(HASH_FLAG) && fmt::visit(internal::is_zero_int(), arg))
       spec.flags_ &= ~internal::to_unsigned<int>(HASH_FLAG);
     if (spec.fill_ == '0') {
       if (arg.is_arithmetic())
@@ -553,7 +551,7 @@ void basic_printf_context<OutputIt, Char, AF>::format() {
         break;
       case 'c':
         // TODO: handle wchar_t better?
-        visit(internal::char_converter<basic_printf_context>(arg), arg);
+        fmt::visit(internal::char_converter<basic_printf_context>(arg), arg);
         break;
       }
     }
@@ -561,7 +559,7 @@ void basic_printf_context<OutputIt, Char, AF>::format() {
     start = it;
 
     // Format argument.
-    visit(AF(buffer, spec, *this), arg);
+    fmt::visit(AF(buffer, spec, *this), arg);
   }
   buffer.append(pointer_from(start), pointer_from(it));
 }
