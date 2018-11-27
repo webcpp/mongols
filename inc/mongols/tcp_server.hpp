@@ -26,14 +26,9 @@ namespace mongols {
         class client_t {
         public:
 
-            client_t() : ip(), port(-1), uid(0), u_size(0), gid() {
-                this->gid.push_back(0);
-            }
+            client_t();
 
-            client_t(const std::string& ip, int port, size_t uid, size_t gid)
-            : ip(ip), port(port), uid(uid), u_size(0), gid() {
-                this->gid.push_back(gid);
-            }
+            client_t(const std::string& ip, int port, size_t uid, size_t gid);
             virtual~client_t() = default;
             std::string ip;
             int port;

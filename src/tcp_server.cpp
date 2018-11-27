@@ -81,6 +81,15 @@ namespace mongols {
         }
     }
 
+    tcp_server::client_t::client_t() : ip(), port(-1), uid(0), u_size(0), gid() {
+        this->gid.push_back(0);
+    }
+
+    tcp_server::client_t::client_t(const std::string& ip, int port, size_t uid, size_t gid)
+    : ip(ip), port(port), uid(uid), u_size(0), gid() {
+        this->gid.push_back(gid);
+    }
+
     void tcp_server::run(const handler_function& g) {
         std::vector<int> sigs = {SIGHUP, SIGTERM, SIGINT, SIGQUIT};
 
