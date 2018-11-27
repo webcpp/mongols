@@ -9,7 +9,7 @@
 #include <utility>
 #include <vector>
 
-#include "re2.h"
+#include "re2/re2.h"
 
 namespace re2 {
 class Prog;
