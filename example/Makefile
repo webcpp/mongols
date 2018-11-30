@@ -3,7 +3,7 @@ SERVEROBJ=$(patsubst %.cpp,%.o,$(SERVERSRC))
 
 CXX=g++
 CXXFLAGS+=-std=c++11 -Wall -O3  `pkg-config --cflags mongols`
-LDLIBS+=`pkg-config --libs mongols` -lpthread
+LDLIBS+=`pkg-config --libs mongols`
 
 all: server
 
