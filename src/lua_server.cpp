@@ -11,7 +11,7 @@ namespace mongols {
 
     lua_server::lua_server(const std::string& host, int port, int timeout
             , size_t buffer_size, size_t thread_size, size_t max_body_size, int max_event_size)
-    : vm(), server(0), root_path() {
+    : vm(), server(0), root_path(), enable_bootstrap(false) {
 
         this->server = new http_server(host, port, timeout, buffer_size, thread_size, max_body_size, max_event_size);
 
@@ -83,7 +83,7 @@ namespace mongols {
             res.content = szError;
             res.status = 500;
         });
-        this->vm.dofile(this->root_path + req.uri);
+        this->vm.dofile(this->enable_bootstrap ? this->root_path + "/index.lua" : this->root_path + req.uri);
     }
 
     void lua_server::set_root_path(const std::string& path) {
@@ -92,6 +92,10 @@ namespace mongols {
 
     void lua_server::set_db_path(const std::string& path) {
         this->server->set_db_path(path);
+    }
+
+    void lua_server::set_enable_bootstarp(bool b) {
+        this->enable_bootstrap = b;
     }
 
     void lua_server::set_enable_cache(bool b) {
