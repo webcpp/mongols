@@ -21,7 +21,7 @@ namespace mongols {
         void set_enable_session(bool);
         void set_enable_cache(bool);
         void set_enable_lru_cache(bool);
-        void set_enable_bootstarp(bool);
+        void set_enable_bootstrap(bool);
         void set_lru_cache_expires(long long);
         void set_session_expires(long long);
         void set_max_open_files(int);

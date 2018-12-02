@@ -94,7 +94,7 @@ namespace mongols {
         this->server->set_db_path(path);
     }
 
-    void lua_server::set_enable_bootstarp(bool b) {
+    void lua_server::set_enable_bootstrap(bool b) {
         this->enable_bootstrap = b;
     }
 
