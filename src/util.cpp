@@ -18,6 +18,8 @@
 
 #include "lib/cppcodec/base64_rfc4648.hpp"
 #include "lib/hash/md5.hpp"
+#include "lib/re2/re2.h"
+#include "lib/re2/stringpiece.h"
 #include "util.hpp"
 
 
@@ -485,5 +487,72 @@ namespace mongols {
         CPU_SET(cpu, &set);
         return sched_setaffinity(pid, sizeof (cpu_set_t), &set) == 0;
     }
+
+    bool regex_match(const std::string & pattern, const std::string & str, std::vector<std::string> & results) {
+        std::string wrapped_pattern = std::move("(" + pattern + ")");
+        RE2::Options opt;
+        opt.set_log_errors(false);
+        opt.set_utf8(true);
+        RE2 re2(wrapped_pattern, opt);
+        if (!re2.ok()) {
+            return false;
+        }
+
+
+        std::vector<RE2::Arg> arguments;
+        std::vector<RE2::Arg *> arguments_ptrs;
+
+
+        std::size_t args_count = re2.NumberOfCapturingGroups();
+
+
+        arguments.resize(args_count);
+        arguments_ptrs.resize(args_count);
+        results.resize(args_count);
+
+        for (std::size_t i = 0; i < args_count; ++i) {
+
+            arguments[i] = &results[i];
+
+            arguments_ptrs[i] = &arguments[i];
+        }
+
+        return RE2::FullMatchN(re2::StringPiece(str), re2, arguments_ptrs.data(), args_count);
+    }
+
+    bool regex_find(const std::string & pattern, const std::string & str, std::vector<std::string> & results) {
+        std::string wrapped_pattern = std::move("(" + pattern + ")");
+        RE2::Options opt;
+        opt.set_log_errors(false);
+        opt.set_utf8(true);
+        RE2 re2(wrapped_pattern, opt);
+        if (!re2.ok()) {
+            return false;
+        }
+
+
+        std::vector<RE2::Arg> arguments;
+
+        std::vector<RE2::Arg *> arguments_ptrs;
+
+
+        std::size_t args_count = re2.NumberOfCapturingGroups();
+
+
+        arguments.resize(args_count);
+        arguments_ptrs.resize(args_count);
+        results.resize(args_count);
+
+        for (std::size_t i = 0; i < args_count; ++i) {
+
+            arguments[i] = &results[i];
+
+            arguments_ptrs[i] = &arguments[i];
+        }
+
+        re2::StringPiece piece(str);
+        return RE2::FindAndConsumeN(&piece, re2, arguments_ptrs.data(), args_count);
+    }
+
 
 }

@@ -73,6 +73,10 @@ namespace mongols {
     void forker(int, const std::function<void()>&, std::vector<pid_t>&);
 
     bool process_bind_cpu(pid_t pid, int cpu);
+    
+    bool regex_match(const std::string & pattern, const std::string & str, std::vector<std::string> & results);
+    
+    bool regex_find(const std::string & pattern, const std::string & str, std::vector<std::string> & results);
 }
 
 #endif /* UTIL_HPP */

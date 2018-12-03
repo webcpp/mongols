@@ -1,10 +1,11 @@
+--[[
 local echo=require('echo')
 mongols_res:header('Content-Type','text/plain;charset=UTF-8')
 mongols_res:content(echo.concat('hello,','world'))
 mongols_res:status(200)
+--]]
 
-
---[[
+--
 
 local echo=require('echo')
 local route=require('route'):get_instance()
@@ -33,6 +34,6 @@ route:add({'GET','POST','PUT'},'^/(\\w+)/?$'
     res:status(200)
 end)
 
-route:run(mongols_req,mongols_res,{})
+route:run(mongols_req,mongols_res)
 
---]]
+--

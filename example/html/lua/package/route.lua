@@ -43,15 +43,16 @@ function route:add(method,pattern,callback)
 end
 
 
-function route:run(req,res,param)
+function route:run(req,res)
+    local uri=req:uri()
     for i=1,#(self.map)
     do
         local ele=self.map[i]
         for j,m in pairs(ele.method)
         do 
             if m==req:method() then
-                param=mongols_regex.match(ele.pattern,req:uri())
-                if #param > 0 then
+               local b, param=mongols_regex.match_find(ele.pattern,uri)
+                if b then
                     ele.callback(req,res,param)
                     return 
                 end
