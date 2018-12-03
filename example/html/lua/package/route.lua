@@ -16,6 +16,7 @@ end
 
 function route:free()
     if self.instance then
+        self.map=nil
         self.instance=nil
     end
 end
@@ -26,14 +27,15 @@ function route:add(method,pattern,callback)
     ele.method=method
     ele.pattern=pattern
     ele.callback=callback
-    self.map[#(self.map)+1]=ele
+    if self.map[pattern]==nil then
+        self.map[pattern]=ele
+    end
 end
 
 
 function route:run(req,res,param)
-    for i=1,#(self.map)
+    for i,ele in pairs(self.map)
     do
-        local ele=self.map[i]
         for j,m in pairs(ele.method)
         do 
             if m==req:method() then
