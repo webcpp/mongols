@@ -5,9 +5,18 @@ mongols_res:content(echo.concat('hello,','world'))
 mongols_res:status(200)
 --]]
 
-local route=require('route')
+local echo=require('echo')
+local route=require('route'):get_instance()
 
-route.add({'GET'},'^/([0-9]+)/?$'
+
+route:add({'GET'},'^/hello/([0-9a-zA-Z]+)/?$'
+,function(req,res,param)
+    res:content('hello,'..param[2])
+    res:header('Content-Type','text/plain;charset=UTF-8')
+    res:status(200)
+end)
+
+route:add({'GET'},'^/([0-9]+)/?$'
 ,function(req,res,param)
     res:content(param[2]) 
     res:header('Content-Type','text/plain;charset=UTF-8')
@@ -15,14 +24,16 @@ route.add({'GET'},'^/([0-9]+)/?$'
 end)
 
 
-route.add({'GET','POST','PUT'},'^/(.*)$'
+route:add({'GET','POST','PUT'},'^/(\\w+)/?$'
 ,function(req,res,param) 
-    local text='uri: '..req:uri()..'\n'..'method: '..req:method()..'\n'..param[2]
+    local text= echo.concat('uri: ',req:uri(),'\n','method: ',req:method(),'\n',param[2])
     res:content(text) 
     res:header('Content-Type','text/plain;charset=UTF-8')
     res:status(200)
 end)
 
-route.run(mongols_req,mongols_res,{})
+route:run(mongols_req,mongols_res,{})
+
+route:free()
 
 
