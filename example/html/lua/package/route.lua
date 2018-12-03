@@ -1,4 +1,4 @@
-local route={map={}}
+local route={map={},instance=nil}
 
 function route:new()
     local cls={}
@@ -17,9 +17,11 @@ end
 function route:free()
     if self.instance then
         self.map=nil
+        self.map={}
         self.instance=nil
     end
 end
+
 
 
 function route:add(method,pattern,callback)
@@ -27,15 +29,24 @@ function route:add(method,pattern,callback)
     ele.method=method
     ele.pattern=pattern
     ele.callback=callback
-    if self.map[pattern]==nil then
-        self.map[pattern]=ele
+    local b=false
+    for k,v in pairs(self.map) 
+    do
+        if v.pattern == pattern then
+            b=true
+            break
+        end
+    end
+    if not b then 
+        self.map[#(self.map)+1]=ele
     end
 end
 
 
 function route:run(req,res,param)
-    for i,ele in pairs(self.map)
+    for i=1,#(self.map)
     do
+        local ele=self.map[i]
         for j,m in pairs(ele.method)
         do 
             if m==req:method() then
