@@ -1,4 +1,4 @@
---[[
+--
 local echo=require('echo')
 mongols_res:header('Content-Type','text/plain;charset=UTF-8')
 mongols_res:content(echo.concat('hello,','world'))
@@ -36,4 +36,4 @@ end)
 
 route:run(mongols_req,mongols_res)
 
---
+--]]
