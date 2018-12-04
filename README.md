@@ -54,7 +54,7 @@ result: `{"error":null,"result":[{"id":1,"name":"a"},{"id":2,"name":"b"},{"id":3
 
 ## benchmark
 
-2 core,4 GB,linux mint 18,2 thread:
+2 core,4 GB,linux mint 18:
 
 ### http
 
