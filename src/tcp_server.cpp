@@ -27,6 +27,7 @@
 namespace mongols {
 
     std::atomic_bool tcp_server::done(true);
+    int tcp_server::backlog = 511;
 
     void tcp_server::signal_normal_cb(int sig, siginfo_t *, void *) {
         switch (sig) {
@@ -71,7 +72,7 @@ namespace mongols {
 
         this->setnonblocking(this->listenfd);
 
-        listen(this->listenfd, 10);
+        listen(this->listenfd, tcp_server::backlog);
 
     }
 

@@ -55,6 +55,7 @@ namespace mongols {
         void run(const handler_function&);
 
         size_t get_buffer_size()const;
+        static int backlog;
     private:
         std::string host;
         int port, listenfd, timeout, max_event_size;
