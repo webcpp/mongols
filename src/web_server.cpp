@@ -233,6 +233,9 @@ http_500:
         this->lru_cache_expires = expires;
     }
 
+    void web_server::set_uri_rewrite(const std::pair<std::string, std::string>& p) {
+        this->server->set_uri_rewrite(p);
+    }
 
 
 }

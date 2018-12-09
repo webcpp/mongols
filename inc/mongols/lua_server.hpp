@@ -28,6 +28,7 @@ namespace mongols {
         void set_write_buffer_size(size_t);
         void set_max_file_size(size_t);
         void set_db_path(const std::string&);
+         void set_uri_rewrite(const std::pair<std::string,std::string>&);
         void run(const std::string& package_path, const std::string& package_cpath);
     private:
         kaguya::State vm;

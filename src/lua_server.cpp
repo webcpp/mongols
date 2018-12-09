@@ -130,6 +130,9 @@ namespace mongols {
         this->server->set_write_buffer_size(len);
     }
 
+    void lua_server::set_uri_rewrite(const std::pair<std::string, std::string>& p) {
+        this->server->set_uri_rewrite(p);
+    }
 
 
 
