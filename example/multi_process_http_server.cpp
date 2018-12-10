@@ -95,7 +95,7 @@ int main(int, char**) {
                 std::cout << strsignal(WTERMSIG(status)) << std::endl;
                 // or 
                 // refork(pid);
-            } else if (WTERMSIG(status) == SIGSEGV || WTERMSIG(status) == SIGBUS) {
+            } else if (WTERMSIG(status) == SIGHUP || WTERMSIG(status) == SIGSEGV || WTERMSIG(status) == SIGBUS) {
                 refork(pid);
             }
         }
@@ -118,21 +118,7 @@ static void signal_cb(int sig) {
         case SIGINT:
             for (auto & i : pids) {
                 if (i > 0) {
-                    kill(i, SIGTERM);
-                }
-            }
-            break;
-        case SIGUSR1:
-            for (auto & i : pids) {
-                if (i > 0) {
-                    kill(i, SIGSEGV);
-                }
-            }
-            break;
-        case SIGUSR2:
-            for (auto & i : pids) {
-                if (i > 0) {
-                    kill(i, SIGSEGV);
+                    kill(i, sig);
                 }
             }
             break;
@@ -141,7 +127,7 @@ static void signal_cb(int sig) {
 }
 
 static void set_signal() {
-    std::vector<int> sigs = {SIGHUP, SIGTERM, SIGINT, SIGQUIT, SIGUSR1, SIGUSR2};
+    std::vector<int> sigs = {SIGHUP, SIGTERM, SIGINT, SIGQUIT};
     for (size_t i = 0; i < sigs.size(); ++i) {
         signal(sigs[i], signal_cb);
     }
