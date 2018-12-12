@@ -29,6 +29,7 @@ CFLAGS+=-Iinc/mongols/lib/sqlite  -DSQLITE_THREADSAFE=1 \
 CFLAGS+=-Iinc/mongols/lib/z
 CFLAGS+=-Iinc/mongols/lib/hash
 CFLAGS+=-Iinc/mongols/lib/WjCryptLib
+CFLAGS+=-Iinc/mongols/lib/dukglue
 
 
 
@@ -39,6 +40,7 @@ CXXFLAGS+=-Iinc/mongols/lib/leveldb -Isrc/leveldb -DLEVELDB_PLATFORM_POSIX
 CXXFLAGS+= -DKAGUYA_USE_CPP11
 CXXFLAGS+=-Isrc -Isrc/re2 
 CXXFLAGS+=-Iinc/mongols/lib/sqlite
+CXXFLAGS+=-Iinc/mongols/lib/dukglue
 
 
 

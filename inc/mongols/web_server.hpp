@@ -25,7 +25,7 @@ namespace mongols {
         void set_enable_mmap(bool);
         void set_lru_cache_expires(long long);
         void set_enable_lru_cache(bool);
-         void set_uri_rewrite(const std::pair<std::string,std::string>&);
+        void set_uri_rewrite(const std::pair<std::string, std::string>&);
         void run(const std::function<bool(const mongols::request&)>& req_filter);
     private:
         long long lru_cache_expires;

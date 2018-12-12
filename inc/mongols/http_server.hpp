@@ -46,7 +46,7 @@ namespace mongols {
         void set_enable_lru_cache(bool);
         void set_lru_cache_expires(long long);
         void set_lru_cache_size(size_t);
-        void set_uri_rewrite(const std::pair<std::string,std::string>&);
+        void set_uri_rewrite(const std::pair<std::string, std::string>&);
     private:
         std::string work(
                 const std::function<bool(const mongols::request&)>& req_filter
@@ -84,7 +84,7 @@ namespace mongols {
         long long session_expires, cache_expires, lru_cache_expires;
         bool enable_session, enable_cache, enable_lru_cache;
         std::string db_path;
-        std::vector<std::pair<std::string,std::string>> uri_rewrite_config;
+        std::vector<std::pair<std::string, std::string>> uri_rewrite_config;
         lru11::Cache<std::string, std::shared_ptr<cache_t>>*lru_cache;
 
 

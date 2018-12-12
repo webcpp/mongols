@@ -1,9 +1,8 @@
 #include <functional>
-#include "lua_server.hpp"
 #include "util.hpp"
 #include "server_bind_script.hpp"
 #include "lib/lua/kaguya_ext.hpp"
-
+#include "lua_server.hpp"
 
 
 

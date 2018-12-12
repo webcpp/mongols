@@ -35,11 +35,13 @@ namespace mongols {
         return mongols::md5(s + now_str);
     }
 
-    void read_file(const std::string& path, std::string& out) {
+    bool read_file(const std::string& path, std::string& out) {
         std::ifstream ifs(path.c_str());
         if (ifs) {
             out = std::move(std::string((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>()));
+            return true;
         }
+        return false;
     }
 
     bool is_file(const std::string& s) {

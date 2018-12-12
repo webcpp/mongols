@@ -1,22 +1,38 @@
-#ifndef LUA_SERVER_HPP
-#define LUA_SERVER_HPP
+#ifndef JS_SERVER_HPP
+#define JS_SERVER_HPP
 
 #include <string>
+#include <unordered_map>
+#include <sys/stat.h>
 #include "http_server.hpp"
-#include "lib/lua/kaguya.hpp"
+#include "lib/dukglue/duktape.h"
+#include "lib/dukglue/dukvalue.h"
+#include "file_mmap.hpp"
 
 namespace mongols {
 
-    class lua_server {
+    class js_tool {
     public:
-        lua_server() = delete;
-        lua_server(const std::string& host, int port
+
+        js_tool();
+
+        virtual~js_tool() = default;
+
+        std::string require(const std::string& path);
+    private:
+        file_mmap data;
+    };
+
+    class js_server {
+    public:
+        js_server() = delete;
+        js_server(const std::string& host, int port
                 , int timeout = 5000
                 , size_t buffer_size = 8092
                 , size_t thread_size = std::thread::hardware_concurrency()
                 , size_t max_body_size = 4096
                 , int max_event_size = 64);
-        virtual~lua_server();
+        virtual~js_server();
         void set_root_path(const std::string& path);
         void set_enable_session(bool);
         void set_enable_cache(bool);
@@ -29,17 +45,20 @@ namespace mongols {
         void set_max_file_size(size_t);
         void set_db_path(const std::string&);
         void set_uri_rewrite(const std::pair<std::string, std::string>&);
-        void run(const std::string& package_path, const std::string& package_cpath);
-    private:
-        kaguya::State vm;
-        mongols::http_server *server;
-        std::string root_path;
-        bool enable_bootstrap;
+        void run(const std::string& package_path);
+
     private:
         void work(const mongols::request& req, mongols::response& res);
         bool filter(const mongols::request& req);
+    private:
+        duk_context* ctx;
+        mongols::http_server *server;
+        std::string root_path;
+        bool enable_bootstrap;
+        std::unordered_map<std::string, std::pair<char*, struct stat>> file_mmap;
+        js_tool tool;
     };
 }
 
-#endif /* LUA_SERVER_HPP */
+#endif /* JS_SERVER_HPP */
 
