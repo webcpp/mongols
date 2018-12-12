@@ -2,6 +2,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <dlfcn.h>
 #include <unistd.h>
 #include <functional>
 #include "util.hpp"
@@ -9,6 +10,7 @@
 #include "lib/dukglue/duktape.h"
 #include "lib/dukglue/duk_print_alert.h"
 #include "lib/dukglue/duk_module_duktape.h"
+#include "lib/dukglue/duk_console.h"
 #include "lib/dukglue/dukglue.h"
 #include "lib/hash/md5.hpp"
 #include "js_server.hpp"
@@ -16,11 +18,27 @@
 
 namespace mongols {
 
-    js_tool::js_tool() : data() {
+    js_tool::js_tool() : data(), dl_map(), ctx(0), cpackage_path() {
 
     }
 
-    std::string js_tool::require(const std::string& path) {
+    js_tool::~js_tool() {
+        for (auto& i : this->dl_map) {
+            if (i.second.first != NULL) {
+                dlclose(i.second.first);
+            }
+        }
+    }
+
+    void js_tool::init(duk_context* ctx) {
+        this->ctx = ctx;
+    }
+
+    void js_tool::set_cpackage_path(const std::string& path) {
+        this->cpackage_path = path;
+    }
+
+    std::string js_tool::read(const std::string& path) {
         std::string text;
         std::pair<char*, struct stat> ele;
         if (this->data.get(path, ele)) {
@@ -30,11 +48,35 @@ namespace mongols {
         return text;
     }
 
+    bool js_tool::require(const std::string& path, const std::string& fun_name) {
+        if (this->dl_map.find(fun_name) != this->dl_map.end()) {
+            return true;
+        }
+        void* handler = dlopen((this->cpackage_path + "/" + path).c_str(), RTLD_NOW);
+        if (handler != NULL) {
+            dlerror();
+            native_fun* fun = (native_fun*) dlsym(handler, fun_name.c_str());
+            if (dlerror() == NULL) {
+                duk_push_c_function(this->ctx, *fun, DUK_VARARGS);
+                duk_put_global_string(this->ctx, fun_name.c_str());
+                this->dl_map[fun_name] = std::move(std::make_pair(handler, fun));
+                return true;
+            } else {
+                dlclose(handler);
+            }
+        }
+        return false;
+    }
+
     js_server::js_server(const std::string& host, int port, int timeout, size_t buffer_size, size_t thread_size, size_t max_body_size, int max_event_size)
     : ctx(0), server(0), root_path(), enable_bootstrap(false), file_mmap(), tool() {
         this->ctx = duk_create_heap_default();
+        this->tool.init(this->ctx);
+
+
         duk_module_duktape_init(this->ctx);
         duk_print_alert_init(this->ctx, 0 /*flags*/);
+        duk_console_init(this->ctx, 0 /*flags*/);
 
 
         dukglue_register_constructor<server_bind_script_request>(this->ctx, "mongols_request");
@@ -63,7 +105,9 @@ namespace mongols {
 
 
         dukglue_register_constructor<js_tool>(this->ctx, "mongols_tool");
+        dukglue_register_method(this->ctx, &js_tool::read, "read");
         dukglue_register_method(this->ctx, &js_tool::require, "require");
+
 
         dukglue_register_global(this->ctx, &tool, "mongols_module");
 
@@ -144,11 +188,12 @@ js_500:
         }
     }
 
-    void js_server::run(const std::string& package_path) {
-        std::string mod_search = "Duktape.modSearch = function (id, require, exports, module) {return mongols_module.require('";
+    void js_server::run(const std::string& package_path, const std::string& cpackage_path) {
+        std::string mod_search = "Duktape.modSearch = function (id, require, exports, module) {return mongols_module.read('";
         mod_search += package_path;
         mod_search += "/'+id+'.js'); };";
         duk_peval_lstring_noresult(this->ctx, mod_search.c_str(), mod_search.size());
+        this->tool.set_cpackage_path(cpackage_path);
         this->server->run(std::bind(&js_server::filter, this, std::placeholders::_1)
                 , std::bind(&js_server::work, this
                 , std::placeholders::_1

@@ -7,6 +7,6 @@ int main(int, char**) {
     server(host, port, 5000, 8096, 0/*2*/);
     server.set_root_path("html/js");
     server.set_enable_bootstrap(true);
-    server.run("html/js/package");
+    server.run("html/js/package", "html/js/package");
 }
 

@@ -16,11 +16,19 @@ namespace mongols {
 
         js_tool();
 
-        virtual~js_tool() = default;
+        virtual~js_tool();
 
-        std::string require(const std::string& path);
+        std::string read(const std::string& path);
+        bool require(const std::string&,const std::string&);
+        void init(duk_context*);
+        void set_cpackage_path(const std::string&);
     private:
+        typedef duk_ret_t native_fun(duk_context *ctx);
         file_mmap data;
+        std::unordered_map<std::string,std::pair<void*,native_fun*>> dl_map;
+        duk_context* ctx;
+        std::string cpackage_path;
+        
     };
 
     class js_server {
@@ -45,7 +53,7 @@ namespace mongols {
         void set_max_file_size(size_t);
         void set_db_path(const std::string&);
         void set_uri_rewrite(const std::pair<std::string, std::string>&);
-        void run(const std::string& package_path);
+        void run(const std::string& package_path,const std::string& cpackage_path);
 
     private:
         void work(const mongols::request& req, mongols::response& res);

@@ -65,7 +65,7 @@ int main(int, char**) {
         *data = (*data) + 1;
         pthread_mutex_unlock(mtx);
         server.set_db_path("html/leveldb/" + i);
-        server.run("html/js/package");
+        server.run("html/js/package","html/js/package");
     };
     mongols::forker(std::thread::hardware_concurrency(), process_work, pids);
     set_signal();
