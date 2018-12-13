@@ -15,18 +15,18 @@ mongols_res.status(200)
 
 
 /*
-var loaded = mongols_module.require('adder/libadder.so','adder')
+var loaded = mongols_module.require('adder/libadder','adder')
 mongols_res.header('Content-Type','text/plain;charset=UTF-8')
 mongols_res.content(loaded?adder(1,2).toString():'failed load c module.')
 mongols_res.status(200)
 */
 
-/*
-var loaded = mongols_module.require('concat/libconcat.so','concat')
+///*
+var loaded = mongols_module.require('concat/libconcat','concat')
 mongols_res.header('Content-Type','text/plain;charset=UTF-8')
 mongols_res.content(loaded?concat('Hello,','world'):'failed load c module.')
 mongols_res.status(200)
-*/
+//*/
 
 /*
 var mustache = require('mustache')
@@ -54,8 +54,21 @@ mongols_res.status(200)
 */
 
 
-///*
+/*
+var handlebars = require('handlebars')
+var s=new studest()
+s.set_name("Jerry").set_age(14).set_score(74.6)
+var text='hello,world'
+var tpl=handlebars.compile('name: {{name}}\nage: {{age}}\nscore: {{score}}\ntext:{{text}}\ntext_md5: {{md5}}\ntext_sha1: {{sha1}}')
+var model={name:s.get_name(),age:s.get_age(),score:s.get_score(),text:text,md5:md5(text),sha1:sha1(text)}
+mongols_res.header('Content-Type','text/plain;charset=UTF-8')
+mongols_res.content(tpl(model))
+mongols_res.status(200)
+*/
+
+
+/*
 mongols_res.header('Content-Type','text/plain;charset=UTF-8')
 mongols_res.content('hello,world')
 mongols_res.status(200)
-//*/
+*/

@@ -52,7 +52,7 @@ namespace mongols {
         if (this->dl_map.find(fun_name) != this->dl_map.end()) {
             return true;
         }
-        void* handler = dlopen((this->cpackage_path + "/" + path).c_str(), RTLD_NOW);
+        void* handler = dlopen((this->cpackage_path + "/" + path + ".so").c_str(), RTLD_NOW);
         if (handler != NULL) {
             dlerror();
             native_fun* fun = (native_fun*) dlsym(handler, fun_name.c_str());
