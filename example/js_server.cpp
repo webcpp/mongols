@@ -1,12 +1,11 @@
 #include <mongols/lib/hash/md5.hpp>
+#include <mongols/lib/hash/sha1.hpp>
 #include <mongols/js_server.hpp>
 
-#include "hash/sha1.hpp"
-
-class person {
+class person : public mongols::js_object {
 public:
 
-    person() : name("Tom"), age(0) {
+    person() : mongols::js_object(), name("Tom"), age(0) {
     }
     virtual~person() = default;
 
@@ -58,6 +57,8 @@ int main(int, char**) {
     server(host, port, 5000, 8096, 0/*2*/);
     server.set_root_path("html/js");
     server.set_enable_bootstrap(true);
+    server.set_enable_lru_cache(true);
+    server.set_lru_cache_expires(1);
 
     server.register_class_constructor<person>("person");
     server.register_class_method(&person::set_age, "set_age");
@@ -68,6 +69,7 @@ int main(int, char**) {
     server.register_class_constructor<studest>("studest");
     server.register_class_method(&studest::get_score, "get_score");
     server.register_class_method(&studest::set_score, "set_score");
+    server.set_base_class<mongols::js_object, person>();
     server.set_base_class<person, studest>();
 
     server.register_function(&mongols::md5, "md5");

@@ -34,6 +34,11 @@ namespace mongols {
         this->ctx = ctx;
     }
 
+    void js_tool::free(js_object* p) {
+        delete p;
+        dukglue_invalidate_object(this->ctx, p);
+    }
+
     void js_tool::set_cpackage_path(const std::string& path) {
         this->cpackage_path = path;
     }
@@ -107,9 +112,10 @@ namespace mongols {
         dukglue_register_constructor<js_tool>(this->ctx, "mongols_tool");
         dukglue_register_method(this->ctx, &js_tool::read, "read");
         dukglue_register_method(this->ctx, &js_tool::require, "require");
+        dukglue_register_method(this->ctx, &js_tool::free, "free");
 
 
-        dukglue_register_global(this->ctx, &tool, "mongols_module");
+        dukglue_register_global(this->ctx, &this->tool, "mongols_module");
 
         this->server = new http_server(host, port, timeout, buffer_size, thread_size, max_body_size, max_event_size);
 
@@ -119,6 +125,7 @@ namespace mongols {
         for (auto& i : this->file_mmap) {
             munmap(i.second.first, i.second.second.st_size);
         }
+        dukglue_invalidate_object(this->ctx, &this->tool);
         if (this->ctx) {
             duk_destroy_heap(this->ctx);
         }

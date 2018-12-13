@@ -11,6 +11,12 @@
 
 namespace mongols {
 
+    class js_object {
+    public:
+        js_object() = default;
+        virtual~js_object() = default;
+    };
+
     class js_tool {
     public:
 
@@ -22,6 +28,7 @@ namespace mongols {
         bool require(const std::string&, const std::string&);
         void init(duk_context*);
         void set_cpackage_path(const std::string&);
+        void free(js_object* p);
     private:
         typedef duk_ret_t native_fun(duk_context *ctx);
         file_mmap data;
