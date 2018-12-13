@@ -45,6 +45,15 @@ mongols_res.status(200)
 */
 
 
+/*
+var echo = require('echo')
+var t=new echo()
+t.set('HELLO, ')
+mongols_res.content(t.concat('Tom'))
+mongols_res.status(200)
+*/
+
+
 ///*
 mongols_res.header('Content-Type','text/plain;charset=UTF-8')
 mongols_res.content('hello,world')
