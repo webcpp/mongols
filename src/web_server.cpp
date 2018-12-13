@@ -52,23 +52,28 @@ namespace mongols {
         if (stat(path.c_str(), &st) == 0) {
             if (S_ISREG(st.st_mode)) {
                 int ffd = open(path.c_str(), O_RDONLY | O_NONBLOCK);
-                if (ffd > 0 && posix_fadvise(ffd, 0, 0, POSIX_FADV_SEQUENTIAL) == 0) {
-                    char ffd_buffer[st.st_size];
+                if (ffd > 0) {
+                    if (posix_fadvise(ffd, 0, 0, POSIX_FADV_SEQUENTIAL) == 0) {
+                        char ffd_buffer[st.st_size];
 http_read:
-                    if (read(ffd, ffd_buffer, st.st_size) < 0) {
-                        if (errno == EAGAIN || errno == EINTR) {
-                            goto http_read;
-                        }
+                        if (read(ffd, ffd_buffer, st.st_size) < 0) {
+                            if (errno == EAGAIN || errno == EINTR) {
+                                goto http_read;
+                            }
 
+                            close(ffd);
+                            goto http_500;
+                        } else {
+                            res.status = 200;
+                            res.headers.find("Content-Type")->second = std::move(this->get_mime_type(path));
+                            time_t now = time(0);
+                            res.headers.insert(std::move(std::make_pair(std::move("Last-Modified"), mongols::http_time(&now))));
+                            res.content.assign(ffd_buffer, st.st_size);
+                            close(ffd);
+                        }
+                    } else {
                         close(ffd);
                         goto http_500;
-                    } else {
-                        res.status = 200;
-                        res.headers.find("Content-Type")->second = std::move(this->get_mime_type(path));
-                        time_t now = time(0);
-                        res.headers.insert(std::move(std::make_pair(std::move("Last-Modified"), mongols::http_time(&now))));
-                        res.content.assign(ffd_buffer, st.st_size);
-                        close(ffd);
                     }
                 } else {
 http_500:
