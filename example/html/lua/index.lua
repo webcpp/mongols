@@ -5,6 +5,35 @@ mongols_res:content(echo.concat('hello,','world'))
 mongols_res:status(200)
 --
 
+
+--[[
+
+local template = require "resty.template"
+local view=template.new('name: {{name}}\
+age: {{age}}\
+score: {{score}}\
+text:{{text}}\
+text_md5: {{md5}}\
+text_sha1: {{sha1}}')
+
+local text='hello,world'
+
+local s=studest.new()
+s:set_score(74.6):set_name("Jerry"):set_age(14)
+
+view.name=s:get_name()
+view.age=s:get_age()
+view.score=s:get_score()
+view.text=text
+view.md5=md5(text)
+view.sha1=sha1(text)
+
+mongols_res:header('Content-Type','text/plain;charset=UTF-8')
+mongols_res:content(tostring(view))
+mongols_res:status(200)
+
+--]]
+
 --[[
 
 local echo=require('echo')

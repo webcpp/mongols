@@ -30,6 +30,16 @@ namespace mongols {
         void set_db_path(const std::string&);
         void set_uri_rewrite(const std::pair<std::string, std::string>&);
         void run(const std::string& package_path, const std::string& package_cpath);
+
+        template <typename class_type, typename base_class_type = void>
+        void set_class(const kaguya::UserdataMetatable<class_type, base_class_type>& cls, const std::string& name) {
+            this->vm[name].setClass(cls);
+        }
+
+        template<typename T>
+        void set_function(T f, const std::string& name) {
+            this->vm[name].setFunction(f);
+        }
     private:
         kaguya::State vm;
         mongols::http_server *server;
