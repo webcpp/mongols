@@ -25,10 +25,6 @@ end
 
 
 function route:add(method,pattern,callback)
-    local ele={}
-    ele.method=method
-    ele.pattern=pattern
-    ele.callback=callback
     local b=false
     for k,v in pairs(self.map) 
     do
@@ -38,6 +34,10 @@ function route:add(method,pattern,callback)
         end
     end
     if not b then 
+        local ele={}
+        ele.method=method
+        ele.pattern=pattern
+        ele.callback=callback
         self.map[#(self.map)+1]=ele
     end
 end
