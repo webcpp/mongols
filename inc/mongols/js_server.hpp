@@ -54,6 +54,7 @@ namespace mongols {
         void set_enable_lru_cache(bool);
         void set_enable_bootstrap(bool);
         void set_lru_cache_expires(long long);
+        void set_lru_cache_size(size_t);
         void set_session_expires(long long);
         void set_max_open_files(int);
         void set_write_buffer_size(size_t);

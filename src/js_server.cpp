@@ -231,6 +231,10 @@ js_500:
         this->server->set_enable_lru_cache(b);
     }
 
+    void js_server::set_lru_cache_size(size_t len) {
+        this->server->set_lru_cache_size(len);
+    }
+
     void js_server::set_max_file_size(size_t len) {
         this->server->set_max_file_size(len);
     }

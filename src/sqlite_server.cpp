@@ -117,6 +117,25 @@ namespace mongols {
         res.content = std::move(writer.write(root));
     }
 
+    void sqlite_server::set_enable_lru_cache(bool b) {
+        this->server->set_enable_lru_cache(b);
+    }
+
+    void sqlite_server::set_lru_cache_expires(long long expires) {
+        this->server->set_lru_cache_expires(expires);
+    }
+
+    void sqlite_server::set_lru_cache_size(size_t len) {
+        this->server->set_lru_cache_size(len);
+    }
+
+    void sqlite_server::set_uri_rewrite(const std::pair<std::string, std::string>& p) {
+        this->server->set_uri_rewrite(p);
+    }
+
+
+
+
 
 
 

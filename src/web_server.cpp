@@ -19,8 +19,8 @@
 namespace mongols {
 
     web_server::web_server(const std::string& host, int port, int timeout, size_t buffer_size, size_t thread_size, size_t max_body_size, int max_event_size)
-    : lru_cache_expires(3600), root_path(), mime_type(), file_mmap()
-    , server(0), list_directory(false), enable_mmap(false), enable_lru_cache(false) {
+    : root_path(), mime_type(), file_mmap()
+    , server(0), list_directory(false), enable_mmap(false) {
         this->server = new http_server(host, port, timeout, buffer_size, thread_size, max_body_size, max_event_size);
     }
 
@@ -34,9 +34,6 @@ namespace mongols {
     }
 
     void web_server::run(const std::function<bool(const mongols::request&)>& req_filter) {
-        this->server->set_lru_cache_expires(this->lru_cache_expires);
-        this->server->set_enable_lru_cache(this->enable_lru_cache);
-
         if (this->enable_mmap) {
             this->server->run(req_filter, std::bind(&web_server::res_filter_with_mmap, this, std::placeholders::_1
                     , std::placeholders::_2));
@@ -175,7 +172,7 @@ http_500:
     }
 
     void web_server::set_enable_lru_cache(bool b) {
-        this->enable_lru_cache = b;
+        this->server->set_enable_lru_cache(b);
     }
 
     void web_server::res_filter_with_mmap(const mongols::request& req, mongols::response& res) {
@@ -235,7 +232,11 @@ http_500:
     }
 
     void web_server::set_lru_cache_expires(long long expires) {
-        this->lru_cache_expires = expires;
+        this->server->set_lru_cache_expires(expires);
+    }
+
+    void web_server::set_lru_cache_size(size_t len) {
+        this->server->set_lru_cache_size(len);
     }
 
     void web_server::set_uri_rewrite(const std::pair<std::string, std::string>& p) {

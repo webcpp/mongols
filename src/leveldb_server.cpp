@@ -122,6 +122,15 @@ leveldb_error:
         this->server->set_lru_cache_expires(expires);
     }
 
+    void leveldb_server::set_lru_cache_size(size_t len) {
+        this->server->set_lru_cache_size(len);
+    }
+
+    void leveldb_server::set_uri_rewrite(const std::pair<std::string, std::string>& p) {
+        this->server->set_uri_rewrite(p);
+    }
+
+
 
 
 

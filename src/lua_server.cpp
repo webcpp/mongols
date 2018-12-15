@@ -125,6 +125,10 @@ namespace mongols {
         this->server->set_lru_cache_expires(expires);
     }
 
+    void lua_server::set_lru_cache_size(size_t len) {
+        this->server->set_lru_cache_size(len);
+    }
+
     void lua_server::set_write_buffer_size(size_t len) {
         this->server->set_write_buffer_size(len);
     }

@@ -19,6 +19,10 @@ namespace mongols {
                 , size_t max_body_size = 4096
                 , int max_event_size = 64);
         virtual~sqlite_server();
+        void set_lru_cache_expires(long long);
+        void set_enable_lru_cache(bool);
+        void set_lru_cache_size(size_t);
+        void set_uri_rewrite(const std::pair<std::string, std::string>&);
         void run(const std::string& db_name);
     private:
         http_server *server;
