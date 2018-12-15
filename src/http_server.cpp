@@ -231,7 +231,7 @@ namespace mongols {
                     return this->create_response(res, keepalive);
                 }
                 std::string cache_k = std::move(mongols::md5(req.method + req.uri + "?" + req.param));
-                if (req.method == "GET" && this->enable_lru_cache) {
+                if (this->enable_lru_cache && req.method == "GET") {
                     if (this->lru_cache->contains(cache_k)) {
                         auto cache_ele = this->lru_cache->get(cache_k);
                         if (cache_ele->expired(this->lru_cache_expires)) {
@@ -326,7 +326,7 @@ namespace mongols {
                     }
                     this->db->Put(leveldb::WriteOptions(), cache_k, this->serialize(*ptr));
                 }
-                if (req.method == "GET" && this->enable_lru_cache && res.status == 200 && this->lru_cache_expires > 0) {
+                if (this->enable_lru_cache && this->lru_cache_expires > 0 && req.method == "GET" && res.status == 200) {
                     std::shared_ptr<cache_t> cache_ele = std::make_shared<cache_t>();
                     cache_ele->content = res.content;
                     cache_ele->status = res.status;
