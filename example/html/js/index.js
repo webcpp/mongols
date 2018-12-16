@@ -68,7 +68,7 @@
  */
 
 
-/*
+///*
 
 var route = require('route').get_instance()
 
@@ -89,11 +89,11 @@ route.run(mongols_req, mongols_res)
 
 
 
-*/
+//*/
 
 
-///*
+/*
  mongols_res.header('Content-Type','text/plain;charset=UTF-8')
  mongols_res.content('hello,world')
  mongols_res.status(200)
-//*/
+*/

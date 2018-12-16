@@ -14,7 +14,7 @@ var route = function () {
         var x = null
         for (x in this.map) {
             var reg = new RegExp(x, 'ig');
-            var param = req.uri().match(reg)
+            var param = reg.exec(req.uri())
             if (param != null) {
                 var ele = this.map[x]
                 if (ele.method.indexOf(req.method()) >= 0) {
