@@ -29,7 +29,7 @@ public:
         return this;
     }
 
-    const std::string& get_name() {
+    const std::string& get_name() const {
         return this->name;
     }
 

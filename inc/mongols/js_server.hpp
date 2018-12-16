@@ -73,6 +73,11 @@ namespace mongols {
             dukglue_register_method<Cls, RetType, Ts...>(this->ctx, method, name.c_str());
         }
 
+        template<class Cls, typename RetType, typename... Ts>
+        void register_class_method(RetType(Cls::*method)(Ts...)const, const std::string& name) {
+            dukglue_register_method<Cls, RetType, Ts...>(this->ctx, method, name.c_str());
+        }
+
         template<typename RetType, typename... Ts>
         void register_function(RetType(*funcToCall)(Ts...), const std::string& name) {
             dukglue_register_function<RetType, Ts...>(this->ctx, funcToCall, name.c_str());
