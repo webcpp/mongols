@@ -72,18 +72,29 @@
 
 var route = require('route').get_instance()
 
-route.add(['GET'], '^\/(hello|test)?\/?$', function (req, res, param) {
+route.get('^\/get/?(\\w+)$', function (req, res, param) {
     res.header('Content-Type', 'text/plain;charset=UTF8')
-    res.content(param.toString())
+    res.content(req.method()+'\n'+req.uri() + '\n' + param.toString())
     res.status(200)
 })
 
-route.add(['POST', 'PUT'], '^\/.*$', function (req, res, param) {
+route.post('^\/post/?([a-zA-Z]+)?$', function (req, res, param) {
     res.header('Content-Type', 'text/plain;charset=UTF8')
-    res.content(req.uri())
+    res.content(req.method()+'\n'+req.uri() + '\n' + param.toString())
     res.status(200)
 })
 
+route.put('^\/put/?([0-9]+)?', function (req, res, param) {
+    res.header('Content-Type', 'text/plain;charset=UTF8')
+    res.content(req.method()+'\n'+req.uri() + '\n' + param.toString())
+    res.status(200)
+})
+
+route.add(['GET', 'POST', 'PUT'], '^\/(.*)$', function (req, res, param) {
+    res.header('Content-Type', 'text/plain;charset=UTF8')
+    res.content(req.method()+'\n'+req.uri() + '\n' + param.toString())
+    res.status(200)
+})
 
 route.run(mongols_req, mongols_res)
 
