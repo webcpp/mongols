@@ -33,11 +33,12 @@ CFLAGS+=-Iinc/mongols/lib/dukglue
 
 
 
-CXXFLAGS+=-O3 -std=c++11 -Wall -fPIC 
+CXXFLAGS+=-O3 -std=c++14 -Wall -fPIC 
 CXXFLAGS+=-Iinc/mongols -Iinc/mongols/lib 
 CXXFLAGS+=-Isrc/MPFDParser
 CXXFLAGS+=-Iinc/mongols/lib/leveldb -Isrc/leveldb -DLEVELDB_PLATFORM_POSIX
-CXXFLAGS+= -DKAGUYA_USE_CPP11
+CXXFLAGS+= -DKAGUYA_USE_CPP11 
+CXXFLAGS+= -DCHAISCRIPT_EXTRAS_MATH_SKIP_ADVANCED
 CXXFLAGS+=-Isrc -Isrc/re2 
 CXXFLAGS+=-Iinc/mongols/lib/sqlite
 CXXFLAGS+=-Iinc/mongols/lib/dukglue

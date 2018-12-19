@@ -9,14 +9,12 @@ public:
     }
     virtual~person() = default;
 
-    person* set_name(const std::string& name) {
+    void set_name(const std::string& name) {
         this->name = name;
-        return this;
     }
 
-    person* set_age(unsigned int age) {
+    void set_age(unsigned int age) {
         this->age = age;
-        return this;
     }
 
     const std::string& get_name() const {
@@ -42,9 +40,8 @@ public:
         return this->score;
     }
 
-    studest* set_score(double score) {
+    void set_score(double score) {
         this->score = score;
-        return this;
     }
 private:
     double score;

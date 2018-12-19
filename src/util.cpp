@@ -3,6 +3,11 @@
 #include <sys/stat.h>
 #include <sched.h>
 
+
+#include <sys/signal.h>
+#include <sys/prctl.h>
+#include <sys/mman.h>
+
 #include <fcntl.h>
 #include <unistd.h>
 #include <cstdlib>
@@ -555,6 +560,102 @@ namespace mongols {
         re2::StringPiece piece(str);
         return RE2::FindAndConsumeN(&piece, re2, arguments_ptrs.data(), args_count);
     }
+
+    std::vector<pid_t> multi_process::pids;
+
+    void multi_process::signal_cb(int sig) {
+        switch (sig) {
+            case SIGTERM:
+            case SIGHUP:
+            case SIGQUIT:
+            case SIGINT:
+                for (auto & i : multi_process::pids) {
+                    if (i > 0) {
+                        kill(i, sig);
+                    }
+                }
+                break;
+            default:break;
+        }
+    }
+
+    void multi_process::set_signal() {
+        std::vector<int> sigs = {SIGHUP, SIGTERM, SIGINT, SIGQUIT};
+        for (size_t i = 0; i < sigs.size(); ++i) {
+            signal(sigs[i], multi_process::signal_cb);
+        }
+    }
+
+    multi_process::multi_process() : mtx(0), mtx_attr(0), data(0) {
+        this->mtx = (pthread_mutex_t*) mmap(0, sizeof (pthread_mutex_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+        if (this->mtx != MAP_FAILED) {
+            this->mtx_attr = (pthread_mutexattr_t*) mmap(0, sizeof (pthread_mutexattr_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+            if (this->mtx_attr != MAP_FAILED) {
+
+                pthread_mutexattr_init(this->mtx_attr);
+                pthread_mutexattr_setpshared(this->mtx_attr, PTHREAD_PROCESS_SHARED);
+                pthread_mutexattr_settype(this->mtx_attr, PTHREAD_MUTEX_DEFAULT);
+                pthread_mutex_init(this->mtx, this->mtx_attr);
+            }
+
+            this->data = (size_t*) mmap(0, sizeof (size_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+            if (this->data != MAP_FAILED) {
+                pthread_mutex_lock(this->mtx);
+                *this->data = 0;
+                pthread_mutex_unlock(this->mtx);
+            }
+        }
+    }
+
+    multi_process::~multi_process() {
+        if (this->mtx != MAP_FAILED) {
+            pthread_mutex_destroy(this->mtx);
+            munmap(this->mtx, sizeof (pthread_mutex_t));
+
+            if (this->mtx_attr != MAP_FAILED) {
+                pthread_mutexattr_destroy(this->mtx_attr);
+                munmap(this->mtx_attr, sizeof (pthread_mutexattr_t));
+
+            }
+            if (this->data != MAP_FAILED) {
+                munmap(this->data, sizeof (size_t));
+            }
+        }
+    }
+
+    void multi_process::run(const std::function<void(pthread_mutex_t*, size_t*)>& f, const std::function<bool(int) >& g) {
+        std::function<void() > process_work = [&]() {
+            f(this->mtx, this->data);
+        };
+        mongols::forker(std::thread::hardware_concurrency(), process_work, multi_process::pids);
+        multi_process::set_signal();
+        for (size_t i = 0; i < multi_process::pids.size(); ++i) {
+            mongols::process_bind_cpu(multi_process::pids[i], i);
+        }
+
+        std::function<void(pid_t) > refork = [&](pid_t pid) {
+            std::vector<int>::iterator p = std::find(multi_process::pids.begin(), multi_process::pids.end(), pid);
+            if (p != multi_process::pids.end()) {
+                *p = -1 * pid;
+            }
+            mongols::forker(1, process_work, multi_process::pids);
+        };
+        pid_t pid;
+        int status;
+        while ((pid = wait(&status)) > 0) {
+            if (WIFSIGNALED(status)) {
+                if (WCOREDUMP(status)) {
+                    if (g(status)) {
+                        refork(pid);
+                    }
+                } else if (WTERMSIG(status) == SIGHUP || WTERMSIG(status) == SIGSEGV || WTERMSIG(status) == SIGBUS) {
+                    refork(pid);
+                }
+            }
+        }
+    }
+
+
 
 
 }

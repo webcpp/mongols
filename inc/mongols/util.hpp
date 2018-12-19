@@ -2,7 +2,9 @@
 #define UTIL_HPP
 
 
+#include <pthread.h>
 #include <functional>
+#include <algorithm>
 #include <ctime>
 #include <cstdlib>
 #include <cstdio>
@@ -73,10 +75,28 @@ namespace mongols {
     void forker(int, const std::function<void()>&, std::vector<pid_t>&);
 
     bool process_bind_cpu(pid_t pid, int cpu);
-    
+
     bool regex_match(const std::string & pattern, const std::string & str, std::vector<std::string> & results);
-    
+
     bool regex_find(const std::string & pattern, const std::string & str, std::vector<std::string> & results);
+
+    class multi_process {
+    public:
+        multi_process();
+
+        virtual~multi_process();
+
+        void run(const std::function<void(pthread_mutex_t*, size_t*)>& f, const std::function<bool(int) >& g);
+
+
+    private:
+        pthread_mutex_t *mtx;
+        pthread_mutexattr_t *mtx_attr;
+        size_t *data;
+        static std::vector<pid_t> pids;
+        static void signal_cb(int sig);
+        static void set_signal();
+    };
 }
 
 #endif /* UTIL_HPP */

@@ -19,7 +19,9 @@ text_sha1: {{sha1}}')
 local text='hello,world'
 
 local s=studest.new()
-s:set_score(74.6):set_name("Jerry"):set_age(14)
+s:set_score(74.6)
+s:set_name("Jerry")
+s:set_age(14)
 
 view.name=s:get_name()
 view.age=s:get_age()

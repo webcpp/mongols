@@ -57,7 +57,9 @@
 /*
  var handlebars = require('handlebars')
  var s=new studest()
- s.set_name("Jerry").set_age(14).set_score(74.6)
+ s.set_name("Jerry")
+ s.set_age(14)
+ s.set_score(74.6)
  var text='hello,world'
  var tpl=handlebars.compile('name: {{name}}\nage: {{age}}\nscore: {{score}}\ntext:{{text}}\ntext_md5: {{md5}}\ntext_sha1: {{sha1}}')
  var content=tpl({name:s.get_name(),age:s.get_age(),score:s.get_score(),text:text,md5:md5(text),sha1:sha1(text)})

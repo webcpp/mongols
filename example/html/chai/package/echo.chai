@@ -1,0 +1,6 @@
+class echo {
+    var value;
+    def echo() { this.value = "a"; }
+    def set_value(x) { this.value = x;}
+    def get_value() { return "Value Is: " + this.value; }
+};
