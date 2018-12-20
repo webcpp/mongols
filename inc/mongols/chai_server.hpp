@@ -31,24 +31,20 @@ namespace mongols {
         void set_max_file_size(size_t);
         void set_db_path(const std::string&);
         void set_uri_rewrite(const std::pair<std::string, std::string>&);
-        void run(const std::string& package_path, const std::string& package_cpath);
+        void set_package_path(const std::string&);
+        void set_package_cpath(const std::string&);
+        void run();
 
         template<typename T>
         void add(const T &t_t, const std::string &t_name) {
             this->chai->add(t_t, t_name);
         }
 
-        void add(const chaiscript::Type_Conversion &d) {
-            this->chai->add(d);
-        }
+        void add(const chaiscript::Type_Conversion &d);
 
-        void add(const chaiscript::ModulePtr &t_p) {
-            this->chai->add(t_p);
-        }
+        void add(const chaiscript::ModulePtr &t_p);
 
-        void register_namespace(const std::function<void(chaiscript::Namespace&)>& t_namespace_generator, const std::string& t_namespace_name) {
-            this->register_namespace(t_namespace_generator, t_namespace_name);
-        }
+        void register_namespace(const std::function<void(chaiscript::Namespace&)>& t_namespace_generator, const std::string& t_namespace_name);
 
 
     private:

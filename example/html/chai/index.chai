@@ -1,24 +1,29 @@
-use("echo.chai")
+use("foo/foo.chai")
+use("demo.chai")
 load_module("test")
-
-/*
-{
-    var a = echo()
-    a.set_value("Jerry")
-    mongols_res.header("Content-Type","text/plain;charset=UTF-8")
-    mongols_res.content(a.get_value())
-    mongols_res.status(200)
-}
-*/
-
 
 ///*
 {
-var a = studest()
-a.set_score(23.8).set_name("Jerry").set_age(14)
-mongols_res.header("Content-Type","text/plain;charset=UTF-8")
-mongols_res.content(concat(a.get_name().to_string(),a.get_age().to_string()))
-mongols_res.status(200)
+    var a = foo()
+    var b = demo()
+    a.set_value("hello,")
+    b.set_value("world")
+    mongols_res.header("Content-Type","text/plain;charset=UTF-8")
+    mongols_res.content(concat(a.get_value(),b.get_value()))
+    mongols_res.status(200)
 }
 //*/
+
+
+/*
+{
+var a = studest()
+a.set_score(23.8)
+a.set_name("Jerry")
+a.set_age(14)
+mongols_res.header("Content-Type","text/plain;charset=UTF-8")
+mongols_res.content(concat(a.get_name(),a.get_age().to_string()))
+mongols_res.status(200)
+}
+*/
 

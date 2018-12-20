@@ -354,13 +354,15 @@ explicit ChaiScript_Basic(std::unique_ptr<parser::ChaiScript_Parser_Base> &&pars
       return *m_parser;
     }
     
-    void set_use_paths(const std::vector<std::string>& paths){
-        this->m_use_paths=paths;
+    void set_use_path(const std::string& path){
+        this->m_use_paths.push_back(path);
     }
     
-    void set_module_paths(const std::vector<std::string>& paths){
-        this->m_module_paths=paths;
+    
+    void set_module_path(const std::string& cpath){
+        this->m_module_paths.push_back(cpath);
     }
+
     
     const Boxed_Value eval(const AST_Node &t_ast)
     {

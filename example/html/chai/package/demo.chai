@@ -1,0 +1,6 @@
+class demo {
+    var value;
+    def demo() { this.value = "demo"; }
+    def set_value(x) { this.value = x;}
+    def get_value() { return this.value; }
+};

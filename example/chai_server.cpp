@@ -55,7 +55,7 @@ int main(int, char**) {
     server(host, port, 5000, 8096, 0/*2*/);
     server.set_root_path("html/chai");
     server.set_enable_bootstrap(true);
-    server.set_enable_lru_cache(false);
+    server.set_enable_lru_cache(true);
     server.set_lru_cache_expires(1);
 
     server.add(chaiscript::user_type<person>(), "person");
@@ -77,6 +77,14 @@ int main(int, char**) {
     server.add(chaiscript::fun(&mongols::md5), "md5");
     server.add(chaiscript::fun(&mongols::sha1), "sha1");
 
+    std::vector<std::string> package_paths = {"html/chai/package"}
+    , package_cpaths = {"html/chai/package/test"};
 
-    server.run("html/chai/package", "html/chai/package");
+    for (auto& item : package_paths) {
+        server.set_package_path(item);
+    }
+    for (auto& item : package_cpaths) {
+        server.set_package_cpath(item);
+    }
+    server.run();
 }

@@ -30,7 +30,6 @@ all:$(PROJECT)
 
 $(PROJECT):$(OBJ)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS) 
-	ln -s $(PROJECT) ../$(PROJECT)
 
 .c.o:
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -47,7 +46,6 @@ $(PROJECT):$(OBJ)
 clean:
 	@for i in $(OBJ);do echo "rm -f" $${i} && rm -f $${i} ;done
 	rm -f $(PROJECT)
-	rm -f ../$(PROJECT)
 
 install:
 	test -d $(INSTALL_DIR)/ || mkdir -p $(INSTALL_DIR)/

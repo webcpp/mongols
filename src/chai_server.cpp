@@ -135,14 +135,34 @@ namespace mongols {
         }
     }
 
-    void chai_server::run(const std::string& package_path, const std::string& package_cpath) {
-        this->chai->set_use_paths({(package_path.back() == '/' ? package_path : package_path + "/")});
-        this->chai->set_module_paths({(package_cpath.back() == '/' ? package_cpath : package_cpath + "/")});
+    void chai_server::set_package_path(const std::string& path) {
+        this->chai->set_use_path(path.back() == '/' ? path : path + "/");
+    }
+
+    void chai_server::set_package_cpath(const std::string& cpath) {
+        this->chai->set_module_path(cpath.back() == '/' ? cpath : cpath + "/");
+    }
+
+    void chai_server::run() {
         this->server->run(std::bind(&chai_server::filter, this, std::placeholders::_1)
                 , std::bind(&chai_server::work, this
                 , std::placeholders::_1
                 , std::placeholders::_2));
     }
+
+    void chai_server::add(const chaiscript::Type_Conversion& d) {
+        this->chai->add(d);
+    }
+
+    void chai_server::add(const chaiscript::ModulePtr& t_p) {
+        this->chai->add(t_p);
+    }
+
+    void chai_server::register_namespace(const std::function<void(chaiscript::Namespace&)>& t_namespace_generator, const std::string& t_namespace_name) {
+        this->chai->register_namespace(t_namespace_generator, t_namespace_name);
+    }
+
+
 
 
 
