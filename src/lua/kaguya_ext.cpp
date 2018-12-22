@@ -6,6 +6,7 @@
 #include "lib/hash/md5.hpp"
 #include "lib/hash/sha1.hpp"
 #include "lib/lua/kaguya_ext.hpp"
+#include "ext/json.hpp"
 
 namespace mongols {
 
@@ -40,5 +41,32 @@ namespace mongols {
         hash_tbl["sha1"] = kaguya::function([](const std::string & str) {
             return mongols::sha1(str);
         });
+
+        vm["mongols_json"].setClass(
+                kaguya::UserdataMetatable<json>()
+                .setConstructors < json(), json(json)>()
+                .addOverloadedFunctions("set", &json::set_json, &json::set_double, &json::set_long, &json::set_string)
+                .addOverloadedFunctions("get", &json::get_element, &json::get_object)
+                .addOverloadedFunctions("append", &json::append_double, &json::append_long, &json::append_string)
+                .addFunction("parse_string", &json::parse_string)
+                .addFunction("parse_file", &json::parse_file)
+                .addFunction("as_double", &json::as_double)
+                .addFunction("as_long", &json::as_long)
+                .addFunction("as_string", &json::as_string)
+                .addFunction("to_string", &json::to_string)
+                );
     }
+
+    
+
+
+
+
+
+
+
+
+
+
+
 }
