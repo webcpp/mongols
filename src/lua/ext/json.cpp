@@ -57,6 +57,10 @@ namespace mongols {
         this->root[name] = j;
     }
 
+    void json::set_bool(const std::string& name, bool j) {
+        this->root[name] = j;
+    }
+
     void json::set_string(const std::string& name, const std::string& j) {
         this->root[name] = j;
     }
@@ -73,6 +77,14 @@ namespace mongols {
         this->root.append(j);
     }
 
+    void json::append_json(const json& j) {
+        this->root.append(j.root);
+    }
+
+    void json::append_bool(bool j) {
+        this->root.append(j);
+    }
+
     std::string json::as_string()const {
         return this->root.asString();
     }
@@ -85,10 +97,53 @@ namespace mongols {
         return this->root.asDouble();
     }
 
+    bool json::as_bool() const {
+        return this->root.asBool();
+    }
+
     std::string json::to_string() {
         std::unique_ptr<Json::StreamWriter> writer(this->builder.newStreamWriter());
         std::ostringstream out;
         writer->write(this->root, &out);
         return out.str();
     }
+
+    bool json::is_array() const {
+        return this->root.isArray();
+    }
+
+    bool json::is_double() const {
+        return this->root.isDouble();
+    }
+
+    bool json::is_long() const {
+        return this->root.isInt64();
+    }
+
+    bool json::is_object() const {
+        return this->root.isObject();
+    }
+
+    bool json::is_string() const {
+        return this->root.isString();
+    }
+
+    bool json::is_bool() const {
+        return this->root.isBool();
+    }
+
+    size_t json::size() const {
+        if (this->is_array() || this->is_object()) {
+            return this->root.size();
+        }
+        return 0;
+    }
+
+
+
+
+
+
+
+
 }

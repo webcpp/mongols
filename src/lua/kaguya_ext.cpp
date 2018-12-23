@@ -45,19 +45,26 @@ namespace mongols {
         vm["mongols_json"].setClass(
                 kaguya::UserdataMetatable<json>()
                 .setConstructors < json(), json(json)>()
-                .addOverloadedFunctions("set", &json::set_json, &json::set_double, &json::set_long, &json::set_string)
+                .addOverloadedFunctions("set", &json::set_bool, &json::set_json, &json::set_double, &json::set_long, &json::set_string)
                 .addOverloadedFunctions("get", &json::get_element, &json::get_object)
-                .addOverloadedFunctions("append", &json::append_double, &json::append_long, &json::append_string)
+                .addOverloadedFunctions("append", &json::append_bool, &json::append_json, &json::append_double, &json::append_long, &json::append_string)
                 .addFunction("parse_string", &json::parse_string)
                 .addFunction("parse_file", &json::parse_file)
                 .addFunction("as_double", &json::as_double)
                 .addFunction("as_long", &json::as_long)
                 .addFunction("as_string", &json::as_string)
+                .addFunction("as_bool", &json::as_bool)
                 .addFunction("to_string", &json::to_string)
+                .addFunction("is_double", &json::is_double)
+                .addFunction("is_bool", &json::is_bool)
+                .addFunction("is_long", &json::is_long)
+                .addFunction("is_object", &json::is_object)
+                .addFunction("is_array", &json::is_array)
+                .addFunction("size", &json::size)
                 );
     }
 
-    
+
 
 
 
