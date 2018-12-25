@@ -13,6 +13,20 @@
  mongols_res.status(200)
  */
 
+/*
+
+var loaded = mongols_module.require('cpp/libcpp', 'cpp')
+var registered = cpp()
+if (loaded && registered) {
+    var a = new demo()
+    mongols_res.header('Content-Type', 'text/plain;charset=UTF-8')
+    mongols_res.content(a.echo('hello,cpp class'))
+    mongols_res.status(200)
+    mongols_module.free(a)
+}
+
+*/
+
 
 /*
  var loaded = mongols_module.require('adder/libadder','adder')
@@ -71,42 +85,42 @@
 
 
 /*
-
-var route = require('route').get_instance()
-
-route.get('^\/get/?(\\w+)$', function (req, res, param) {
-    res.header('Content-Type', 'text/plain;charset=UTF8')
-    res.content(req.method()+'\n'+req.uri() + '\n' + param.toString())
-    res.status(200)
-})
-
-route.post('^\/post/?([a-zA-Z]+)?$', function (req, res, param) {
-    res.header('Content-Type', 'text/plain;charset=UTF8')
-    res.content(req.method()+'\n'+req.uri() + '\n' + param.toString())
-    res.status(200)
-})
-
-route.put('^\/put/?([0-9]+)?', function (req, res, param) {
-    res.header('Content-Type', 'text/plain;charset=UTF8')
-    res.content(req.method()+'\n'+req.uri() + '\n' + param.toString())
-    res.status(200)
-})
-
-route.add(['GET', 'POST', 'PUT'], '^\/(.*)$', function (req, res, param) {
-    res.header('Content-Type', 'text/plain;charset=UTF8')
-    res.content(req.method()+'\n'+req.uri() + '\n' + param.toString())
-    res.status(200)
-})
-
-route.run(mongols_req, mongols_res)
-
-
-
-*/
+ 
+ var route = require('route').get_instance()
+ 
+ route.get('^\/get/?(\\w+)$', function (req, res, param) {
+ res.header('Content-Type', 'text/plain;charset=UTF8')
+ res.content(req.method()+'\n'+req.uri() + '\n' + param.toString())
+ res.status(200)
+ })
+ 
+ route.post('^\/post/?([a-zA-Z]+)?$', function (req, res, param) {
+ res.header('Content-Type', 'text/plain;charset=UTF8')
+ res.content(req.method()+'\n'+req.uri() + '\n' + param.toString())
+ res.status(200)
+ })
+ 
+ route.put('^\/put/?([0-9]+)?', function (req, res, param) {
+ res.header('Content-Type', 'text/plain;charset=UTF8')
+ res.content(req.method()+'\n'+req.uri() + '\n' + param.toString())
+ res.status(200)
+ })
+ 
+ route.add(['GET', 'POST', 'PUT'], '^\/(.*)$', function (req, res, param) {
+ res.header('Content-Type', 'text/plain;charset=UTF8')
+ res.content(req.method()+'\n'+req.uri() + '\n' + param.toString())
+ res.status(200)
+ })
+ 
+ route.run(mongols_req, mongols_res)
+ 
+ 
+ 
+ */
 
 
 ///*
  mongols_res.header('Content-Type','text/plain;charset=UTF-8')
  mongols_res.content('hello,world')
  mongols_res.status(200)
-//*/
+ //*/
