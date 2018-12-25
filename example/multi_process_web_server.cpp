@@ -35,8 +35,8 @@ int main(int, char**) {
         return false;
     };
 
-    mongols::multi_process main_precess;
-    main_precess.run(ff, g);
+    mongols::multi_process main_process;
+    main_process.run(ff, g);
 
 
 }

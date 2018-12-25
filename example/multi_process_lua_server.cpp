@@ -108,8 +108,8 @@ int main(int, char**) {
         return false;
     };
 
-    mongols::multi_process main_precess;
-    main_precess.run(f, g);
+    mongols::multi_process main_process;
+    main_process.run(f, g);
 
 
 }
