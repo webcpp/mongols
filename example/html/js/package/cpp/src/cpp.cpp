@@ -3,7 +3,6 @@
 #include <mongols/lib/dukglue/duktape.h>
 #include <mongols/js_server.hpp>
 
-#include "dukglue/duktape.h"
 
 class demo : public mongols::js_object {
 public:
