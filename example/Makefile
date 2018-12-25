@@ -15,6 +15,7 @@ all: server module
 module:
 	cd $(js_c_module_path)/adder && make clean && make 
 	cd $(js_c_module_path)/concat && make clean && make
+	cd $(js_c_module_path)/cpp && make clean && make
 	cd $(chai_module_path)/test && make clean && make
 	cd $(lua_module_path)/hello && make clean && make
 
