@@ -47,7 +47,7 @@ int main(int, char**) {
     };
 
     mongols::multi_process main_process;
-    main_precoss.run(ff, gg);
+    main_process.run(ff, gg);
 
 
 
