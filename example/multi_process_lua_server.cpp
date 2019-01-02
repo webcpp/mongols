@@ -90,7 +90,6 @@ int main(int, char**) {
 
 
     std::function<void(pthread_mutex_t*, size_t*) > f = [&](pthread_mutex_t* mtx, size_t * data) {
-        prctl(PR_SET_NAME, "mongols: worker");
         std::string i;
         pthread_mutex_lock(mtx);
         if (*data > std::thread::hardware_concurrency() - 1) {

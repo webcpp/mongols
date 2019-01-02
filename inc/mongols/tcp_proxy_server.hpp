@@ -60,6 +60,9 @@ namespace mongols {
 
         void set_default_content(const std::string&);
 
+        void set_default_http_content();
+
+
     private:
         size_t index, back_end_size;
         tcp_server* server;
@@ -73,6 +76,7 @@ namespace mongols {
                 , tcp_server::client_t&
                 , tcp_server::filter_handler_function&);
 
+        static std::string DEFAULT_HTTP_CONTENT;
 
     };
 }

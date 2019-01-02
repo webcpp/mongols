@@ -60,7 +60,16 @@ namespace mongols {
     ssize_t tcp_client::send(const char* str, size_t len) {
         return ::write(this->socket_fd, str, len);
     }
-    
+
+    std::string tcp_proxy_server::DEFAULT_HTTP_CONTENT = "HTTP/1.1 403 Forbidden\r\n"
+            "Content-Type: text/html; charset=UTF-8\r\n"
+            "Content-Length: 70\r\n"
+            "Connection: close\r\n"
+            "\r\n"
+            "<html>"
+            "<head><title>403</title></head>"
+            "<body>403 Forbidden</body>"
+            "</html>";
 
     tcp_proxy_server::tcp_proxy_server(const std::string& host, int port, int timeout, size_t buffer_size, size_t thread_size, int max_event_size)
     : index(0), back_end_size(0), server(0), back_server(), clients(), default_content() {
@@ -129,6 +138,9 @@ namespace mongols {
         return this->default_content;
     }
 
+    void tcp_proxy_server::set_default_http_content() {
+        this->default_content = tcp_proxy_server::DEFAULT_HTTP_CONTENT;
+    }
 
 
 

@@ -26,7 +26,6 @@ int main(int, char**) {
     server.set_enable_mmap(true);
 
     std::function<void(pthread_mutex_t*, size_t*) > ff = [&](pthread_mutex_t* mtx, size_t * data) {
-        prctl(PR_SET_NAME, "mongols: worker");
         server.run(f);
     };
 

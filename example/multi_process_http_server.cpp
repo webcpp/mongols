@@ -28,7 +28,6 @@ int main(int, char**) {
     server.set_enable_cache(false);
 
     std::function<void(pthread_mutex_t*, size_t*) > ff = [&](pthread_mutex_t* mtx, size_t * data) {
-        prctl(PR_SET_NAME, "mongols: worker");
         std::string i;
         pthread_mutex_lock(mtx);
         if (*data > std::thread::hardware_concurrency() - 1) {
