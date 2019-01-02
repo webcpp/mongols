@@ -46,7 +46,7 @@ namespace mongols {
             , size_t buffer_size
             , int max_event_size) :
     host(host), port(port), listenfd(0), timeout(timeout), max_event_size(max_event_size), serveraddr()
-    , buffer_size(buffer_size), thread_size(0), clients(), work_pool(0) {
+    , sid_queue(), sid(0), buffer_size(buffer_size), thread_size(0), clients(), work_pool(0) {
         this->listenfd = socket(AF_INET, SOCK_STREAM, 0);
 
         int on = 1;
@@ -81,12 +81,12 @@ namespace mongols {
         }
     }
 
-    tcp_server::client_t::client_t() : ip(), port(-1), uid(0), u_size(0), gid() {
+    tcp_server::client_t::client_t() : ip(), port(-1), sid(0), uid(0), u_size(0), gid() {
         this->gid.push_back(0);
     }
 
     tcp_server::client_t::client_t(const std::string& ip, int port, size_t uid, size_t gid)
-    : ip(ip), port(port), uid(uid), u_size(0), gid() {
+    : ip(ip), port(port), sid(0), uid(uid), u_size(0), gid() {
         this->gid.push_back(gid);
     }
 
@@ -125,10 +125,18 @@ namespace mongols {
     }
 
     void tcp_server::add_client(int fd, const std::string& ip, int port) {
-        this->clients.insert(std::move(std::make_pair(fd, std::move(client_t(ip, port, 0, 0)))));
+        auto pair = this->clients.insert(std::move(std::make_pair(fd, std::move(client_t(ip, port, 0, 0)))));
+        if (this->sid_queue.empty()) {
+            pair.first->second.sid = ++this->sid;
+        } else {
+            pair.first->second.sid = this->sid_queue.front();
+            this->sid_queue.pop();
+        }
+
     }
 
     void tcp_server::del_client(int fd) {
+        this->sid_queue.push(this->clients.find(fd)->second.sid);
         this->clients.erase(fd);
     }
 

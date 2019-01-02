@@ -10,6 +10,7 @@
 #include <atomic>
 #include <list>
 #include <thread>
+#include <queue>
 
 
 #include "epoll.hpp"
@@ -32,7 +33,7 @@ namespace mongols {
             virtual~client_t() = default;
             std::string ip;
             int port;
-            size_t uid, u_size;
+            size_t sid, uid, u_size;
             std::list<size_t> gid;
         };
         typedef std::function<bool(const client_t&) > filter_handler_function;
@@ -60,7 +61,8 @@ namespace mongols {
         std::string host;
         int port, listenfd, timeout, max_event_size;
         struct sockaddr_in serveraddr;
-
+        std::queue<size_t, std::list<size_t>> sid_queue;
+        size_t sid;
         static std::atomic_bool done;
         static void signal_normal_cb(int sig, siginfo_t *, void *);
         void setnonblocking(int fd);
