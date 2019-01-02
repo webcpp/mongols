@@ -11,6 +11,7 @@
 #include <list>
 #include <thread>
 #include <queue>
+#include <ctime>
 
 
 #include "epoll.hpp"
@@ -33,7 +34,8 @@ namespace mongols {
             virtual~client_t() = default;
             std::string ip;
             int port;
-            size_t sid, uid, u_size;
+            time_t t;
+            size_t sid, uid, u_size, count;
             std::list<size_t> gid;
         };
         typedef std::function<bool(const client_t&) > filter_handler_function;
@@ -61,14 +63,13 @@ namespace mongols {
         std::string host;
         int port, listenfd, timeout, max_event_size;
         struct sockaddr_in serveraddr;
-        std::queue<size_t, std::list<size_t>> sid_queue;
-        size_t sid;
         static std::atomic_bool done;
         static void signal_normal_cb(int sig, siginfo_t *, void *);
         void setnonblocking(int fd);
         void main_loop(struct epoll_event *, const handler_function&, mongols::epoll&);
     protected:
-        size_t buffer_size, thread_size;
+        size_t buffer_size, thread_size, sid;
+        std::queue<size_t, std::list<size_t>> sid_queue;
         std::unordered_map<int, client_t > clients;
         mongols::thread_pool<std::function<bool() >> *work_pool;
         virtual void add_client(int, const std::string&, int);

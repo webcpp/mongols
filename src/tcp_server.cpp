@@ -46,7 +46,7 @@ namespace mongols {
             , size_t buffer_size
             , int max_event_size) :
     host(host), port(port), listenfd(0), timeout(timeout), max_event_size(max_event_size), serveraddr()
-    , sid_queue(), sid(0), buffer_size(buffer_size), thread_size(0), clients(), work_pool(0) {
+    , buffer_size(buffer_size), thread_size(0), sid(0), sid_queue(), clients(), work_pool(0) {
         this->listenfd = socket(AF_INET, SOCK_STREAM, 0);
 
         int on = 1;
@@ -81,12 +81,12 @@ namespace mongols {
         }
     }
 
-    tcp_server::client_t::client_t() : ip(), port(-1), sid(0), uid(0), u_size(0), gid() {
+    tcp_server::client_t::client_t() : ip(), port(-1), t(time(0)), sid(0), uid(0), u_size(0), gid(), count(0) {
         this->gid.push_back(0);
     }
 
     tcp_server::client_t::client_t(const std::string& ip, int port, size_t uid, size_t gid)
-    : ip(ip), port(port), sid(0), uid(uid), u_size(0), gid() {
+    : ip(ip), port(port), t(time(0)), sid(0), uid(uid), u_size(0), gid(), count(0) {
         this->gid.push_back(gid);
     }
 
@@ -175,6 +175,7 @@ ev_recv:
             bool keepalive = CLOSE_CONNECTION, send_to_all = false;
             client_t& client = this->clients[fd];
             client.u_size = this->clients.size();
+            client.count++;
             std::string output = std::move(g(input, keepalive, send_to_all, client, send_to_other_filter));
             size_t n = send(fd, output.c_str(), output.size(), MSG_NOSIGNAL);
             if (n >= 0) {

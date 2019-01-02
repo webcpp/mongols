@@ -34,11 +34,18 @@ namespace mongols {
 
     void tcp_threading_server::add_client(int fd, const std::string& ip, int port) {
         std::lock_guard<std::mutex> lk(this->main_mtx);
-        this->clients.insert(std::move(std::make_pair(fd, std::move(client_t(ip, port, 0, 0)))));
+        auto pair = this->clients.insert(std::move(std::make_pair(fd, std::move(client_t(ip, port, 0, 0)))));
+        if (this->sid_queue.empty()) {
+            pair.first->second.sid = ++this->sid;
+        } else {
+            pair.first->second.sid = this->sid_queue.front();
+            this->sid_queue.pop();
+        }
     }
 
     void tcp_threading_server::del_client(int fd) {
         std::lock_guard<std::mutex> lk(this->main_mtx);
+        this->sid_queue.push(this->clients.find(fd)->second.sid);
         this->clients.erase(fd);
     }
 
@@ -83,6 +90,7 @@ ev_recv:
                 std::lock_guard<std::mutex> lk(this->main_mtx);
                 tcp_server::client_t& client = this->clients[fd];
                 client.u_size = this->clients.size();
+                client.count++;
                 output = std::move(g(input, keepalive, send_to_all, client, send_to_other_filter));
             }
             size_t n = send(fd, output.c_str(), output.size(), MSG_NOSIGNAL);
