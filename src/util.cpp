@@ -625,6 +625,7 @@ namespace mongols {
 
     void multi_process::run(const std::function<void(pthread_mutex_t*, size_t*)>& f, const std::function<bool(int) >& g) {
         std::function<void() > process_work = [&]() {
+            prctl(PR_SET_NAME, "mongols: worker");
             f(this->mtx, this->data);
         };
         mongols::forker(std::thread::hardware_concurrency(), process_work, multi_process::pids);
