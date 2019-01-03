@@ -154,7 +154,9 @@ namespace mongols {
                         }
                     }
                     if (this->enable_http_lru_cache) {
-                        cache_key = std::make_shared<std::string>(mongols::md5(req.param.empty() ? req.uri : req.uri + "?" + req.param));
+                        std::string tmp_str(req.method);
+                        tmp_str.append(req.uri);
+                        cache_key = std::make_shared<std::string>(std::move(mongols::md5(req.param.empty() ? tmp_str : tmp_str.append("?").append(req.param))));
                         if (this->http_lru_cache->contains(*cache_key)) {
                             output = this->http_lru_cache->get(*cache_key);
                             if (difftime(time(0), output->second)>this->http_lru_cache_expires) {
