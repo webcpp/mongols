@@ -201,6 +201,7 @@ new_client:
                             this->http_lru_cache->insert(*cache_key, output);
                             return output->first;
                         }
+                        keepalive = KEEPALIVE_CONNECTION;
                         return std::string(buffer, ret);
                     }
                 }
