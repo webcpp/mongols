@@ -12,6 +12,9 @@
 #include <functional>
 
 #include "tcp_proxy_server.hpp"
+#include "http_request_parser.hpp"
+#include "lib/hash/md5.hpp"
+#include "cache.h"
 
 
 namespace mongols {
@@ -72,17 +75,26 @@ namespace mongols {
             "</html>";
 
     tcp_proxy_server::tcp_proxy_server(const std::string& host, int port, int timeout, size_t buffer_size, size_t thread_size, int max_event_size)
-    : index(0), back_end_size(0), server(0), back_server(), clients(), default_content() {
+    : index(0), back_end_size(0), http_lru_cache_size(1024), http_lru_cache_expires(300), enable_http(false), enable_http_lru_cache(false)
+    , server(0), back_server(), clients(), default_content(), http_lru_cache(0) {
         this->server = new tcp_server(host, port, timeout, buffer_size, max_event_size);
     }
 
     tcp_proxy_server::~tcp_proxy_server() {
+        if (this->http_lru_cache) {
+            delete this->http_lru_cache;
+        }
+
         if (this->server) {
             delete this->server;
         }
     }
 
     void tcp_proxy_server::run(const tcp_server::filter_handler_function& g) {
+        if (this->enable_http && this->enable_http_lru_cache) {
+            this->http_lru_cache = new lru11::Cache<std::string, std::shared_ptr < std::pair<std::string, time_t> >> (this->http_lru_cache_size);
+        }
+
         tcp_server::handler_function f = std::bind(&tcp_proxy_server::work, this
                 , std::cref(g)
                 , std::placeholders::_1
@@ -103,12 +115,56 @@ namespace mongols {
         this->default_content = str;
     }
 
+    void tcp_proxy_server::set_enable_http_mode(bool b) {
+        this->enable_http = b;
+    }
+
+    void tcp_proxy_server::set_enable_http_lru_cache(bool b) {
+        this->enable_http_lru_cache = b;
+    }
+
+    void tcp_proxy_server::set_http_lru_cache_size(size_t len) {
+        this->http_lru_cache_size = len;
+    }
+
+    void tcp_proxy_server::set_http_lru_cache_expires(long long expires) {
+        this->http_lru_cache_expires = expires;
+    }
+
     std::string tcp_proxy_server::work(const tcp_server::filter_handler_function& f
             , const std::pair<char*, size_t>& input, bool& keepalive
             , bool& send_to_other, tcp_server::client_t& client, tcp_server::filter_handler_function& send_to_other_filter) {
-        keepalive = KEEPALIVE_CONNECTION;
+        keepalive = CLOSE_CONNECTION;
         send_to_other = false;
+        std::shared_ptr<std::string> cache_key;
+        std::shared_ptr<std::pair < std::string, time_t>> output;
         if (f(client)) {
+            if (this->enable_http) {
+                mongols::request req;
+                mongols::http_request_parser parser(req);
+                if (parser.parse(input.first, input.second)) {
+                    std::unordered_map<std::string, std::string>::const_iterator tmp_iterator;
+                    if ((tmp_iterator = req.headers.find("Connection")) != req.headers.end()) {
+                        if (tmp_iterator->second == "keep-alive") {
+                            keepalive = KEEPALIVE_CONNECTION;
+                        }
+                    }
+                    if (this->enable_http_lru_cache) {
+                        cache_key = std::make_shared<std::string>(mongols::md5(req.param.empty() ? req.uri : req.uri + "?" + req.param));
+                        if (this->http_lru_cache->contains(*cache_key)) {
+                            output = this->http_lru_cache->get(*cache_key);
+                            if (difftime(time(0), output->second)>this->http_lru_cache_expires) {
+                                this->http_lru_cache->remove(*cache_key);
+                            } else {
+                                return output->first;
+                            }
+                        }
+                    }
+
+                } else {
+                    goto done;
+                }
+            }
             std::unordered_map<size_t, std::shared_ptr < tcp_client>>::iterator iter = this->clients.find(client.sid);
             std::shared_ptr<tcp_client> cli;
             if (iter == this->clients.end()) {
@@ -125,16 +181,23 @@ namespace mongols {
             if (cli->ok()) {
                 ssize_t ret = cli->send(input.first, input.second);
                 if (ret > 0) {
-                    char buffer[4096];
-                    ret = cli->recv(buffer, 4096);
+                    char buffer[this->server->get_buffer_size()];
+                    ret = cli->recv(buffer, this->server->get_buffer_size());
                     if (ret > 0) {
+                        if (this->enable_http && this->enable_http_lru_cache) {
+                            output = std::make_shared<std::pair < std::string, time_t >> ();
+                            output->first.assign(buffer, ret);
+                            output->second = time(0);
+                            this->http_lru_cache->insert(*cache_key, output);
+                            return output->first;
+                        }
                         return std::string(buffer, ret);
                     }
                 }
             }
             this->clients.erase(client.sid);
         }
-        keepalive = CLOSE_CONNECTION;
+done:
         return this->default_content;
     }
 

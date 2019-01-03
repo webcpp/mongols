@@ -1,23 +1,17 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
-#include <fcntl.h> 
-#include <string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
+#include <sys/wait.h>
+#include <sys/signal.h>
 #include <sys/prctl.h>
-#include <netdb.h> 
 
-
-#include <unordered_map>
-#include <memory>
 #include <mongols/util.hpp>
 #include <mongols/tcp_proxy_server.hpp>
 
-
+#include <cstring>
+#include <iostream>
+#include <functional>
 
 int main(int, char**) {
+    //    daemon(1, 0);
     auto f = [](const mongols::tcp_server::client_t & client) {
         return true;
     };
@@ -26,10 +20,14 @@ int main(int, char**) {
 
     mongols::tcp_proxy_server server(host, port);
 
+    server.set_enable_http_mode(true);
+    server.set_enable_http_lru_cache(true);
+    server.set_http_lru_cache_expires(1);
+    server.set_default_http_content();
+
+    //see example/nodejs
     server.set_back_server(host, 8888);
     server.set_back_server(host, 8889);
-    
-    server.set_default_http_content();
 
     //    server.run(f);
 

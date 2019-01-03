@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <algorithm>
+#include <functional>
 
 int main(int, char**) {
     //    daemon(1, 0);
