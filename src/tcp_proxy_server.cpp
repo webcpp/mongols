@@ -77,7 +77,11 @@ namespace mongols {
     tcp_proxy_server::tcp_proxy_server(const std::string& host, int port, int timeout, size_t buffer_size, size_t thread_size, int max_event_size)
     : index(0), back_end_size(0), http_lru_cache_size(1024), http_lru_cache_expires(300), enable_http(false), enable_http_lru_cache(false)
     , server(0), back_server(), clients(), default_content(), http_lru_cache(0) {
-        this->server = new tcp_server(host, port, timeout, buffer_size, max_event_size);
+        if (thread_size > 0) {
+            this->server = new tcp_threading_server(host, port, timeout, buffer_size, thread_size, max_event_size);
+        } else {
+            this->server = new tcp_server(host, port, timeout, buffer_size, max_event_size);
+        }
     }
 
     tcp_proxy_server::~tcp_proxy_server() {
@@ -167,15 +171,19 @@ namespace mongols {
             }
             std::unordered_map<size_t, std::shared_ptr < tcp_client>>::iterator iter = this->clients.find(client.sid);
             std::shared_ptr<tcp_client> cli;
+            bool is_old = false;
             if (iter == this->clients.end()) {
+new_client:
                 if (this->index>this->back_end_size - 1) {
                     this->index = 0;
                 }
                 std::vector<std::pair < std::string, int>>::const_reference back_end = this->back_server[this->index++];
                 cli = std::make_shared<tcp_client>(back_end.first, back_end.second);
                 this->clients[client.sid] = cli;
+                is_old = false;
             } else {
                 cli = iter->second;
+                is_old = true;
             }
 
             if (cli->ok()) {
@@ -196,6 +204,9 @@ namespace mongols {
                 }
             }
             this->clients.erase(client.sid);
+            if (is_old) {
+                goto new_client;
+            }
         }
 done:
         return this->default_content;

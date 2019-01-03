@@ -18,7 +18,7 @@ int main(int, char**) {
     int port = 9090;
     const char* host = "127.0.0.1";
 
-    mongols::tcp_proxy_server server(host, port);
+    mongols::tcp_proxy_server server(host, port, 5000, 8192, 0/*2*/);
 
     server.set_enable_http_mode(true);
     server.set_enable_http_lru_cache(true);

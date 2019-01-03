@@ -15,6 +15,7 @@
 #include <functional>
 
 #include "tcp_server.hpp"
+#include "tcp_threading_server.hpp"
 #include "lib/LRUCache11.hpp"
 
 namespace mongols {
