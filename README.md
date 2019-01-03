@@ -92,6 +92,16 @@ result: `{"error":null,"result":[{"id":1,"name":"a"},{"id":2,"name":"b"},{"id":3
 
 ![medis.png](https://raw.githubusercontent.com/webcpp/mongols/master/benchmark/medis.png)
 
+### tcp proxy 
+
+![tcp_proxy_serverVSnginx_proxy_pass.png](https://raw.githubusercontent.com/webcpp/mongols/master/benchmark/tcp_proxy_serverVSnginx_proxy_pass.png)
+
+
 ## example
 
 [example](https://github.com/webcpp/mongols/tree/master/example)
+
+
+
+
+
