@@ -14,7 +14,6 @@
 #include "tcp_proxy_server.hpp"
 #include "http_request_parser.hpp"
 #include "lib/hash/md5.hpp"
-#include "cache.h"
 
 
 namespace mongols {
