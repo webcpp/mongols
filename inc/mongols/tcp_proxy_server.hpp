@@ -58,7 +58,7 @@ namespace mongols {
 
         void run(const tcp_server::filter_handler_function&);
 
-        void set_back_server(const std::string&, int);
+        void set_backend_server(const std::string&, int);
 
         void set_default_content(const std::string&);
 
@@ -73,7 +73,7 @@ namespace mongols {
         long long http_lru_cache_expires;
         bool enable_http, enable_http_lru_cache;
         tcp_server* server;
-        std::vector<std::pair<std::string, int>> back_server;
+        std::vector<std::pair<std::string, int>> backend_server;
         std::unordered_map<size_t, std::shared_ptr<tcp_client>> clients;
         std::string default_content;
         lru11::Cache<std::string, std::shared_ptr<std::pair<std::string, time_t>>>* http_lru_cache;

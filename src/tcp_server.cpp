@@ -81,12 +81,12 @@ namespace mongols {
         }
     }
 
-    tcp_server::client_t::client_t() : ip(), port(-1), t(time(0)), sid(0), uid(0), u_size(0), gid(), count(0) {
+    tcp_server::client_t::client_t() : ip(), port(-1), t(time(0)), sid(0), uid(0), u_size(0), count(0), gid() {
         this->gid.push_back(0);
     }
 
     tcp_server::client_t::client_t(const std::string& ip, int port, size_t uid, size_t gid)
-    : ip(ip), port(port), t(time(0)), sid(0), uid(uid), u_size(0), gid(), count(0) {
+    : ip(ip), port(port), t(time(0)), sid(0), uid(uid), u_size(0), count(0), gid() {
         this->gid.push_back(gid);
     }
 

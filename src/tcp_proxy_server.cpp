@@ -40,12 +40,11 @@ namespace mongols {
             this->socket_fd = -1;
             return;
         }
-        bzero((char *) & this->server_addr, sizeof (this->server_addr));
+        memset((char *) & this->server_addr, 0, sizeof (this->server_addr));
         this->server_addr.sin_family = AF_INET;
-        bcopy((char *) this->server->h_addr,
-                (char *) & this->server_addr.sin_addr.s_addr,
-                this->server->h_length);
         this->server_addr.sin_port = htons(this->port);
+        memcpy(& this->server_addr.sin_addr, (char *) this->server->h_addr, this->server->h_length);
+
         if (connect(this->socket_fd, (struct sockaddr *) & this->server_addr, sizeof (this->server_addr)) < 0) {
             close(this->socket_fd);
             this->socket_fd = -1;
@@ -66,9 +65,9 @@ namespace mongols {
 
     std::string tcp_proxy_server::DEFAULT_HTTP_CONTENT = "HTTP/1.1 403 Forbidden\r\n"
             "Content-Type: text/html; charset=UTF-8\r\n"
-            "Content-Length: 70\r\n"
+            "Content-Length: 72\r\n"
             "Connection: close\r\n"
-            "\r\n"
+            "\r\n\r\n"
             "<html>"
             "<head><title>403</title></head>"
             "<body>403 Forbidden</body>"
@@ -76,7 +75,7 @@ namespace mongols {
 
     tcp_proxy_server::tcp_proxy_server(const std::string& host, int port, int timeout, size_t buffer_size, size_t thread_size, int max_event_size)
     : index(0), back_end_size(0), http_lru_cache_size(1024), http_lru_cache_expires(300), enable_http(false), enable_http_lru_cache(false)
-    , server(0), back_server(), clients(), default_content(), http_lru_cache(0) {
+    , server(0), backend_server(), clients(), default_content(), http_lru_cache(0) {
         if (thread_size > 0) {
             this->server = new tcp_threading_server(host, port, timeout, buffer_size, thread_size, max_event_size);
         } else {
@@ -110,8 +109,8 @@ namespace mongols {
         this->server->run(f);
     }
 
-    void tcp_proxy_server::set_back_server(const std::string& host, int port) {
-        this->back_server.emplace_back(std::make_pair(host, port));
+    void tcp_proxy_server::set_backend_server(const std::string& host, int port) {
+        this->backend_server.emplace_back(std::make_pair(host, port));
         this->back_end_size++;
     }
 
@@ -179,7 +178,7 @@ new_client:
                 if (this->index>this->back_end_size - 1) {
                     this->index = 0;
                 }
-                std::vector<std::pair < std::string, int>>::const_reference back_end = this->back_server[this->index++];
+                std::vector<std::pair < std::string, int>>::const_reference back_end = this->backend_server[this->index++];
                 cli = std::make_shared<tcp_client>(back_end.first, back_end.second);
                 this->clients[client.sid] = cli;
                 is_old = false;

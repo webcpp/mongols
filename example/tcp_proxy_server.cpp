@@ -26,8 +26,8 @@ int main(int, char**) {
     server.set_default_http_content();
 
     //see example/nodejs
-    server.set_back_server(host, 8888);
-    server.set_back_server(host, 8889);
+    server.set_backend_server(host, 8888);
+    server.set_backend_server(host, 8889);
 
     //    server.run(f);
 
