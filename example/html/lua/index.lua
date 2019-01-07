@@ -6,6 +6,38 @@ mongols_res:status(200)
 --
 
 --[[
+
+local lfs = require"lfs"
+local echo=require('echo')
+
+local content=''
+function attrdir (path)
+    for file in lfs.dir(path) do
+        if file ~= "." and file ~= ".." then
+            local f = path..'/'..file
+            content=echo.concat(content,f,'\n')
+            local attr = lfs.attributes (f)
+            assert (type(attr) == "table")
+            if attr.mode == "directory" then
+                attrdir (f)
+            else
+                for name, value in pairs(attr) do
+                    content=echo.concat(content,name,'\t',value,'\n')
+                end
+            end
+        end
+    end
+end
+
+attrdir (".")
+
+mongols_res:header('Content-Type','text/plain;charset=UTF-8')
+mongols_res:content(content)
+mongols_res:status(200)
+
+--]]
+
+--[[
 local lustache = require('lustache')
 local view_model = {
   title = "Joe",

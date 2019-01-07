@@ -17,7 +17,7 @@ CXX=g++
 
 CFLAGS+=-O3 -std=c11 -Wall -fPIC
 CFLAGS+=-Iinc/mongols -Iinc/mongols/lib
-CFLAGS+=-Iinc/mongols/lib/lua -Wextra -DLUA_COMPAT_5_2 -DLUA_COMPAT_5_1 -DLUA_USE_LINUX
+CFLAGS+=-Iinc/mongols/lib/lua -Wextra -DLUA_COMPAT_5_2 -DLUA_COMPAT_5_1 -DLUA_USE_LINUX -D_DEFAULT_SOURCE
 CFLAGS+=-DMULTIPLE_THREADS
 CFLAGS+=-Iinc/mongols/lib/sqlite  -DSQLITE_THREADSAFE=1 \
 	-DSQLITE_ENABLE_FTS4  \

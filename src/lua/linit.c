@@ -52,6 +52,7 @@ static const luaL_Reg loadedlibs[] = {
     {LUA_DBLIBNAME, luaopen_debug},
     {LUA_CJSONLIBNAME, luaopen_cjson},
     {LUA_CJSONSAFELIBNAME, luaopen_cjson_safe},
+    {LUA_LFSLIBNAME, luaopen_lfs},
 #if defined(LUA_COMPAT_BITLIB)
     {LUA_BITLIBNAME, luaopen_bit32},
 #endif
