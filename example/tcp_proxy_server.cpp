@@ -10,11 +10,18 @@
 #include <iostream>
 #include <functional>
 
+#include "request.hpp"
+
 int main(int, char**) {
     //    daemon(1, 0);
     auto f = [](const mongols::tcp_server::client_t & client) {
         return true;
     };
+
+    auto h = [&](const mongols::request & req) {
+        return true;
+    };
+
     int port = 9090;
     const char* host = "127.0.0.1";
 
@@ -29,11 +36,11 @@ int main(int, char**) {
     server.set_backend_server(host, 8888);
     server.set_backend_server(host, 8889);
 
-    //    server.run(f);
+    //    server.run(f,h);
 
 
     std::function<void(pthread_mutex_t*, size_t*) > ff = [&](pthread_mutex_t* mtx, size_t * data) {
-        server.run(f);
+        server.run(f, h);
     };
 
     std::function<bool(int) > g = [&](int status) {

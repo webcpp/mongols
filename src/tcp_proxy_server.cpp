@@ -96,9 +96,13 @@ namespace mongols {
         if (this->enable_http && this->enable_http_lru_cache) {
             this->http_lru_cache = new lru11::Cache<std::string, std::shared_ptr < std::pair<std::string, time_t> >> (this->http_lru_cache_size);
         }
+        auto default_http_req_filter = [](const mongols::request&) {
+            return true;
+        };
 
         tcp_server::handler_function f = std::bind(&tcp_proxy_server::work, this
                 , std::cref(g)
+                , std::cref(default_http_req_filter)
                 , std::placeholders::_1
                 , std::placeholders::_2
                 , std::placeholders::_3
@@ -106,6 +110,24 @@ namespace mongols {
                 , std::placeholders::_5);
 
         this->server->run(f);
+    }
+
+    void tcp_proxy_server::run(const tcp_server::filter_handler_function& f, const std::function<bool(const mongols::request&)>& g) {
+        if (this->enable_http && this->enable_http_lru_cache) {
+            this->http_lru_cache = new lru11::Cache<std::string, std::shared_ptr < std::pair<std::string, time_t> >> (this->http_lru_cache_size);
+        }
+
+
+        tcp_server::handler_function ff = std::bind(&tcp_proxy_server::work, this
+                , std::cref(f)
+                , std::cref(g)
+                , std::placeholders::_1
+                , std::placeholders::_2
+                , std::placeholders::_3
+                , std::placeholders::_4
+                , std::placeholders::_5);
+
+        this->server->run(ff);
     }
 
     void tcp_proxy_server::set_backend_server(const std::string& host, int port) {
@@ -134,6 +156,7 @@ namespace mongols {
     }
 
     std::string tcp_proxy_server::work(const tcp_server::filter_handler_function& f
+            , const std::function<bool(const mongols::request&)>& g
             , const std::pair<char*, size_t>& input, bool& keepalive
             , bool& send_to_other, tcp_server::client_t& client, tcp_server::filter_handler_function& send_to_other_filter) {
         keepalive = CLOSE_CONNECTION;
@@ -145,6 +168,13 @@ namespace mongols {
                 mongols::request req;
                 mongols::http_request_parser parser(req);
                 if (parser.parse(input.first, input.second)) {
+                    req.client = client.ip;
+                    if (g(req)) {
+                        goto http_process;
+                    } else {
+                        goto done;
+                    }
+http_process:
                     std::unordered_map<std::string, std::string>::const_iterator tmp_iterator;
                     if ((tmp_iterator = req.headers.find("Connection")) != req.headers.end()) {
                         if (tmp_iterator->second == "keep-alive") {
@@ -164,6 +194,7 @@ namespace mongols {
                             }
                         }
                     }
+
 
                 } else {
                     goto done;
@@ -216,7 +247,6 @@ done:
     void tcp_proxy_server::set_default_http_content() {
         this->default_content = tcp_proxy_server::DEFAULT_HTTP_CONTENT;
     }
-
 
 
 

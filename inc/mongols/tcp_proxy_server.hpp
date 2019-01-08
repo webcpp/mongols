@@ -17,6 +17,7 @@
 #include "tcp_server.hpp"
 #include "tcp_threading_server.hpp"
 #include "lib/LRUCache11.hpp"
+#include "request.hpp"
 
 namespace mongols {
 
@@ -57,6 +58,7 @@ namespace mongols {
         virtual~tcp_proxy_server();
 
         void run(const tcp_server::filter_handler_function&);
+        void run(const tcp_server::filter_handler_function&, const std::function<bool(const mongols::request&)>&);
 
         void set_backend_server(const std::string&, int);
 
@@ -78,6 +80,7 @@ namespace mongols {
         std::string default_content;
         lru11::Cache<std::string, std::shared_ptr<std::pair<std::string, time_t>>>* http_lru_cache;
         std::string work(const tcp_server::filter_handler_function&
+                , const std::function<bool(const mongols::request&)>&
                 , const std::pair<char*, size_t>&
                 , bool&
                 , bool&
