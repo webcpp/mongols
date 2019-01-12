@@ -30,6 +30,7 @@ namespace mongols {
         void set_max_file_size(size_t);
         void set_db_path(const std::string&);
         void set_uri_rewrite(const std::pair<std::string, std::string>&);
+        bool set_openssl(const std::string&, const std::string&);
         void run(const std::string& package_path, const std::string& package_cpath);
 
         template <typename class_type, typename base_class_type = void>

@@ -26,6 +26,9 @@ int main(int, char**) {
     server(host, port, 5000, 8096, 0/*2*/);
     server.set_enable_session(false);
     server.set_enable_cache(false);
+//    if (!server.set_openssl("openssl/localhost.crt", "openssl/localhost.key")) {
+//        return -1;
+//    }
 
     std::function<void(pthread_mutex_t*, size_t*) > ff = [&](pthread_mutex_t* mtx, size_t * data) {
         std::string i;

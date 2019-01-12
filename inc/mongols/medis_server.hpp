@@ -49,7 +49,7 @@ namespace mongols {
         void set_lru_set_max_size(size_t);
         void set_lru_queue_max_size(size_t);
         void set_lru_stack_max_size(size_t);
-
+        bool set_openssl(const std::string&, const std::string&);
         void set_lua_package_path(const std::string& package_path, const std::string& package_cpath);
     private:
 

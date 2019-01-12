@@ -33,6 +33,7 @@ namespace mongols {
         void set_uri_rewrite(const std::pair<std::string, std::string>&);
         void set_package_path(const std::string&);
         void set_package_cpath(const std::string&);
+        bool set_openssl(const std::string&, const std::string&);
         void run();
 
         template<typename T>

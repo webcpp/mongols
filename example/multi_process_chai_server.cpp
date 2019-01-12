@@ -68,6 +68,9 @@ int main(int, char**) {
     server.set_enable_bootstrap(true);
     server.set_enable_lru_cache(true);
     server.set_lru_cache_expires(1);
+//    if (!server.set_openssl("openssl/localhost.crt", "openssl/localhost.key")) {
+//        return -1;
+//    }
 
     server.add(chaiscript::user_type<person>(), "person");
     server.add(chaiscript::constructor < person()>(), "person");

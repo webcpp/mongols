@@ -19,10 +19,12 @@ namespace mongols {
         virtual~tcp_threading_server() = default;
     private:
 
-        virtual void add_client(int, const std::string&, int);
+        virtual bool add_client(int, const std::string&, int);
         virtual void del_client(int);
         virtual bool send_to_all_client(int, const std::string&, const filter_handler_function&);
         virtual bool work(int, const handler_function&);
+        virtual bool ssl_work(int, const handler_function&);
+
         bool send_to_other_client(int, int, const client_t&, const std::string&, const filter_handler_function&);
     private:
 

@@ -9,10 +9,12 @@
 #include <sys/prctl.h>
 #include <netdb.h>
 
+#include <iostream>
 #include <functional>
 
 #include "tcp_proxy_server.hpp"
 #include "http_request_parser.hpp"
+#include "http_response_parser.hpp"
 #include "lib/hash/md5.hpp"
 
 
@@ -72,9 +74,11 @@ namespace mongols {
             "<body>403 Forbidden</body>"
             "</html>";
 
+    std::string tcp_proxy_server::DEFAULT_TCP_CONTENT = "close";
+
     tcp_proxy_server::tcp_proxy_server(const std::string& host, int port, int timeout, size_t buffer_size, size_t thread_size, int max_event_size)
     : index(0), back_end_size(0), http_lru_cache_size(1024), http_lru_cache_expires(300), enable_http(false), enable_http_lru_cache(false)
-    , server(0), backend_server(), clients(), default_content(), http_lru_cache(0) {
+    , server(0), backend_server(), clients(), default_content(tcp_proxy_server::DEFAULT_TCP_CONTENT), http_lru_cache(0) {
         if (thread_size > 0) {
             this->server = new tcp_threading_server(host, port, timeout, buffer_size, thread_size, max_event_size);
         } else {
@@ -155,6 +159,10 @@ namespace mongols {
         this->http_lru_cache_expires = expires;
     }
 
+    bool tcp_proxy_server::set_openssl(const std::string& crt_file, const std::string& key_file) {
+        return this->server->set_openssl(crt_file, key_file);
+    }
+
     std::string tcp_proxy_server::work(const tcp_server::filter_handler_function& f
             , const std::function<bool(const mongols::request&)>& g
             , const std::pair<char*, size_t>& input, bool& keepalive
@@ -223,11 +231,26 @@ new_client:
                     char buffer[this->server->get_buffer_size()];
                     ret = cli->recv(buffer, this->server->get_buffer_size());
                     if (ret > 0) {
-                        if (this->enable_http && this->enable_http_lru_cache) {
+                        if (this->enable_http) {
                             output = std::make_shared<std::pair < std::string, time_t >> ();
                             output->first.assign(buffer, ret);
                             output->second = time(0);
-                            this->http_lru_cache->insert(*cache_key, output);
+                            mongols::response res;
+                            mongols::http_response_parser res_parser(res);
+                            if (res_parser.parse(buffer, ret)) {
+                                /*
+                                auto i = res.headers.find("Connection");
+                                if (i == res.headers.end() || i->second != "keep-alive") {
+                                    keepalive = CLOSE_CONNECTION;
+                                } else {
+                                    keepalive = KEEPALIVE_CONNECTION;
+                                }
+                                 */
+                                if (res.status == 200 && this->enable_http_lru_cache) {
+                                    this->http_lru_cache->insert(*cache_key, output);
+                                }
+                            }
+
                             return output->first;
                         }
                         keepalive = KEEPALIVE_CONNECTION;

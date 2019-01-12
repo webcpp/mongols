@@ -69,6 +69,7 @@ namespace mongols {
         void set_enable_http_lru_cache(bool);
         void set_http_lru_cache_size(size_t);
         void set_http_lru_cache_expires(long long);
+        bool set_openssl(const std::string&, const std::string&);
 
     private:
         size_t index, back_end_size, http_lru_cache_size;
@@ -87,7 +88,7 @@ namespace mongols {
                 , tcp_server::client_t&
                 , tcp_server::filter_handler_function&);
 
-        static std::string DEFAULT_HTTP_CONTENT;
+        static std::string DEFAULT_HTTP_CONTENT, DEFAULT_TCP_CONTENT;
 
     };
 }

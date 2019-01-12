@@ -10,7 +10,6 @@
 #include <iostream>
 #include <functional>
 
-
 int main(int, char**) {
     //    daemon(1, 0);
     auto f = [](const mongols::tcp_server::client_t & client) {
@@ -34,6 +33,9 @@ int main(int, char**) {
     //see example/nodejs
     server.set_backend_server(host, 8888);
     server.set_backend_server(host, 8889);
+    if (!server.set_openssl("openssl/localhost.crt", "openssl/localhost.key")) {
+        return -1;
+    }
 
     //    server.run(f,h);
 

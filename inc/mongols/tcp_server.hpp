@@ -17,6 +17,10 @@
 #include "epoll.hpp"
 #include "thread_pool.hpp"
 
+
+#include "openssl.hpp"
+
+
 #define CLOSE_CONNECTION true
 #define KEEPALIVE_CONNECTION false
 
@@ -58,10 +62,17 @@ namespace mongols {
         void run(const handler_function&);
 
         size_t get_buffer_size()const;
+
+
+        bool set_openssl(const std::string&, const std::string&);
+
+
+
         static int backlog;
+        static openssl::version openssl_version;
     private:
         std::string host;
-        int port, listenfd, timeout, max_event_size;
+        int port, listenfd, max_event_size;
         struct sockaddr_in serveraddr;
         static std::atomic_bool done;
         static void signal_normal_cb(int sig, siginfo_t *, void *);
@@ -69,13 +80,21 @@ namespace mongols {
         void main_loop(struct epoll_event *, const handler_function&, mongols::epoll&);
     protected:
         size_t buffer_size, thread_size, sid;
+        int timeout;
         std::queue<size_t, std::list<size_t>> sid_queue;
         std::unordered_map<int, client_t > clients;
         mongols::thread_pool<std::function<bool() >> *work_pool;
-        virtual void add_client(int, const std::string&, int);
+
+        std::shared_ptr<mongols::openssl> openssl_manager;
+        std::string openssl_crt_file, openssl_key_file;
+        std::unordered_map<int, std::shared_ptr<openssl::ssl>> ssl_map;
+        bool openssl_is_ok;
+        
+        virtual bool add_client(int, const std::string&, int);
         virtual void del_client(int);
         virtual bool send_to_all_client(int, const std::string&, const filter_handler_function&);
         virtual bool work(int, const handler_function&);
+        virtual bool ssl_work(int, const handler_function&);
     };
 }
 

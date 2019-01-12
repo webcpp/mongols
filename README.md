@@ -8,10 +8,12 @@ Libevent, libev and libuv are outdated.
 - linux
 - gcc (-std=c11)
 - g++ (-std=c++14)
+- openssl
 
 
 ## feature
 epoll or epoll + multi-threading + multi-process
+- http(s)
 - tcp sever 
 - http server
 - websocket server 
@@ -32,7 +34,7 @@ epoll or epoll + multi-threading + multi-process
 
 ## usage
 
-`pkg-config --libs --cflags mongols`
+`pkg-config --libs --cflags mongols openssl`
 
 ### leveldb_server usage
   - successful: 200

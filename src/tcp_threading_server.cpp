@@ -32,7 +32,7 @@ namespace mongols {
         this->thread_size = (thread_size == 0 ? std::thread::hardware_concurrency() : thread_size);
     }
 
-    void tcp_threading_server::add_client(int fd, const std::string& ip, int port) {
+    bool tcp_threading_server::add_client(int fd, const std::string& ip, int port) {
         std::lock_guard<std::mutex> lk(this->main_mtx);
         auto pair = this->clients.insert(std::move(std::make_pair(fd, std::move(client_t(ip, port, 0, 0)))));
         if (this->sid_queue.empty()) {
@@ -41,16 +41,32 @@ namespace mongols {
             pair.first->second.sid = this->sid_queue.front();
             this->sid_queue.pop();
         }
+        if (this->openssl_is_ok) {
+            std::shared_ptr<openssl::ssl> ssl = std::make_shared<openssl::ssl>(this->openssl_manager->get_ctx());
+            if (this->openssl_manager->set_socket_and_accept(ssl->get_ssl(), fd)) {
+                this->ssl_map[fd] = std::move(ssl);
+            } else {
+                return false;
+            }
+        }
+        return true;
     }
 
     void tcp_threading_server::del_client(int fd) {
         std::lock_guard<std::mutex> lk(this->main_mtx);
         this->sid_queue.push(this->clients.find(fd)->second.sid);
         this->clients.erase(fd);
+        if (this->openssl_is_ok) {
+            this->ssl_map.erase(fd);
+        }
     }
 
     bool tcp_threading_server::send_to_other_client(int fd, int ffd, const client_t& client, const std::string& str, const filter_handler_function& h) {
-        if (ffd != fd && h(client) && send(ffd, str.c_str(), str.size(), MSG_NOSIGNAL) < 0) {
+        if (ffd != fd && h(client) &&
+                (this->openssl_is_ok
+                ? this->openssl_manager->write(this->ssl_map[ffd]->get_ssl(), str) < 0
+                : send(ffd, str.c_str(), str.size(), MSG_NOSIGNAL) < 0)
+                ) {
             close(ffd);
             this->del_client(ffd);
         }
@@ -93,13 +109,13 @@ ev_recv:
                 client.count++;
                 output = std::move(g(input, keepalive, send_to_all, client, send_to_other_filter));
             }
-            size_t n = send(fd, output.c_str(), output.size(), MSG_NOSIGNAL);
-            if (n >= 0) {
+            ret = send(fd, output.c_str(), output.size(), MSG_NOSIGNAL);
+            if (ret > 0) {
                 if (send_to_all) {
                     this->work_pool->submit(std::bind(&tcp_threading_server::send_to_all_client, this, fd, output, send_to_other_filter));
                 }
             }
-            if (n < 0 || keepalive == CLOSE_CONNECTION) {
+            if (ret <= 0 || keepalive == CLOSE_CONNECTION) {
                 goto ev_error;
             }
 
@@ -113,6 +129,71 @@ ev_error:
         return false;
     }
 
+    bool tcp_threading_server::ssl_work(int fd, const handler_function& g) {
+        char buffer[this->buffer_size];
+        ssize_t ret = 0;
+ev_recv:
+        {
+            std::lock_guard<std::mutex> lk(this->main_mtx);
+            if (difftime(time(0), this->ssl_map[fd]->get_time()) > this->timeout) {
+                goto ev_error;
+            }
+            ret = this->openssl_manager->read(this->ssl_map[fd]->get_ssl(), buffer, this->buffer_size);}
+        if (ret == -1) {
+            std::lock_guard<std::mutex> lk(this->main_mtx);
+            int err = SSL_get_error(this->ssl_map[fd]->get_ssl(), ret);
+            switch (err) {
+                case SSL_ERROR_WANT_READ:
+                case SSL_ERROR_WANT_WRITE:
+                    return false;
+                case SSL_ERROR_SYSCALL:
+                    switch (errno) {
+                        case EINTR:
+                            goto ev_recv;
+                        case EAGAIN:
+                            return false;
+                        default:
+                            goto ev_error;
+                    }
+                default:
+                    goto ev_error;
+            }
+        } else if (ret > 0) {
+            std::pair<char*, size_t> input;
+            input.first = &buffer[0];
+            input.second = ret;
+            std::string output;
+            filter_handler_function send_to_other_filter = [](const tcp_server::client_t&) {
+                return true;
+            };
+            bool keepalive = CLOSE_CONNECTION, send_to_all = false;
+            {
+                std::lock_guard<std::mutex> lk(this->main_mtx);
+                tcp_server::client_t& client = this->clients[fd];
+                client.u_size = this->clients.size();
+                client.count++;
+                output = std::move(g(input, keepalive, send_to_all, client, send_to_other_filter));
+
+                ret = this->openssl_manager->write(this->ssl_map[fd]->get_ssl(), output);
+            }
+            if (ret > 0) {
+                if (send_to_all) {
+                    this->work_pool->submit(std::bind(&tcp_threading_server::send_to_all_client, this, fd, output, send_to_other_filter));
+                }
+            }
+            if (ret <= 0 || keepalive == CLOSE_CONNECTION) {
+                goto ev_error;
+            }
+
+        } else {
+
+ev_error:
+            close(fd);
+            this->del_client(fd);
+
+        }
+        return false;
+    }
 
 
 

@@ -143,6 +143,10 @@ namespace mongols {
         this->chai->set_module_path(cpath.back() == '/' ? cpath : cpath + "/");
     }
 
+    bool chai_server::set_openssl(const std::string& crt_file, const std::string& key_file) {
+        return this->server->set_openssl(crt_file, key_file);
+    }
+
     void chai_server::run() {
         this->server->run(std::bind(&chai_server::filter, this, std::placeholders::_1)
                 , std::bind(&chai_server::work, this

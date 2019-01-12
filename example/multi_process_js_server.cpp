@@ -68,6 +68,9 @@ int main(int, char**) {
     server.set_enable_bootstrap(true);
     server.set_enable_lru_cache(true);
     server.set_lru_cache_expires(1);
+//    if (!server.set_openssl("openssl/localhost.crt", "openssl/localhost.key")) {
+//        return -1;
+//    }
 
     server.register_class_constructor<person>("person");
     server.register_class_method(&person::set_age, "set_age");

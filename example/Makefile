@@ -2,8 +2,8 @@ SERVERSRC=$(shell find . -maxdepth 1 -type f -name '*.cpp' )
 SERVEROBJ=$(patsubst %.cpp,%.o,$(SERVERSRC))
 
 CXX=g++
-CXXFLAGS+=-std=c++14 -Wall -O3  `pkg-config --cflags mongols`
-LDLIBS+=`pkg-config --libs mongols`
+CXXFLAGS+=-std=c++14 -Wall -O3  `pkg-config --cflags mongols openssl`
+LDLIBS+=`pkg-config --libs mongols openssl`
 
 
 js_c_module_path=`pwd`/html/js/package

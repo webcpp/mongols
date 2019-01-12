@@ -28,6 +28,7 @@ namespace mongols {
         void set_lru_cache_size(size_t);
         void set_lru_cache_expires(long long);
         void set_uri_rewrite(const std::pair<std::string, std::string>&);
+        bool set_openssl(const std::string&, const std::string&);
         void run(const std::string&);
     private:
         http_server* server;

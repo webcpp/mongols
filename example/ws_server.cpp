@@ -4,6 +4,9 @@ int main(int, char**) {
     int port = 9090;
     const char* host = "127.0.0.1";
     mongols::ws_server server(host, port, 5000, 8096, 2/*0*/);
+//    if (!server.set_openssl("openssl/localhost.crt", "openssl/localhost.key")) {
+//        return -1;
+//    }
 
     auto f = [](const std::string& input
             , bool& keepalive
