@@ -38,8 +38,6 @@ namespace mongols {
 
         enum version {
             SSLv23
-            , TSLv1
-            , TSLv11
             , TLSv12
             , TLSv13
         };

@@ -12,19 +12,11 @@ namespace mongols {
     openssl::openssl(const std::string& crt_file, const std::string& key_file, openssl::version v)
     : ok(false), crt_file(crt_file), key_file(key_file)
     , ctx(0) {
-        OPENSSL_init();
-        SSL_library_init();
         SSL_load_error_strings();
         OpenSSL_add_ssl_algorithms();
         switch (v) {
             case openssl::version::SSLv23:
                 this->ctx = SSL_CTX_new(SSLv23_server_method());
-                break;
-            case openssl::version::TSLv1:
-                this->ctx = SSL_CTX_new(TLSv1_server_method());
-                break;
-            case openssl::version::TSLv11:
-                this->ctx = SSL_CTX_new(TLSv1_1_server_method());
                 break;
             case openssl::version::TLSv12:
                 this->ctx = SSL_CTX_new(TLSv1_2_server_method());
