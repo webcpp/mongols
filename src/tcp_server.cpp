@@ -315,6 +315,7 @@ ev_error:
             }
         } else {
             close(event->data.fd);
+            this->del_client(event->data.fd);
         }
     }
 
