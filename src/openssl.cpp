@@ -5,23 +5,26 @@
 
 namespace mongols {
 
+    openssl::version_t openssl::version = openssl::version_t::TLSv12;
     std::string openssl::ciphers = "AES128-GCM-SHA256";
-
     long openssl::flags = SSL_OP_NO_COMPRESSION;
 
-    openssl::openssl(const std::string& crt_file, const std::string& key_file, openssl::version v)
+    openssl::openssl(const std::string& crt_file, const std::string& key_file
+            , openssl::version_t v
+            , const std::string& ciphers
+            , long flags)
     : ok(false), crt_file(crt_file), key_file(key_file)
     , ctx(0) {
         SSL_load_error_strings();
         OpenSSL_add_ssl_algorithms();
         switch (v) {
-            case openssl::version::SSLv23:
+            case openssl::version_t::SSLv23:
                 this->ctx = SSL_CTX_new(SSLv23_server_method());
                 break;
-            case openssl::version::TLSv12:
+            case openssl::version_t::TLSv12:
                 this->ctx = SSL_CTX_new(TLSv1_2_server_method());
                 break;
-            case openssl::version::TLSv13:
+            case openssl::version_t::TLSv13:
                 this->ctx = SSL_CTX_new(TLSv1_2_server_method());
                 break;
             default:
@@ -31,8 +34,8 @@ namespace mongols {
 
         if (this->ctx) {
             SSL_CTX_set_ecdh_auto(this->ctx, 1);
-            SSL_CTX_set_options(this->ctx, openssl::flags);
-            SSL_CTX_set_cipher_list(this->ctx, openssl::ciphers.c_str());
+            SSL_CTX_set_options(this->ctx, flags);
+            SSL_CTX_set_cipher_list(this->ctx, ciphers.c_str());
 
             if (SSL_CTX_use_certificate_file(this->ctx, this->crt_file.c_str(), SSL_FILETYPE_PEM) > 0) {
                 if (SSL_CTX_use_PrivateKey_file(this->ctx, this->key_file.c_str(), SSL_FILETYPE_PEM) > 0) {

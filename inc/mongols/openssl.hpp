@@ -20,9 +20,6 @@ namespace mongols {
 
     class openssl {
     public:
-        static std::string ciphers;
-        static long flags;
-    public:
 
         class ssl {
         public:
@@ -36,16 +33,23 @@ namespace mongols {
             time_t t;
         };
 
-        enum version {
+        enum version_t {
             SSLv23
             , TLSv12
             , TLSv13
         };
     public:
+        static openssl::version_t version;
+        static std::string ciphers;
+        static long flags;
+    public:
         openssl() = delete;
         virtual~openssl();
 
-        openssl(const std::string&, const std::string&, openssl::version = openssl::version::TLSv12);
+        openssl(const std::string&, const std::string&
+                , openssl::version_t = openssl::version_t::TLSv12
+                , const std::string& ciphers = openssl::ciphers
+                , long flags = openssl::flags);
         bool set_socket_and_accept(SSL*, int);
         int read(SSL*, char*, size_t);
         int write(SSL*, const std::string&);

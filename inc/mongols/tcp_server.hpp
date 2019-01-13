@@ -64,12 +64,14 @@ namespace mongols {
         size_t get_buffer_size()const;
 
 
-        bool set_openssl(const std::string&, const std::string&);
+        bool set_openssl(const std::string&, const std::string&
+                , openssl::version_t v=openssl::version
+                , const std::string& ciphers=openssl::ciphers
+                , long flags =openssl::flags);
 
 
 
         static int backlog;
-        static openssl::version openssl_version;
     private:
         std::string host;
         int port, listenfd, max_event_size;
@@ -79,17 +81,27 @@ namespace mongols {
         void setnonblocking(int fd);
         void main_loop(struct epoll_event *, const handler_function&, mongols::epoll&);
     protected:
+
+        class meta_data_t {
+        public:
+            meta_data_t();
+            meta_data_t(const std::string& ip, int port, size_t uid, size_t gid);
+            virtual~meta_data_t() = default;
+
+        public:
+            client_t client;
+            std::shared_ptr<openssl::ssl> ssl;
+        };
         size_t buffer_size, thread_size, sid;
         int timeout;
         std::queue<size_t, std::list<size_t>> sid_queue;
-        std::unordered_map<int, client_t > clients;
+        std::unordered_map<int, meta_data_t > clients;
         mongols::thread_pool<std::function<bool() >> *work_pool;
 
         std::shared_ptr<mongols::openssl> openssl_manager;
         std::string openssl_crt_file, openssl_key_file;
-        std::unordered_map<int, std::shared_ptr<openssl::ssl>> ssl_map;
         bool openssl_is_ok;
-        
+
         virtual bool add_client(int, const std::string&, int);
         virtual void del_client(int);
         virtual bool send_to_all_client(int, const std::string&, const filter_handler_function&);
