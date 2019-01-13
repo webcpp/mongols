@@ -178,7 +178,7 @@ namespace mongols {
         char buffer[this->buffer_size];
 ev_recv:
         ssize_t ret = recv(fd, buffer, this->buffer_size, MSG_WAITALL);
-        if (ret == -1) {
+        if (ret < 0) {
             if (errno == EINTR) {
                 goto ev_recv;
             } else if (errno == EAGAIN) {
@@ -232,7 +232,7 @@ ev_recv:
         }
         ret = this->openssl_manager->read(ssl->get_ssl(), buffer, this->buffer_size);
 
-        if (ret == -1) {
+        if (ret < 0) {
             int err = SSL_get_error(ssl->get_ssl(), ret);
             switch (err) {
                 case SSL_ERROR_WANT_READ:
