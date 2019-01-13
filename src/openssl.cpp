@@ -67,9 +67,16 @@ namespace mongols {
 
     bool openssl::set_socket_and_accept(SSL* ssl, int fd) {
         if (SSL_set_fd(ssl, fd)) {
-            SSL_set_accept_state(ssl);
-            if (SSL_accept(ssl) > 0 && SSL_do_handshake(ssl) > 0) {
+            //            SSL_set_accept_state(ssl);
+ssl_accept:
+            int ret = SSL_accept(ssl);
+            if (ret > 0 /*&& SSL_do_handshake(ssl) > 0*/) {
                 return true;
+            } else {
+                int err = SSL_get_error(ssl, ret);
+                if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE) {
+                    goto ssl_accept;
+                }
             }
         }
         return false;
@@ -87,6 +94,10 @@ namespace mongols {
 
     openssl::ssl::ssl(SSL_CTX* ctx) : data(0), t(time(0)) {
         this->data = SSL_new(ctx);
+        if (this->data) {
+            SSL_set_options(this->data, SSL_MODE_RELEASE_BUFFERS);
+        }
+
     }
 
     openssl::ssl::~ssl() {
