@@ -7,7 +7,7 @@ namespace mongols {
 
     openssl::version_t openssl::version = openssl::version_t::TLSv12;
     std::string openssl::ciphers = "AES128-GCM-SHA256";
-    long openssl::flags = SSL_OP_NO_COMPRESSION;
+    long openssl::flags = SSL_OP_NO_COMPRESSION | SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER | SSL_MODE_RELEASE_BUFFERS | SSL_OP_SINGLE_ECDH_USE;
 
     openssl::openssl(const std::string& crt_file, const std::string& key_file
             , openssl::version_t v
@@ -33,8 +33,8 @@ namespace mongols {
         }
 
         if (this->ctx) {
-            SSL_CTX_set_ecdh_auto(this->ctx, 1);
-            SSL_CTX_set_options(this->ctx, flags);
+            this->ctx->freelist_max_len = 0;
+            SSL_CTX_set_options(this->ctx, openssl::flags | flags);
             SSL_CTX_set_cipher_list(this->ctx, ciphers.c_str());
 
             if (SSL_CTX_use_certificate_file(this->ctx, this->crt_file.c_str(), SSL_FILETYPE_PEM) > 0) {
