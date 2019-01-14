@@ -27,10 +27,8 @@ namespace mongols {
             ssl(SSL_CTX*);
             virtual~ssl();
             SSL* get_ssl();
-            const time_t& get_time()const;
         private:
             SSL* data;
-            time_t t;
         };
 
         enum version_t {

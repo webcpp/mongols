@@ -130,11 +130,8 @@ ev_error:
 ev_recv:
         {
             std::lock_guard<std::mutex> lk(this->main_mtx);
-            if (difftime(time(0), this->clients[fd].ssl->get_time()) > this->timeout) {
-                goto ev_error;
-            }
             ret = this->openssl_manager->read(this->clients[fd].ssl->get_ssl(), buffer, this->buffer_size);}
-        if (ret == -1) {
+        if (ret < 0) {
             std::lock_guard<std::mutex> lk(this->main_mtx);
             int err = SSL_get_error(this->clients[fd].ssl->get_ssl(), ret);
             switch (err) {

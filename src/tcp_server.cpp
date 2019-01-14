@@ -224,14 +224,9 @@ ev_error:
     bool tcp_server::ssl_work(int fd, const handler_function& g) {
         char buffer[this->buffer_size];
         ssize_t ret = 0;
-        std::shared_ptr<openssl::ssl> ssl;
+        std::shared_ptr<openssl::ssl> ssl = this->clients[fd].ssl;
 ev_recv:
-        ssl = this->clients[fd].ssl;
-        if (difftime(time(0), ssl->get_time()) > this->timeout) {
-            goto ev_error;
-        }
         ret = this->openssl_manager->read(ssl->get_ssl(), buffer, this->buffer_size);
-
         if (ret < 0) {
             int err = SSL_get_error(ssl->get_ssl(), ret);
             switch (err) {

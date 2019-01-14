@@ -92,7 +92,7 @@ ssl_accept:
         return SSL_write(ssl, output.c_str(), output.size());
     }
 
-    openssl::ssl::ssl(SSL_CTX* ctx) : data(0), t(time(0)) {
+    openssl::ssl::ssl(SSL_CTX* ctx) : data(0) {
         this->data = SSL_new(ctx);
         if (this->data) {
             SSL_set_options(this->data, SSL_MODE_RELEASE_BUFFERS);
@@ -111,9 +111,7 @@ ssl_accept:
         return this->data;
     }
 
-    const time_t& openssl::ssl::get_time() const {
-        return this->t;
-    }
+
 
 
 
