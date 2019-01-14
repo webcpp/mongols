@@ -77,7 +77,7 @@ namespace mongols {
     std::string tcp_proxy_server::DEFAULT_TCP_CONTENT = "close";
 
     tcp_proxy_server::tcp_proxy_server(const std::string& host, int port, int timeout, size_t buffer_size, size_t thread_size, int max_event_size)
-    : index(0), back_end_size(0), http_lru_cache_size(1024), http_lru_cache_expires(300), enable_http(false), enable_http_lru_cache(false)
+    : index(0), backend_size(0), http_lru_cache_size(1024), http_lru_cache_expires(300), enable_http(false), enable_http_lru_cache(false)
     , server(0), backend_server(), clients(), default_content(tcp_proxy_server::DEFAULT_TCP_CONTENT), http_lru_cache(0) {
         if (thread_size > 0) {
             this->server = new tcp_threading_server(host, port, timeout, buffer_size, thread_size, max_event_size);
@@ -136,7 +136,7 @@ namespace mongols {
 
     void tcp_proxy_server::set_backend_server(const std::string& host, int port) {
         this->backend_server.emplace_back(std::make_pair(host, port));
-        this->back_end_size++;
+        this->backend_size++;
     }
 
     void tcp_proxy_server::set_default_content(const std::string& str) {
@@ -167,7 +167,7 @@ namespace mongols {
             , const std::function<bool(const mongols::request&)>& g
             , const std::pair<char*, size_t>& input, bool& keepalive
             , bool& send_to_other, tcp_server::client_t& client, tcp_server::filter_handler_function& send_to_other_filter) {
-        keepalive = CLOSE_CONNECTION;
+        keepalive = KEEPALIVE_CONNECTION;
         send_to_other = false;
         std::shared_ptr<std::string> cache_key;
         std::shared_ptr<std::pair < std::string, time_t>> output;
@@ -185,8 +185,8 @@ namespace mongols {
 http_process:
                     std::unordered_map<std::string, std::string>::const_iterator tmp_iterator;
                     if ((tmp_iterator = req.headers.find("Connection")) != req.headers.end()) {
-                        if (tmp_iterator->second == "keep-alive") {
-                            keepalive = KEEPALIVE_CONNECTION;
+                        if (tmp_iterator->second == "close") {
+                            keepalive = CLOSE_CONNECTION;
                         }
                     }
                     if (this->enable_http_lru_cache) {
@@ -213,7 +213,7 @@ http_process:
             bool is_old = false;
             if (iter == this->clients.end()) {
 new_client:
-                if (this->index>this->back_end_size - 1) {
+                if (this->index>this->backend_size - 1) {
                     this->index = 0;
                 }
                 std::vector<std::pair < std::string, int>>::const_reference back_end = this->backend_server[this->index++];
@@ -238,14 +238,25 @@ new_client:
                             mongols::response res;
                             mongols::http_response_parser res_parser(res);
                             if (res_parser.parse(buffer, ret)) {
-                                /*
                                 auto i = res.headers.find("Connection");
-                                if (i == res.headers.end() || i->second != "keep-alive") {
-                                    keepalive = CLOSE_CONNECTION;
-                                } else {
-                                    keepalive = KEEPALIVE_CONNECTION;
+                                if (i == res.headers.end()) {
+                                    this->clients.erase(client.sid);
+                                    auto p = output->first.find("\n");
+                                    output->first.insert(p + 1, keepalive == KEEPALIVE_CONNECTION ? "keep-alive" : "close");
+                                } else if (i->second == "close") {
+                                    this->clients.erase(client.sid);
+                                    if (keepalive == KEEPALIVE_CONNECTION) {
+                                        auto p = output->first.find("close");
+                                        if (p != std::string::npos) {
+                                            output->first.replace(p, 5, "keep-alive");
+                                        }
+                                    }
+                                } else if (i->second == "keep-alive") {
+                                    if (keepalive == CLOSE_CONNECTION) {
+                                        keepalive = KEEPALIVE_CONNECTION;
+                                    }
                                 }
-                                 */
+
                                 if (res.status == 200 && this->enable_http_lru_cache) {
                                     this->http_lru_cache->insert(*cache_key, output);
                                 }

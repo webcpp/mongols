@@ -72,7 +72,7 @@ namespace mongols {
         bool set_openssl(const std::string&, const std::string&);
 
     private:
-        size_t index, back_end_size, http_lru_cache_size;
+        size_t index, backend_size, http_lru_cache_size;
         long long http_lru_cache_expires;
         bool enable_http, enable_http_lru_cache;
         tcp_server* server;
