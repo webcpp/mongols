@@ -63,6 +63,7 @@ namespace mongols {
         void set_backend_server(const std::string&, int);
 
         void set_default_content(const std::string&);
+        void set_enable_tcp_send_to_other(bool);
 
         void set_default_http_content();
         void set_enable_http_lru_cache(bool);
@@ -73,7 +74,7 @@ namespace mongols {
     private:
         size_t index, backend_size, http_lru_cache_size;
         long long http_lru_cache_expires;
-        bool enable_http_lru_cache;
+        bool enable_http_lru_cache, enable_tcp_send_to_other;
         tcp_server* server;
         std::vector<std::pair<std::string, int>> backend_server;
         std::unordered_map<size_t, std::shared_ptr<tcp_client>> clients;

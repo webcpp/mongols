@@ -79,7 +79,7 @@ namespace mongols {
 
     tcp_proxy_server::tcp_proxy_server(const std::string& host, int port, int timeout, size_t buffer_size, size_t thread_size, int max_event_size)
     : index(0), backend_size(0), http_lru_cache_size(1024), http_lru_cache_expires(300), enable_http_lru_cache(false)
-    , server(0), backend_server(), clients(), default_content(tcp_proxy_server::DEFAULT_TCP_CONTENT), http_lru_cache(0) {
+    , enable_tcp_send_to_other(true), server(0), backend_server(), clients(), default_content(tcp_proxy_server::DEFAULT_TCP_CONTENT), http_lru_cache(0) {
         if (thread_size > 0) {
             this->server = new tcp_threading_server(host, port, timeout, buffer_size, thread_size, max_event_size);
         } else {
@@ -155,11 +155,15 @@ namespace mongols {
         return this->server->set_openssl(crt_file, key_file);
     }
 
+    void tcp_proxy_server::set_enable_tcp_send_to_other(bool b) {
+        this->enable_tcp_send_to_other = b;
+    }
+
     std::string tcp_proxy_server::work(const tcp_server::filter_handler_function& f
             , const std::pair<char*, size_t>& input, bool& keepalive
             , bool& send_to_other, tcp_server::client_t& client, tcp_server::filter_handler_function& send_to_other_filter) {
         keepalive = KEEPALIVE_CONNECTION;
-        send_to_other = true;
+        send_to_other = this->enable_tcp_send_to_other;
         if (f(client)) {
 
             std::unordered_map<size_t, std::shared_ptr < tcp_client>>::iterator iter = this->clients.find(client.sid);

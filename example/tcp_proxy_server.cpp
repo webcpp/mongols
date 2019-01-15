@@ -21,7 +21,7 @@ int main(int, char**) {
 
     mongols::tcp_proxy_server server(host, port, 5000, 8192, 0/*2*/);
 
-
+    server.set_enable_tcp_send_to_other(true);
     //see example/nodejs
     server.set_backend_server(host, 8886);
     server.set_backend_server(host, 8887);
