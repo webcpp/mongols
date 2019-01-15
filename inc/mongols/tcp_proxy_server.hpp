@@ -65,7 +65,6 @@ namespace mongols {
         void set_default_content(const std::string&);
 
         void set_default_http_content();
-        void set_enable_http_mode(bool);
         void set_enable_http_lru_cache(bool);
         void set_http_lru_cache_size(size_t);
         void set_http_lru_cache_expires(long long);
@@ -74,13 +73,19 @@ namespace mongols {
     private:
         size_t index, backend_size, http_lru_cache_size;
         long long http_lru_cache_expires;
-        bool enable_http, enable_http_lru_cache;
+        bool enable_http_lru_cache;
         tcp_server* server;
         std::vector<std::pair<std::string, int>> backend_server;
         std::unordered_map<size_t, std::shared_ptr<tcp_client>> clients;
         std::string default_content;
         lru11::Cache<std::string, std::shared_ptr<std::pair<std::string, time_t>>>* http_lru_cache;
         std::string work(const tcp_server::filter_handler_function&
+                , const std::pair<char*, size_t>&
+                , bool&
+                , bool&
+                , tcp_server::client_t&
+                , tcp_server::filter_handler_function&);
+        std::string http_work(const tcp_server::filter_handler_function&
                 , const std::function<bool(const mongols::request&)>&
                 , const std::pair<char*, size_t>&
                 , bool&

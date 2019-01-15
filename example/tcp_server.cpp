@@ -18,9 +18,9 @@ int main(int, char**) {
     mongols::tcp_server
 //    mongols::tcp_threading_server
     server(host, port);
-    if (!server.set_openssl("openssl/localhost.crt", "openssl/localhost.key")) {
-        return -1;
-    }
+//    if (!server.set_openssl("openssl/localhost.crt", "openssl/localhost.key")) {
+//        return -1;
+//    }
 
     server.run(f);
 }
