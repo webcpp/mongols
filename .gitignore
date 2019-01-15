@@ -50,3 +50,4 @@ nbproject/
 /example/chai_server
 /example/multi_process_chai_server
 /example/tcp_proxy_server
+/example/http_proxy_server
