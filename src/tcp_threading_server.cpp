@@ -78,16 +78,20 @@ namespace mongols {
 
     bool tcp_threading_server::work(int fd, const handler_function& g) {
         char buffer[this->buffer_size];
+        bool rereaded = false;
 ev_recv:
         ssize_t ret = recv(fd, buffer, this->buffer_size, MSG_WAITALL);
         if (ret == -1) {
             if (errno == EINTR) {
-                goto ev_recv;
+                if (!rereaded) {
+                    rereaded = true;
+                    goto ev_recv;
+                }
             } else if (errno == EAGAIN) {
                 return false;
-            } else {
-                goto ev_error;
             }
+            goto ev_error;
+
         } else if (ret > 0) {
             std::pair<char*, size_t> input;
             input.first = &buffer[0];
@@ -127,6 +131,7 @@ ev_error:
     bool tcp_threading_server::ssl_work(int fd, const handler_function& g) {
         char buffer[this->buffer_size];
         ssize_t ret = 0;
+        bool rereaded = false;
 ev_recv:
         {
             std::lock_guard<std::mutex> lk(this->main_mtx);
@@ -134,22 +139,19 @@ ev_recv:
         if (ret < 0) {
             std::lock_guard<std::mutex> lk(this->main_mtx);
             int err = SSL_get_error(this->clients[fd].ssl->get_ssl(), ret);
-            switch (err) {
-                case SSL_ERROR_WANT_READ:
-                case SSL_ERROR_WANT_WRITE:
-                    return false;
-                case SSL_ERROR_SYSCALL:
-                    switch (errno) {
-                        case EINTR:
-                            goto ev_recv;
-                        case EAGAIN:
-                            return false;
-                        default:
-                            goto ev_error;
+            if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE) {
+                return false;
+            } else if (err == SSL_ERROR_SYSCALL) {
+                if (errno == EINTR) {
+                    if (!rereaded) {
+                        rereaded = true;
+                        goto ev_recv;
                     }
-                default:
-                    goto ev_error;
+                } else if (errno == EAGAIN) {
+                    return false;
+                }
             }
+            goto ev_error;
         } else if (ret > 0) {
             std::pair<char*, size_t> input;
             input.first = &buffer[0];
