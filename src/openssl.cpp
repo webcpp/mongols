@@ -8,7 +8,7 @@ namespace mongols {
     openssl::version_t openssl::version = openssl::version_t::TLSv12;
     std::string openssl::ciphers = "ECDHE-ECDSA-AES128-SHA256:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:RSA+AES128:!aNULL:!eNULL:!LOW:!ADH:!RC4:!3DES:!MD5:!EXP:!PSK:!SRP:!DSS"; //"AES128-GCM-SHA256";
     long openssl::flags = SSL_OP_NO_COMPRESSION | SSL_OP_CIPHER_SERVER_PREFERENCE | SSL_OP_SINGLE_ECDH_USE | SSL_OP_SINGLE_DH_USE;
-    bool openssl::enable_verify = false, openssl::enable_cache = false;
+    bool openssl::enable_verify = false, openssl::enable_cache = true;
     size_t openssl::cache_size = 128;
 
     std::unordered_map<std::string, std::string> openssl::session_cache;
@@ -122,6 +122,7 @@ namespace mongols {
 
     bool openssl::set_socket_and_accept(SSL* ssl, int fd) {
         if (SSL_set_fd(ssl, fd)) {
+            bool reconnectioned = false;
             //            SSL_set_accept_state(ssl);
 ssl_accept:
             int ret = SSL_accept(ssl);
@@ -130,7 +131,10 @@ ssl_accept:
             } else {
                 int err = SSL_get_error(ssl, ret);
                 if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE) {
-                    goto ssl_accept;
+                    if (!reconnectioned) {
+                        reconnectioned=true;
+                        goto ssl_accept;
+                    }
                 }
             }
         }

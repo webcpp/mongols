@@ -62,7 +62,7 @@ namespace mongols {
     }
 
     ssize_t tcp_client::send(const char* str, size_t len) {
-        return ::send(this->socket_fd, str, len,MSG_NOSIGNAL);
+        return ::send(this->socket_fd, str, len, MSG_NOSIGNAL);
     }
 
     std::string tcp_proxy_server::DEFAULT_HTTP_CONTENT = "HTTP/1.1 403 Forbidden\r\n"
@@ -225,7 +225,7 @@ http_process:
                     if (tmp_iterator->second == "close") {
                         keepalive = CLOSE_CONNECTION;
                     }
-                }else{
+                } else {
                     keepalive = CLOSE_CONNECTION;
                 }
                 if (this->enable_http_lru_cache) {
@@ -283,18 +283,19 @@ new_client:
                                 if (p != std::string::npos) {
                                     output->first.insert(p + 1, keepalive == KEEPALIVE_CONNECTION ? "Connection: keep-alive\r\n" : "Connection: close\r\n");
                                 }
-                            } else if (i->second == "close") {
+                            } else if (i->second == "close" && keepalive == KEEPALIVE_CONNECTION) {
                                 this->clients.erase(client.sid);
-                                if (keepalive == KEEPALIVE_CONNECTION) {
-                                    auto p = output->first.find("close");
-                                    if (p != std::string::npos) {
-                                        output->first.replace(p, 5, "keep-alive");
-                                    }
+                                auto p = output->first.find("close");
+                                if (p != std::string::npos) {
+                                    output->first.replace(p, 5, "keep-alive");
                                 }
-                            } else if (i->second == "keep-alive") {
-                                if (keepalive == CLOSE_CONNECTION) {
-                                    keepalive = KEEPALIVE_CONNECTION;
-                                }
+
+                            } else if (i->second == "keep-alive" && keepalive == CLOSE_CONNECTION) {
+                                keepalive =KEEPALIVE_CONNECTION;
+                                /*auto p = output->first.find("keep-alive");
+                                if (p != std::string::npos) {
+                                    output->first.replace(p, 10, "close");
+                                }*/
                             }
                             i = res.headers.find("Server");
                             if (i == res.headers.end()) {

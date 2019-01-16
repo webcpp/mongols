@@ -25,9 +25,9 @@ int main(int, char**) {
     //see example/nodejs
     server.set_backend_server(host, 8886);
     server.set_backend_server(host, 8887);
-    if (!server.set_openssl("openssl/localhost.crt", "openssl/localhost.key")) {
-        return -1;
-    }
+//    if (!server.set_openssl("openssl/localhost.crt", "openssl/localhost.key")) {
+//        return -1;
+//    }
 
     server.run(f);
 
