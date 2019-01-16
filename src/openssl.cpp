@@ -7,7 +7,7 @@ namespace mongols {
 
     openssl::version_t openssl::version = openssl::version_t::TLSv12;
     std::string openssl::ciphers = "AES128-GCM-SHA256";
-    long openssl::flags = SSL_OP_NO_COMPRESSION | SSL_OP_SINGLE_ECDH_USE | SSL_OP_SINGLE_DH_USE;
+    long openssl::flags = SSL_OP_NO_COMPRESSION | SSL_OP_CIPHER_SERVER_PREFERENCE | SSL_OP_SINGLE_ECDH_USE | SSL_OP_SINGLE_DH_USE;
     bool openssl::enable_verify = false, openssl::enable_cache = false;
     size_t openssl::cache_size = 128;
 
