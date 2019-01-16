@@ -292,8 +292,8 @@ ev_error:
                 if (connfd > 0) {
                     epoll.add(connfd, EPOLLIN | EPOLLRDHUP | EPOLLET);
                     if (!this->add_client(connfd, inet_ntoa(clientaddr.sin_addr), ntohs(clientaddr.sin_port))) {
-                        close(connfd);
                         this->del_client(connfd);
+                        close(connfd);
                         break;
                     }
                     this->setnonblocking(connfd);
