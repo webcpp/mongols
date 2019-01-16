@@ -62,7 +62,7 @@ namespace mongols {
     }
 
     ssize_t tcp_client::send(const char* str, size_t len) {
-        return ::write(this->socket_fd, str, len);
+        return ::send(this->socket_fd, str, len,MSG_NOSIGNAL);
     }
 
     std::string tcp_proxy_server::DEFAULT_HTTP_CONTENT = "HTTP/1.1 403 Forbidden\r\n"
@@ -225,6 +225,8 @@ http_process:
                     if (tmp_iterator->second == "close") {
                         keepalive = CLOSE_CONNECTION;
                     }
+                }else{
+                    keepalive = CLOSE_CONNECTION;
                 }
                 if (this->enable_http_lru_cache) {
                     std::string tmp_str(req.method);

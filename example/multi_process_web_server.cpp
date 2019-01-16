@@ -25,9 +25,9 @@ int main(int, char**) {
     server.set_mime_type_file("html/mime.conf");
     server.set_list_directory(true);
     server.set_enable_mmap(true);
-//    if (!server.set_openssl("openssl/localhost.crt", "openssl/localhost.key")) {
-//        return -1;
-//    }
+    if (!server.set_openssl("openssl/localhost.crt", "openssl/localhost.key")) {
+        return -1;
+    }
 
     std::function<void(pthread_mutex_t*, size_t*) > ff = [&](pthread_mutex_t* mtx, size_t * data) {
         server.run(f);
