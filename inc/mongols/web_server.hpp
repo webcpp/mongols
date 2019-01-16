@@ -27,7 +27,10 @@ namespace mongols {
         void set_enable_lru_cache(bool);
         void set_lru_cache_size(size_t);
         void set_uri_rewrite(const std::pair<std::string, std::string>&);
-        bool set_openssl(const std::string&, const std::string&);
+        bool set_openssl(const std::string&, const std::string&
+                , openssl::version_t = openssl::version_t::TLSv12
+                , const std::string& ciphers = openssl::ciphers
+                , long flags = openssl::flags);
         void run(const std::function<bool(const mongols::request&)>& req_filter);
     private:
         std::string root_path;

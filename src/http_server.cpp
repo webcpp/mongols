@@ -401,8 +401,11 @@ namespace mongols {
         this->lru_cache_size = len;
     }
 
-    bool http_server::set_openssl(const std::string& crt_file, const std::string& key_file) {
-        return this->server->set_openssl(crt_file, key_file);
+    bool http_server::set_openssl(const std::string& crt_file, const std::string& key_file
+            , openssl::version_t v
+            , const std::string& ciphers
+            , long flags) {
+        return this->server->set_openssl(crt_file, key_file, v, ciphers, flags);
     }
 
     std::string http_server::serialize(const std::unordered_map<std::string, std::string>& m) {

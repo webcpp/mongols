@@ -151,8 +151,11 @@ namespace mongols {
         this->http_lru_cache_expires = expires;
     }
 
-    bool tcp_proxy_server::set_openssl(const std::string& crt_file, const std::string& key_file) {
-        return this->server->set_openssl(crt_file, key_file);
+    bool tcp_proxy_server::set_openssl(const std::string& crt_file, const std::string& key_file
+            , openssl::version_t v
+            , const std::string& ciphers
+            , long flags) {
+        return this->server->set_openssl(crt_file, key_file, v, ciphers, flags);
     }
 
     void tcp_proxy_server::set_enable_tcp_send_to_other(bool b) {
@@ -291,7 +294,7 @@ new_client:
                                 }
 
                             } else if (i->second == "keep-alive" && keepalive == CLOSE_CONNECTION) {
-                                keepalive =KEEPALIVE_CONNECTION;
+                                keepalive = KEEPALIVE_CONNECTION;
                                 /*auto p = output->first.find("keep-alive");
                                 if (p != std::string::npos) {
                                     output->first.replace(p, 10, "close");

@@ -8,35 +8,7 @@ namespace mongols {
     openssl::version_t openssl::version = openssl::version_t::TLSv12;
     std::string openssl::ciphers = "ECDHE-ECDSA-AES128-SHA256:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:RSA+AES128:!aNULL:!eNULL:!LOW:!ADH:!RC4:!3DES:!MD5:!EXP:!PSK:!SRP:!DSS"; //"AES128-GCM-SHA256";
     long openssl::flags = SSL_OP_NO_COMPRESSION | SSL_OP_CIPHER_SERVER_PREFERENCE | SSL_OP_SINGLE_ECDH_USE | SSL_OP_SINGLE_DH_USE;
-    bool openssl::enable_verify = false, openssl::enable_cache = true;
-    size_t openssl::cache_size = 128;
-
-    std::unordered_map<std::string, std::string> openssl::session_cache;
-
-    int openssl::session_cache_new(SSL* ssl, SSL_SESSION* sess) {
-        std::string cache_key = std::move(mongols::bin2hex(std::string((char*) sess->session_id, sess->session_id_length)));
-
-        size_t data_len = i2d_SSL_SESSION(sess, NULL);
-        char data[data_len];
-        unsigned char *_data = (unsigned char *) data;
-        i2d_SSL_SESSION(sess, &_data);
-        openssl::session_cache[cache_key] = std::move(std::string(data, data_len));
-        return 1;
-    }
-
-    SSL_SESSION* openssl::session_cache_get(SSL* ssl, unsigned char* key, int key_len, int* copy) {
-        std::string cache_key = std::move(mongols::bin2hex(std::string((char*) key, key_len)));
-        const std::string& data = openssl::session_cache[cache_key];
-        const unsigned char *_data = (const unsigned char *) data.c_str();
-        SSL_SESSION *sess = d2i_SSL_SESSION(NULL, &_data, data.size());
-        *copy = 0;
-        return sess;
-    }
-
-    void openssl::session_cache_remove(SSL_CTX* ctx, SSL_SESSION* sess) {
-        std::string key = std::move(mongols::bin2hex(std::string((char*) sess->session_id, sess->session_id_length)));
-        openssl::session_cache.erase(key);
-    }
+    bool openssl::enable_verify = false;
 
     openssl::openssl(const std::string& crt_file, const std::string& key_file
             , openssl::version_t v
@@ -71,23 +43,8 @@ namespace mongols {
             SSL_CTX_set_options(this->ctx, flags);
             SSL_CTX_set_cipher_list(this->ctx, ciphers.c_str());
 
-            if (openssl::enable_cache) {
-                SSL_CTX_sess_set_new_cb(this->ctx, openssl::session_cache_new);
-                SSL_CTX_sess_set_get_cb(this->ctx, openssl::session_cache_get);
-                SSL_CTX_sess_set_remove_cb(this->ctx, openssl::session_cache_remove);
 
-                SSL_CTX_set_session_cache_mode(this->ctx,
-                        SSL_SESS_CACHE_SERVER
-                        | SSL_SESS_CACHE_NO_INTERNAL
-                        | SSL_SESS_CACHE_NO_AUTO_CLEAR
-                        | SSL_SESS_CACHE_NO_INTERNAL_STORE
-                        | SSL_SESS_CACHE_NO_INTERNAL_LOOKUP
-                        );
-                SSL_CTX_sess_set_cache_size(this->ctx, 1);
-            } else {
-                SSL_CTX_set_session_cache_mode(this->ctx, SSL_SESS_CACHE_OFF);
-            }
-
+            SSL_CTX_set_session_cache_mode(this->ctx, SSL_SESS_CACHE_OFF);
 
 
             if (SSL_CTX_use_certificate_file(this->ctx, this->crt_file.c_str(), SSL_FILETYPE_PEM) > 0) {
@@ -132,7 +89,7 @@ ssl_accept:
                 int err = SSL_get_error(ssl, ret);
                 if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE) {
                     if (!reconnectioned) {
-                        reconnectioned=true;
+                        reconnectioned = true;
                         goto ssl_accept;
                     }
                 }

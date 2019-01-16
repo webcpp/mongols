@@ -29,7 +29,10 @@ namespace mongols {
     public:
         void run(const message_handler_function&);
         void run();
-        bool set_openssl(const std::string&, const std::string&);
+        bool set_openssl(const std::string&, const std::string&
+                , openssl::version_t = openssl::version_t::TLSv12
+                , const std::string& ciphers = openssl::ciphers
+                , long flags = openssl::flags);
     private:
         virtual std::string work(const message_handler_function&
                 , const std::pair<char*, size_t>&

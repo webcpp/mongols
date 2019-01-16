@@ -1,5 +1,5 @@
 var http = require('http');
-var port =8889;
+var port = 8889;
 
 http.createServer(function (request, response) {
 
@@ -9,4 +9,4 @@ http.createServer(function (request, response) {
 }).listen(port);
 
 
-console.log('Server running at http://127.0.0.1:'+8889+'/');
+console.log('Server running at http://127.0.0.1:' + 8889 + '/');

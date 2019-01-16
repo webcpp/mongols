@@ -256,8 +256,11 @@ namespace mongols {
         }
     }
 
-    bool medis_server::set_openssl(const std::string& crt_file, const std::string& key_file) {
-        return this->server->set_openssl(crt_file, key_file);
+    bool medis_server::set_openssl(const std::string& crt_file, const std::string& key_file
+            , openssl::version_t v
+            , const std::string& ciphers
+            , long flags) {
+        return this->server->set_openssl(crt_file, key_file, v, ciphers, flags);
     }
 
     void medis_server::set_lua_package_path(const std::string& package_path, const std::string& package_cpath) {

@@ -40,8 +40,7 @@ namespace mongols {
         static openssl::version_t version;
         static std::string ciphers;
         static long flags;
-        static bool enable_verify, enable_cache;
-        static size_t cache_size;
+        static bool enable_verify;
     public:
         openssl() = delete;
         virtual~openssl();
@@ -59,11 +58,7 @@ namespace mongols {
         bool ok;
         std::string crt_file, key_file;
         SSL_CTX *ctx;
-        static std::unordered_map<std::string, std::string> session_cache;
-    private:
-        static int session_cache_new(SSL *ssl, SSL_SESSION *sess);
-        static SSL_SESSION *session_cache_get(SSL *ssl, unsigned char *key, int key_len, int *copy);
-        static void session_cache_remove(SSL_CTX *ctx, SSL_SESSION *sess);
+
 
     };
 }
