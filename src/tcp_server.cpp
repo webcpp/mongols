@@ -165,8 +165,8 @@ namespace mongols {
                     ? this->openssl_manager->write(i->second.ssl->get_ssl(), str) < 0
                     : send(i->first, str.c_str(), str.size(), MSG_NOSIGNAL) < 0)
                     ) {
-                close(i->first);
                 this->del_client(i->first);
+                close(i->first);
             } else {
                 ++i;
             }
@@ -213,9 +213,8 @@ ev_recv:
         } else {
 
 ev_error:
-            close(fd);
             this->del_client(fd);
-
+            close(fd);
         }
 
         return false;
@@ -274,8 +273,8 @@ ev_recv:
         } else {
 
 ev_error:
-            close(fd);
             this->del_client(fd);
+            close(fd);
 
         }
 
