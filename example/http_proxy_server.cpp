@@ -10,7 +10,6 @@
 #include <iostream>
 #include <functional>
 
-#include "openssl.hpp"
 
 int main(int, char**) {
     //    daemon(1, 0);
