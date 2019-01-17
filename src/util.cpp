@@ -571,7 +571,7 @@ namespace mongols {
             case SIGHUP:
                 for (auto & i : multi_process::pids) {
                     if (i.first > 0) {
-                        kill(i.first, SIGKILL);
+                        kill(i.first, SIGUSR1);
                     }
                 }
                 break;
