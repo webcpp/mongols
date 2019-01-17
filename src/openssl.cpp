@@ -7,8 +7,9 @@ namespace mongols {
 
     openssl::version_t openssl::version = openssl::version_t::TLSv12;
     std::string openssl::ciphers = "ECDHE-ECDSA-AES128-SHA256:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:RSA+AES128:!aNULL:!eNULL:!LOW:!ADH:!RC4:!3DES:!MD5:!EXP:!PSK:!SRP:!DSS"; //"AES128-GCM-SHA256";
-    long openssl::flags = SSL_OP_NO_COMPRESSION | SSL_OP_CIPHER_SERVER_PREFERENCE | SSL_OP_SINGLE_ECDH_USE | SSL_OP_SINGLE_DH_USE;
-    bool openssl::enable_verify = false;
+    long openssl::flags = SSL_OP_NO_COMPRESSION | SSL_OP_NO_TICKET | SSL_OP_CIPHER_SERVER_PREFERENCE | SSL_OP_SINGLE_ECDH_USE | SSL_OP_SINGLE_DH_USE;
+    const int openssl::ssl_session_ctx_id = 1;
+    bool openssl::enable_verify = false, openssl::enable_cache = true;
 
     openssl::openssl(const std::string& crt_file, const std::string& key_file
             , openssl::version_t v
@@ -43,8 +44,13 @@ namespace mongols {
             SSL_CTX_set_options(this->ctx, flags);
             SSL_CTX_set_cipher_list(this->ctx, ciphers.c_str());
 
-
-            SSL_CTX_set_session_cache_mode(this->ctx, SSL_SESS_CACHE_OFF);
+            if (openssl::enable_cache) {
+                SSL_CTX_set_session_cache_mode(this->ctx, SSL_SESS_CACHE_BOTH | SSL_SESS_CACHE_NO_INTERNAL);
+                SSL_CTX_sess_set_cache_size(this->ctx, 1);
+                SSL_CTX_set_session_id_context(this->ctx, (const unsigned char *) &openssl::ssl_session_ctx_id, sizeof (openssl::ssl_session_ctx_id));
+            } else {
+                SSL_CTX_set_session_cache_mode(this->ctx, SSL_SESS_CACHE_OFF);
+            }
 
 
             if (SSL_CTX_use_certificate_file(this->ctx, this->crt_file.c_str(), SSL_FILETYPE_PEM) > 0) {
@@ -84,7 +90,7 @@ namespace mongols {
 ssl_accept:
             int ret = SSL_accept(ssl);
             if (ret > 0 /*&& SSL_do_handshake(ssl) > 0*/) {
-                return true;
+                return true;                
             } else {
                 int err = SSL_get_error(ssl, ret);
                 if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE) {
@@ -111,7 +117,6 @@ ssl_accept:
     openssl::ssl::ssl(SSL_CTX* ctx) : data(0) {
         this->data = SSL_new(ctx);
         if (this->data) {
-            SSL_set_options(this->data, SSL_OP_NO_TICKET);
             SSL_set_mode(this->data, SSL_MODE_RELEASE_BUFFERS
                     | SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER
                     );
