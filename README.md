@@ -7,7 +7,7 @@ Libevent, libev and libuv are outdated.
 
 - linux
 - gcc (-std=c11)
-- g++ (-std=c++14)
+- g++ (-std=c++11)
 - openssl
 
 
@@ -23,7 +23,6 @@ epoll or epoll + multi-threading + multi-process
 - sqlite server
 - medis_server (like redis but support sqlite and leveldb)
 - javascript server
-- chaiscript server
 - tcp and http proxy server
 - utils
 

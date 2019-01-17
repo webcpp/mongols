@@ -72,7 +72,7 @@ namespace mongols {
 
     std::string url_decode(const std::string& str);
 
-    void forker(int, const std::function<void()>&, std::vector<pid_t>&);
+    pid_t forker(int, const std::function<void()>&, std::vector<std::pair<pid_t, int> >&);
 
     bool process_bind_cpu(pid_t pid, int cpu);
 
@@ -93,7 +93,7 @@ namespace mongols {
         pthread_mutex_t *mtx;
         pthread_mutexattr_t *mtx_attr;
         size_t *data;
-        static std::vector<pid_t> pids;
+        static std::vector<std::pair<pid_t, int>> pids;
         static void signal_cb(int sig);
         static void set_signal();
     };

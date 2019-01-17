@@ -34,7 +34,7 @@ CFLAGS+=-Iinc/mongols/lib/dukglue
 
 
 
-CXXFLAGS+=-O3 -std=c++14 -Wall -fPIC
+CXXFLAGS+=-O3 -std=c++11 -Wall -fPIC
 CXXFLAGS+=`pkg-config --cflags openssl`
 CXXFLAGS+=-Iinc/mongols -Iinc/mongols/lib 
 CXXFLAGS+=-Isrc/MPFDParser

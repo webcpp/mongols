@@ -474,27 +474,6 @@ namespace mongols {
         return ret;
     }
 
-    void forker(int len, const std::function<void()>& f, std::vector<pid_t>& pids) {
-        pid_t pid = fork();
-        if (pid == 0) {
-            f();
-        } else if (pid > 0) {
-            pids.push_back(pid);
-            if (len > 1) {
-                forker(len - 1, f, pids);
-            }
-        } else {
-            perror("fork error.");
-        }
-    }
-
-    bool process_bind_cpu(pid_t pid, int cpu) {
-        cpu_set_t set;
-        CPU_ZERO(&set);
-        CPU_SET(cpu, &set);
-        return sched_setaffinity(pid, sizeof (cpu_set_t), &set) == 0;
-    }
-
     bool regex_match(const std::string & pattern, const std::string & str, std::vector<std::string> & results) {
         std::string wrapped_pattern = std::move("(" + pattern + ")");
         RE2::Options opt;
@@ -561,17 +540,47 @@ namespace mongols {
         return RE2::FindAndConsumeN(&piece, re2, arguments_ptrs.data(), args_count);
     }
 
-    std::vector<pid_t> multi_process::pids;
+    pid_t forker(int len, const std::function<void()>& f, std::vector<std::pair<pid_t, int>>&pids) {
+        pid_t pid = fork();
+        if (pid == 0) {
+            f();
+        } else if (pid > 0) {
+            pids.push_back({pid, -1});
+            if (len > 1) {
+                forker(len - 1, f, pids);
+            }
+            return pid;
+        } else {
+            perror("fork error.");
+        }
+        return -1;
+    }
+
+    bool process_bind_cpu(pid_t pid, int cpu) {
+        cpu_set_t set;
+        CPU_ZERO(&set);
+        CPU_SET(cpu, &set);
+        return sched_setaffinity(pid, sizeof (cpu_set_t), &set) == 0;
+    }
+
+
+    std::vector<std::pair<pid_t, int>> multi_process::pids;
 
     void multi_process::signal_cb(int sig) {
         switch (sig) {
-            case SIGTERM:
             case SIGHUP:
+                for (auto & i : multi_process::pids) {
+                    if (i.first > 0) {
+                        kill(i.first, SIGKILL);
+                    }
+                }
+                break;
+            case SIGTERM:
             case SIGQUIT:
             case SIGINT:
                 for (auto & i : multi_process::pids) {
-                    if (i > 0) {
-                        kill(i, sig);
+                    if (i.first > 0) {
+                        kill(i.first, sig);
                     }
                 }
                 break;
@@ -631,15 +640,26 @@ namespace mongols {
         mongols::forker(std::thread::hardware_concurrency(), process_work, multi_process::pids);
         multi_process::set_signal();
         for (size_t i = 0; i < multi_process::pids.size(); ++i) {
-            mongols::process_bind_cpu(multi_process::pids[i], i);
+            if (mongols::process_bind_cpu(multi_process::pids[i].first, i)) {
+                multi_process::pids[i].second = i;
+            }
         }
 
         std::function<void(pid_t) > refork = [&](pid_t pid) {
-            std::vector<int>::iterator p = std::find(multi_process::pids.begin(), multi_process::pids.end(), pid);
-            if (p != multi_process::pids.end()) {
-                *p = -1 * pid;
+            if (mongols::forker(1, process_work, multi_process::pids) > 0) {
+                std::vector<std::pair<pid_t, int>>::iterator p = std::find_if(multi_process::pids.begin(), multi_process::pids.end()
+                        , [ = ](const std::pair<pid_t, int>& item){
+                    return item.first == pid;
+                });
+                if (p != multi_process::pids.end()) {
+                    multi_process::pids.back().second = p->second;
+                    mongols::process_bind_cpu(multi_process::pids.back().first, p->second);
+                    p->second = -1;
+                    p->first = -1 * pid;
+
+                }
+
             }
-            mongols::forker(1, process_work, multi_process::pids);
         };
         pid_t pid;
         int status;
@@ -649,7 +669,7 @@ namespace mongols {
                     if (g(status)) {
                         refork(pid);
                     }
-                } else if (WTERMSIG(status) == SIGHUP || WTERMSIG(status) == SIGSEGV || WTERMSIG(status) == SIGBUS) {
+                } else {
                     refork(pid);
                 }
             }

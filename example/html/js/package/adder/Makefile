@@ -16,7 +16,7 @@ CC=gcc
 CXX=g++
 
 CFLAGS+=-O3 -std=c11 -Wall -fPIC
-CXXFLAGS+=-O3 -std=c++14 -Wall -fPIC `pkg-config --cflags mongols`
+CXXFLAGS+=-O3 -std=c++11 -Wall -fPIC `pkg-config --cflags mongols`
 LDLIBS+=`pkg-config --libs mongols`
 LDFLAGS+=-shared
 
