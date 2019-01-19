@@ -90,7 +90,7 @@ namespace mongols {
 ssl_accept:
             int ret = SSL_accept(ssl);
             if (ret > 0 /*&& SSL_do_handshake(ssl) > 0*/) {
-                return true;                
+                return true;
             } else {
                 int err = SSL_get_error(ssl, ret);
                 if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE) {

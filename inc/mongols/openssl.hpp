@@ -40,8 +40,9 @@ namespace mongols {
         static openssl::version_t version;
         static std::string ciphers;
         static long flags;
+        static bool enable_verify, enable_cache;
+    private:
         static const int ssl_session_ctx_id;
-        static bool enable_verify,enable_cache;
     public:
         openssl() = delete;
         virtual~openssl();
