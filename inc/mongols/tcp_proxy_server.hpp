@@ -24,7 +24,7 @@ namespace mongols {
     class tcp_client {
     public:
 
-        tcp_client(const std::string& host = "127.0.0.1", int port = 8080);
+        tcp_client(const std::string& host = "127.0.0.1", int port = 8080, bool enable_openssl = false);
 
         virtual~tcp_client();
 
@@ -44,6 +44,23 @@ namespace mongols {
         int port, socket_fd;
         struct sockaddr_in server_addr;
         struct hostent *server;
+        bool enable_openssl;
+        SSL* ssl;
+    private:
+
+        class ctx_t {
+        public:
+            ctx_t();
+            virtual~ctx_t();
+            SSL_CTX* get();
+        private:
+            SSL_CTX* ctx;
+        };
+        static ctx_t ctx;
+        static const int ssl_session_ctx_id;
+
+
+
     };
 
     class tcp_proxy_server {
@@ -60,7 +77,7 @@ namespace mongols {
         void run(const tcp_server::filter_handler_function&);
         void run(const tcp_server::filter_handler_function&, const std::function<bool(const mongols::request&)>&);
 
-        void set_backend_server(const std::string&, int);
+        void set_backend_server(const std::string&, int, bool = false);
 
         void set_default_content(const std::string&);
         void set_enable_tcp_send_to_other(bool);
@@ -75,11 +92,23 @@ namespace mongols {
                 , long flags = openssl::flags);
 
     private:
+
+        class backend_server_t {
+        public:
+            backend_server_t() = delete;
+            backend_server_t(const std::string&, int port, bool);
+            virtual~backend_server_t() = default;
+        public:
+            std::string server;
+            int port;
+            bool enable_ssl;
+        };
+    private:
         size_t index, backend_size, http_lru_cache_size;
         long long http_lru_cache_expires;
         bool enable_http_lru_cache, enable_tcp_send_to_other;
         tcp_server* server;
-        std::vector<std::pair<std::string, int>> backend_server;
+        std::vector<backend_server_t> backend_server;
         std::unordered_map<size_t, std::shared_ptr<tcp_client>> clients;
         std::string default_content;
         lru11::Cache<std::string, std::shared_ptr<std::pair<std::string, time_t>>>* http_lru_cache;

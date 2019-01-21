@@ -21,11 +21,60 @@
 
 namespace mongols {
 
-    tcp_client::tcp_client(const std::string& host, int port) : host(host), port(port), socket_fd(-1), server_addr(), server(0) {
+    tcp_client::ctx_t tcp_client::ctx;
+    const int tcp_client::ssl_session_ctx_id = 1;
+
+    tcp_client::ctx_t::ctx_t() : ctx(0) {
+        SSL_load_error_strings();
+        OpenSSL_add_ssl_algorithms();
+        switch (openssl::version) {
+            case openssl::version_t::SSLv23:
+                this->ctx = SSL_CTX_new(SSLv23_client_method());
+                break;
+            case openssl::version_t::TLSv12:
+                this->ctx = SSL_CTX_new(TLSv1_2_client_method());
+                break;
+            case openssl::version_t::TLSv13:
+                this->ctx = SSL_CTX_new(TLSv1_2_client_method());
+                break;
+            default:
+                this->ctx = SSL_CTX_new(TLSv1_2_client_method());
+                break;
+        }
+
+        SSL_CTX_set_ecdh_auto(this->ctx, 1024);
+        this->ctx->freelist_max_len = 0;
+        SSL_CTX_set_mode(this->ctx, SSL_MODE_RELEASE_BUFFERS
+                | SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER
+                | SSL_MODE_AUTO_RETRY
+                );
+        SSL_CTX_set_options(this->ctx, openssl::flags);
+
+        SSL_CTX_set_session_cache_mode(this->ctx, SSL_SESS_CACHE_CLIENT | SSL_SESS_CACHE_NO_INTERNAL);
+        SSL_CTX_sess_set_cache_size(this->ctx, 1);
+    }
+
+    tcp_client::ctx_t::~ctx_t() {
+        if (this->ctx) {
+            SSL_CTX_free(this->ctx);
+        }
+        EVP_cleanup();
+    }
+
+    SSL_CTX* tcp_client::ctx_t::get() {
+        return this->ctx;
+    }
+
+    tcp_client::tcp_client(const std::string& host, int port, bool enable_openssl) : host(host), port(port)
+    , socket_fd(-1), server_addr(), server(0), enable_openssl(enable_openssl), ssl(0) {
         this->init();
     }
 
     tcp_client::~tcp_client() {
+        if (this->ssl) {
+            SSL_shutdown(this->ssl);
+            SSL_free(this->ssl);
+        }
         if (this->socket_fd > 0) {
             close(this->socket_fd);
         }
@@ -51,6 +100,23 @@ namespace mongols {
             close(this->socket_fd);
             this->socket_fd = -1;
         }
+        if (this->socket_fd > 0 && this->enable_openssl) {
+            this->ssl = SSL_new(tcp_client::ctx.get());
+            if (this->ssl) {
+                SSL_set_mode(this->ssl, SSL_MODE_RELEASE_BUFFERS
+                        );
+                SSL_set_options(this->ssl, SSL_OP_NO_TICKET);
+                SSL_set_fd(this->ssl, this->socket_fd);
+                int ret = SSL_connect(this->ssl);
+                if (ret <= 0) {
+                    SSL_shutdown(this->ssl);
+                    SSL_free(this->ssl);
+                    this->ssl = 0;
+                    close(this->socket_fd);
+                    this->socket_fd = -1;
+                }
+            }
+        }
     }
 
     bool tcp_client::ok() {
@@ -58,10 +124,18 @@ namespace mongols {
     }
 
     ssize_t tcp_client::recv(char* buffer, size_t len) {
+        if (this->enable_openssl && this->ssl) {
+            return SSL_read(this->ssl, buffer, len);
+        }
         return ::read(this->socket_fd, buffer, len);
     }
 
     ssize_t tcp_client::send(const char* str, size_t len) {
+        if (this->enable_openssl && this->ssl) {
+
+            return SSL_write(this->ssl, str, len);
+
+        }
         return ::send(this->socket_fd, str, len, MSG_NOSIGNAL);
     }
 
@@ -130,8 +204,8 @@ namespace mongols {
         this->server->run(ff);
     }
 
-    void tcp_proxy_server::set_backend_server(const std::string& host, int port) {
-        this->backend_server.emplace_back(std::make_pair(host, port));
+    void tcp_proxy_server::set_backend_server(const std::string& host, int port, bool enable_ssl) {
+        this->backend_server.emplace_back(backend_server_t(host, port, enable_ssl));
         this->backend_size++;
     }
 
@@ -177,8 +251,8 @@ new_client:
                 if (this->index>this->backend_size - 1) {
                     this->index = 0;
                 }
-                std::vector<std::pair < std::string, int>>::const_reference back_end = this->backend_server[this->index++];
-                cli = std::make_shared<tcp_client>(back_end.first, back_end.second);
+                std::vector<backend_server_t>::const_reference backend_server_ref = this->backend_server[this->index++];
+                cli = std::make_shared<tcp_client>(backend_server_ref.server, backend_server_ref.port, backend_server_ref.enable_ssl);
                 this->clients[client.sid] = cli;
                 is_old = false;
             } else {
@@ -258,8 +332,8 @@ new_client:
                 if (this->index>this->backend_size - 1) {
                     this->index = 0;
                 }
-                std::vector<std::pair < std::string, int>>::const_reference back_end = this->backend_server[this->index++];
-                cli = std::make_shared<tcp_client>(back_end.first, back_end.second);
+                std::vector<backend_server_t>::const_reference backend_server_ref = this->backend_server[this->index++];
+                cli = std::make_shared<tcp_client>(backend_server_ref.server, backend_server_ref.port, backend_server_ref.enable_ssl);
                 this->clients[client.sid] = cli;
                 is_old = false;
             } else {
@@ -311,6 +385,7 @@ new_client:
                             if (res.status == 200 && this->enable_http_lru_cache) {
                                 this->http_lru_cache->insert(*cache_key, output);
                             }
+
                         }
 
                         return output->first;
@@ -328,6 +403,12 @@ done:
 
     void tcp_proxy_server::set_default_http_content() {
         this->default_content = tcp_proxy_server::DEFAULT_HTTP_CONTENT;
+    }
+
+    tcp_proxy_server::backend_server_t::backend_server_t(const std::string& server, int port, bool b) {
+        this->server = server;
+        this->port = port;
+        this->enable_ssl = b;
     }
 
 

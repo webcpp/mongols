@@ -1,8 +1,3 @@
-#include <unistd.h>
-#include <sys/wait.h>
-#include <sys/signal.h>
-#include <sys/prctl.h>
-
 #include <mongols/util.hpp>
 #include <mongols/tcp_proxy_server.hpp>
 
