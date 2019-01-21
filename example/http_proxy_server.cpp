@@ -22,7 +22,7 @@ int main(int, char**) {
     mongols::tcp_proxy_server server(host, port, 5000, 8192, 0/*2*/);
 
 
-    server.set_enable_http_lru_cache(true);
+    server.set_enable_http_lru_cache(false);
     server.set_http_lru_cache_expires(1);
     server.set_default_http_content();
 

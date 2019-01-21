@@ -104,6 +104,7 @@ namespace mongols {
             this->ssl = SSL_new(tcp_client::ctx.get());
             if (this->ssl) {
                 SSL_set_mode(this->ssl, SSL_MODE_RELEASE_BUFFERS
+                        | SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER
                         );
                 SSL_set_options(this->ssl, SSL_OP_NO_TICKET);
                 SSL_set_fd(this->ssl, this->socket_fd);

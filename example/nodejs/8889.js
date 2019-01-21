@@ -3,7 +3,7 @@ var port = 8889;
 
 http.createServer(function (request, response) {
 
-    response.writeHead(200, {'Content-Type': 'text/plain'});
+    response.writeHead(200, {'Content-Type': 'text/plain','Content-Length':'12'});
 
     response.end('Hello World\n');
 }).listen(port);
