@@ -7,8 +7,42 @@
 #include "lib/hash/sha1.hpp"
 #include "lib/lua/kaguya_ext.hpp"
 #include "ext/json.hpp"
+#include "tcp_proxy_server.hpp"
+#include "version.hpp"
 
 namespace mongols {
+
+    class tcp_client_wrap {
+    public:
+
+        tcp_client_wrap(const std::string& host, int port, bool enable_ssl)
+        : cli(host, port, enable_ssl) {
+
+        }
+
+        bool ok() {
+            return this->cli.ok();
+        }
+
+        bool send(const std::string& str) {
+            if (str.empty()) {
+                return false;
+            }
+            return this->cli.send(str.c_str(), str.size()) > 0;
+        }
+
+        std::string recv(size_t len) {
+            char buffer[len];
+            ssize_t ret = this->cli.recv(buffer, len);
+            if (ret > 0) {
+                return std::string(buffer, ret);
+            }
+            return "";
+        }
+
+    private:
+        tcp_client cli;
+    };
 
     void lua_ext(kaguya::State& vm) {
         vm["mongols_regex"] = kaguya::NewTable();
@@ -62,6 +96,15 @@ namespace mongols {
                 .addFunction("is_array", &json::is_array)
                 .addFunction("size", &json::size)
                 );
+
+        vm["mongols_tcp_client"].setClass(
+                kaguya::UserdataMetatable<mongols::tcp_client_wrap>()
+                .setConstructors < mongols::tcp_client_wrap(const std::string&, int, bool)>()
+                .addFunction("ok", &mongols::tcp_client_wrap::ok)
+                .addFunction("send", &mongols::tcp_client_wrap::send)
+                .addFunction("recv", &mongols::tcp_client_wrap::recv)
+                );
+
     }
 
 

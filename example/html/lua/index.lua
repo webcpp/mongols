@@ -122,3 +122,27 @@ end)
 route:run(mongols_req,mongols_res)
 
 --]]
+
+
+
+--[[
+
+mongols_res:header('Content-Type','text/plain;charset=UTF-8')
+mongols_res:status(200)
+local host="www.baidu.com"
+local port=443
+local enable_ssl =true
+local cli=mongols_tcp_client.new(host,port,enable_ssl)
+local req="GET / HTTP/1.1\r\n\r\n"
+
+if cli:ok() then
+    if cli:send(req) then
+        mongols_res:content(cli:recv(8096))
+    else
+        mongols_res:content("send failed.")
+    end
+else
+    mongols_res:content("connection failed.")
+end
+
+--]]
