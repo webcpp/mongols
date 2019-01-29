@@ -53,9 +53,19 @@
 //    CHECK(RE2::FullMatch(latin1_string, RE2(latin1_pattern, RE2::Latin1)));
 //
 // -----------------------------------------------------------------------
-// MATCHING WITH SUB-STRING EXTRACTION:
+// MATCHING WITH SUBSTRING EXTRACTION:
 //
-// You can supply extra pointer arguments to extract matched subpieces.
+// You can supply extra pointer arguments to extract matched substrings.
+// On match failure, none of the pointees will have been modified.
+// On match success, the substrings will be converted (as necessary) and
+// their values will be assigned to their pointees until all conversions
+// have succeeded or one conversion has failed.
+// On conversion failure, the pointees will be in an indeterminate state
+// because the caller has no way of knowing which conversion failed.
+// However, conversion cannot fail for types like string and StringPiece
+// that do not inspect the substring contents. Hence, in the common case
+// where all of the pointees are of such types, failure is always due to
+// match failure and thus none of the pointees will have been modified.
 //
 // Example: extracts "ruby" into "s" and 1234 into "i"
 //    int i;
@@ -278,11 +288,13 @@ class RE2 {
   // Returns the program size, a very approximate measure of a regexp's "cost".
   // Larger numbers are more expensive than smaller numbers.
   int ProgramSize() const;
+  int ReverseProgramSize() const;
 
   // EXPERIMENTAL! SUBJECT TO CHANGE!
   // Outputs the program fanout as a histogram bucketed by powers of 2.
   // Returns the number of the largest non-empty bucket.
   int ProgramFanout(std::map<int, int>* histogram) const;
+  int ReverseProgramFanout(std::map<int, int>* histogram) const;
 
   // Returns the underlying Regexp; not for general use.
   // Returns entire_regexp_ so that callers don't need
@@ -467,7 +479,7 @@ class RE2 {
   // Return the number of capturing subpatterns, or -1 if the
   // regexp wasn't valid on construction.  The overall match ($0)
   // does not count: if the regexp is "(a)(b)", returns 2.
-  int NumberOfCapturingGroups() const;
+  int NumberOfCapturingGroups() const { return num_captures_; }
 
   // Return a map from names to capturing indices.
   // The map records the index of the leftmost group
@@ -489,6 +501,7 @@ class RE2 {
   // I.e. matching RE2("(foo)|(bar)baz") on "barbazbla" will return true, with
   // submatch[0] = "barbaz", submatch[1].data() = NULL, submatch[2] = "bar",
   // submatch[3].data() = NULL, ..., up to submatch[nsubmatch-1].data() = NULL.
+  // Caveat: submatch[] may be clobbered even on match failure.
   //
   // Don't ask for more match information than you will use:
   // runs much faster with nsubmatch == 1 than nsubmatch > 1, and
@@ -731,6 +744,7 @@ class RE2 {
   re2::Regexp*  entire_regexp_;    // parsed regular expression
   re2::Regexp*  suffix_regexp_;    // parsed regular expression, prefix removed
   re2::Prog*    prog_;             // compiled program for regexp
+  int           num_captures_;     // Number of capturing groups
   bool          is_one_pass_;      // can use prog_->SearchOnePass?
 
   mutable re2::Prog*     rprog_;         // reverse program for regexp
@@ -738,7 +752,6 @@ class RE2 {
                                          // (or points to empty string)
   mutable ErrorCode      error_code_;    // Error code
   mutable string         error_arg_;     // Fragment of regexp showing error
-  mutable int            num_captures_;  // Number of capturing groups
 
   // Map from capture names to indices
   mutable const std::map<string, int>* named_groups_;
@@ -748,7 +761,6 @@ class RE2 {
 
   // Onces for lazy computations.
   mutable std::once_flag rprog_once_;
-  mutable std::once_flag num_captures_once_;
   mutable std::once_flag named_groups_once_;
   mutable std::once_flag group_names_once_;
 
