@@ -57,6 +57,7 @@ namespace mongols {
     }
 
     bool tcp_threading_server::send_to_other_client(int fd, int ffd, meta_data_t& meta_data, const std::string& str, const filter_handler_function& h) {
+        std::lock_guard<std::mutex> lk(this->main_mtx);
         if (ffd != fd && h(meta_data.client) &&
                 (this->openssl_is_ok
                 ? this->openssl_manager->write(meta_data.ssl->get_ssl(), str) < 0
