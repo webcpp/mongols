@@ -11,6 +11,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <thread>
 
 
 namespace mongols {
@@ -86,7 +87,7 @@ namespace mongols {
 
         virtual~multi_process();
 
-        void run(const std::function<void(pthread_mutex_t*, size_t*)>& f, const std::function<bool(int) >& g);
+        void run(const std::function<void(pthread_mutex_t*, size_t*)>& f, const std::function<bool(int) >& g,size_t=std::thread::hardware_concurrency() );
 
 
     private:

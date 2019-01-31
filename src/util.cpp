@@ -632,12 +632,12 @@ namespace mongols {
         }
     }
 
-    void multi_process::run(const std::function<void(pthread_mutex_t*, size_t*)>& f, const std::function<bool(int) >& g) {
+    void multi_process::run(const std::function<void(pthread_mutex_t*, size_t*)>& f, const std::function<bool(int) >& g, size_t process_size) {
         std::function<void() > process_work = [&]() {
             prctl(PR_SET_NAME, "mongols: worker");
             f(this->mtx, this->data);
         };
-        mongols::forker(std::thread::hardware_concurrency(), process_work, multi_process::pids);
+        mongols::forker((process_size > 0 ? process_size : std::thread::hardware_concurrency()), process_work, multi_process::pids);
         multi_process::set_signal();
         for (size_t i = 0; i < multi_process::pids.size(); ++i) {
             if (mongols::process_bind_cpu(multi_process::pids[i].first, i)) {
