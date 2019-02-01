@@ -33,6 +33,9 @@ namespace mongols {
                 , openssl::version_t = openssl::version_t::TLSv12
                 , const std::string& ciphers = openssl::ciphers
                 , long flags = openssl::flags);
+    public:
+        static size_t max_send_limit;
+        static std::string origin;
     private:
         virtual std::string work(const message_handler_function&
                 , const std::pair<char*, size_t>&

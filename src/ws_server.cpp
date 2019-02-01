@@ -16,6 +16,9 @@
 
 namespace mongols {
 
+    size_t ws_server::max_send_limit = 5;
+    std::string ws_server::origin = "localhost";
+
     ws_server::ws_server(const std::string& host, int port, int timeout
             , size_t buffer_size, size_t thread_size, int max_event_size)
     : server(0) {
@@ -169,16 +172,32 @@ namespace mongols {
         if (input.first[0] == 'G') {
             std::unordered_map<std::string, std::string> headers;
             std::unordered_map<std::string, std::string>::const_iterator headers_iterator;
+            if ((headers_iterator = headers.find("Origin")) != headers.end()) {
+                if (headers_iterator->second != ws_server::origin) {
+                    keepalive = CLOSE_CONNECTION;
+                    goto ws_done;
+                }
+            }
+
             if (!this->ws_handshake(input, response, headers)) {
                 keepalive = CLOSE_CONNECTION;
             } else if ((headers_iterator = headers.find("X-Real-IP")) != headers.end()) {
                 client.ip = headers_iterator->second;
             }
+
             goto ws_done;
         } else {
 
+
+
             std::string close_msg = "connection closed.", pong_msg = "pong", ping_msg = "ping", error_msg = "error message."
                     , binary_msg = "not accept binary message.", message;
+
+            if (client.count / difftime(time(0), client.t) > ws_server::max_send_limit) {
+                keepalive = CLOSE_CONNECTION;
+                goto ws_done;
+            }
+
 
             int ret = this->ws_parse(input, message);
 
