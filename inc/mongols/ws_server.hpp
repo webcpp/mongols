@@ -33,9 +33,8 @@ namespace mongols {
                 , openssl::version_t = openssl::version_t::TLSv12
                 , const std::string& ciphers = openssl::ciphers
                 , long flags = openssl::flags);
-    public:
-        static size_t max_send_limit;
-        static std::string origin;
+        void set_origin(const std::string&);
+        void set_max_send_limit(size_t);
     private:
         virtual std::string work(const message_handler_function&
                 , const std::pair<char*, size_t>&
@@ -50,8 +49,11 @@ namespace mongols {
                 , tcp_server::filter_handler_function& send_to_other_filter);
         bool ws_handshake(const std::pair<char*, size_t> &request, std::string &response, std::unordered_map<std::string, std::string>& headers);
         int ws_parse(const std::pair<char*, size_t>& frame, std::string& message);
+        
     private:
         mongols::tcp_server *server;
+        size_t max_send_limit;
+        std::string origin;
 
     };
 }

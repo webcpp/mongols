@@ -16,12 +16,9 @@
 
 namespace mongols {
 
-    size_t ws_server::max_send_limit = 5;
-    std::string ws_server::origin = "localhost";
-
     ws_server::ws_server(const std::string& host, int port, int timeout
             , size_t buffer_size, size_t thread_size, int max_event_size)
-    : server(0) {
+    : server(0), max_send_limit(5), origin("http://localhost") {
         if (thread_size > 0) {
             this->server = new tcp_threading_server(host, port, timeout, buffer_size, thread_size, max_event_size);
         } else {
@@ -61,6 +58,14 @@ namespace mongols {
                 , std::placeholders::_4
                 , std::placeholders::_5
                 ));
+    }
+
+    void ws_server::set_max_send_limit(size_t len) {
+        this->max_send_limit = len;
+    }
+
+    void ws_server::set_origin(const std::string& origin) {
+        this->origin = origin;
     }
 
     std::string ws_server::ws_json_parse(const std::string& message
@@ -172,17 +177,24 @@ namespace mongols {
         if (input.first[0] == 'G') {
             std::unordered_map<std::string, std::string> headers;
             std::unordered_map<std::string, std::string>::const_iterator headers_iterator;
-            if ((headers_iterator = headers.find("Origin")) != headers.end()) {
-                if (headers_iterator->second != ws_server::origin) {
+            if (this->ws_handshake(input, response, headers)) {
+                if ((headers_iterator = headers.find("Origin")) != headers.end()) {
+                    if (headers_iterator->second == this->origin) {
+                        if ((headers_iterator = headers.find("X-Real-IP")) != headers.end()) {
+                            client.ip = headers_iterator->second;
+                        }
+                    } else {
+                        keepalive = CLOSE_CONNECTION;
+                    }
+                } else {
                     keepalive = CLOSE_CONNECTION;
-                    goto ws_done;
                 }
-            }
-
-            if (!this->ws_handshake(input, response, headers)) {
+            } else {
                 keepalive = CLOSE_CONNECTION;
-            } else if ((headers_iterator = headers.find("X-Real-IP")) != headers.end()) {
-                client.ip = headers_iterator->second;
+            }
+            if (keepalive == CLOSE_CONNECTION) {
+                response = "HTTP/1.1 403 Forbidden\r\n";
+                response += "Connection: close\r\n";
             }
 
             goto ws_done;
@@ -259,9 +271,9 @@ ws_done:
     bool ws_server::ws_handshake(const std::pair<char*, size_t>& request, std::string& response, std::unordered_map<std::string, std::string>& headers) {
         bool ret = false;
         std::istringstream stream(std::string(request.first, request.second));
-        std::string reqType;
-        std::getline(stream, reqType);
-        if (reqType.substr(0, 4) != "GET ") {
+        std::string req_type;
+        std::getline(stream, req_type);
+        if (req_type.substr(0, 4) != "GET ") {
             return ret;
         }
 
