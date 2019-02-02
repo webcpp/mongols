@@ -211,7 +211,7 @@ namespace mongols {
                     , binary_msg = "not accept binary message.", message;
             int ret;
             double diff = difftime(time(0), client.t);
-            if (diff > 0 && client.count / difftime(time(0), client.t) > ws_server::max_send_limit) {
+            if (diff > 0 && client.count / diff > ws_server::max_send_limit) {
                 goto ws_close;
             }
 
