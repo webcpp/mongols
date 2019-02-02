@@ -18,7 +18,7 @@ namespace mongols {
 
     ws_server::ws_server(const std::string& host, int port, int timeout
             , size_t buffer_size, size_t thread_size, int max_event_size)
-    : server(0), max_send_limit(5), origin("http://localhost") {
+    : server(0), enable_origin_check(false), max_send_limit(5), origin("http://localhost") {
         if (thread_size > 0) {
             this->server = new tcp_threading_server(host, port, timeout, buffer_size, thread_size, max_event_size);
         } else {
@@ -66,6 +66,10 @@ namespace mongols {
 
     void ws_server::set_origin(const std::string& origin) {
         this->origin = origin;
+    }
+
+    void ws_server::set_enable_origin_check(bool b) {
+        this->enable_origin_check = b;
     }
 
     std::string ws_server::ws_json_parse(const std::string& message
@@ -178,16 +182,17 @@ namespace mongols {
             std::unordered_map<std::string, std::string> headers;
             std::unordered_map<std::string, std::string>::const_iterator headers_iterator;
             if (this->ws_handshake(input, response, headers)) {
-                if ((headers_iterator = headers.find("Origin")) != headers.end()) {
-                    if (headers_iterator->second == this->origin) {
-                        if ((headers_iterator = headers.find("X-Real-IP")) != headers.end()) {
-                            client.ip = headers_iterator->second;
+                if ((headers_iterator = headers.find("X-Real-IP")) != headers.end()) {
+                    client.ip = headers_iterator->second;
+                }
+                if (this->enable_origin_check) {
+                    if ((headers_iterator = headers.find("Origin")) != headers.end()) {
+                        if (headers_iterator->second != this->origin) {
+                            keepalive = CLOSE_CONNECTION;
                         }
                     } else {
                         keepalive = CLOSE_CONNECTION;
                     }
-                } else {
-                    keepalive = CLOSE_CONNECTION;
                 }
             } else {
                 keepalive = CLOSE_CONNECTION;
@@ -204,15 +209,13 @@ namespace mongols {
 
             std::string close_msg = "connection closed.", pong_msg = "pong", ping_msg = "ping", error_msg = "error message."
                     , binary_msg = "not accept binary message.", message;
-
-            if (client.count / difftime(time(0), client.t) > ws_server::max_send_limit) {
-                keepalive = CLOSE_CONNECTION;
-                goto ws_done;
+            int ret;
+            double diff = difftime(time(0), client.t);
+            if (diff > 0 && client.count / difftime(time(0), client.t) > ws_server::max_send_limit) {
+                goto ws_close;
             }
 
-
-            int ret = this->ws_parse(input, message);
-
+            ret = this->ws_parse(input, message);
 
             if (ret == 1) {
                 message = std::move(f(message, keepalive, send_to_other, client, send_to_other_filter));
@@ -230,6 +233,7 @@ namespace mongols {
                 send_to_other = true;
                 keepalive = KEEPALIVE_CONNECTION;
             } else if (ret == 8) {
+ws_close:
                 size_t frame_len = websocket_calc_frame_size((websocket_flags) (WS_OP_CLOSE | WS_FINAL_FRAME), close_msg.size());
                 char * frame = (char*) malloc(sizeof (char) * frame_len);
                 frame_len = websocket_build_frame(frame, (websocket_flags) (WS_OP_CLOSE | WS_FINAL_FRAME), NULL, close_msg.c_str(), close_msg.size());

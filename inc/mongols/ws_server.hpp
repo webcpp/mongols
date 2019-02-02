@@ -35,6 +35,7 @@ namespace mongols {
                 , long flags = openssl::flags);
         void set_origin(const std::string&);
         void set_max_send_limit(size_t);
+        void set_enable_origin_check(bool);
     private:
         virtual std::string work(const message_handler_function&
                 , const std::pair<char*, size_t>&
@@ -49,9 +50,10 @@ namespace mongols {
                 , tcp_server::filter_handler_function& send_to_other_filter);
         bool ws_handshake(const std::pair<char*, size_t> &request, std::string &response, std::unordered_map<std::string, std::string>& headers);
         int ws_parse(const std::pair<char*, size_t>& frame, std::string& message);
-        
+
     private:
         mongols::tcp_server *server;
+        bool enable_origin_check;
         size_t max_send_limit;
         std::string origin;
 
