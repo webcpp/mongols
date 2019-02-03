@@ -21,6 +21,9 @@ int main(int, char**) {
         }
         return input;
     };
+    //server.set_enable_origin_check(true);
+    //server.set_origin("http://localhost");
+    //server.set_max_send_limit(5);
     server.run(f);
     //server.run();
 }
