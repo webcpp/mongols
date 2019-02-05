@@ -133,7 +133,6 @@ namespace mongols {
         }
         strm.next_in = (Bytef*) src;
         strm.avail_in = src_size;
-        //        std::string compressedData;
         int have = 0, total = 0;
         do {
             strm.avail_out = src_size;
@@ -143,7 +142,6 @@ namespace mongols {
             }
             have = src_size - strm.avail_out;
             total += have;
-            //            compressedData.append(out, have);
         } while (strm.avail_out == 0);
         if (deflateEnd(&strm) != Z_OK) {
             return false;
