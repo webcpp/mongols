@@ -61,12 +61,20 @@ namespace mongols {
                 , tcp_server::client_t&
                 , tcp_server::filter_handler_function&);
     private:
+
+        enum zip_t {
+            deflate,
+            gzip,
+            unkown
+        };
         std::string create_response(mongols::response& res, bool b);
         std::string get_status_text(int status);
         std::string tolower(std::string&);
         void upload(mongols::request&, const std::string&);
         std::string serialize(const std::unordered_map<std::string, std::string>&);
         void deserialize(const std::string&, std::unordered_map<std::string, std::string>&);
+        bool deflate_compress(std::string&);
+        bool gzip_compress(std::string&);
     private:
 
         class cache_t {
@@ -77,9 +85,13 @@ namespace mongols {
             int status;
             time_t t;
             std::string content_type, content;
+            bool enable_zip;
+            http_server::zip_t zip_type;
 
             bool expired(long long expires)const;
         };
+
+
     private:
         mongols::tcp_server *server;
         size_t max_body_size, lru_cache_size;
@@ -91,7 +103,9 @@ namespace mongols {
         std::vector<std::pair<std::string, std::string>> uri_rewrite_config;
         lru11::Cache<std::string, std::shared_ptr<cache_t>>*lru_cache;
 
-
+    public:
+        static int zip_level;
+        static size_t zip_min_size, zip_max_size;
     };
 
 

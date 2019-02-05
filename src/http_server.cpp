@@ -16,6 +16,7 @@
 #include "lib/leveldb/cache.h"
 #include "lib/re2/re2.h"
 #include "lib/re2/stringpiece.h"
+#include "lib/z/zlib.h"
 
 #define form_urlencoded_type "application/x-www-form-urlencoded"
 #define form_multipart_type "multipart/form-data"
@@ -25,6 +26,10 @@
 #define LEVELDB_PATH "mongols_leveldb"
 
 namespace mongols {
+
+
+    int http_server::zip_level = Z_BEST_SPEED;
+    size_t http_server::zip_min_size = 1024, http_server::zip_max_size = 307200; /*1kb<size<300kb*/
 
     http_server::http_server(const std::string& host, int port
             , int timeout
@@ -97,6 +102,54 @@ namespace mongols {
         }
         output.append("\r\n").append(res.content);
         return output;
+    }
+
+    bool http_server::deflate_compress(std::string& content) {
+        if (content.empty()) {
+            return false;
+        }
+        const char* src = content.c_str();
+        const int src_size = content.size();
+        size_t max_dst_size = compressBound(src_size);
+        char compressed_data[max_dst_size];
+        if (compress((Bytef*) compressed_data, &max_dst_size, (const Bytef*) src, src_size) == Z_OK) {
+            content.assign(compressed_data, max_dst_size);
+            return true;
+        }
+        return false;
+    }
+
+    bool http_server::gzip_compress(std::string& content) {
+
+        const char* src = content.c_str();
+        const int src_size = content.size();
+        char out[src_size];
+        z_stream strm;
+        strm.zalloc = Z_NULL;
+        strm.zfree = Z_NULL;
+        strm.opaque = Z_NULL;
+        if (deflateInit2(&strm, http_server::zip_level, Z_DEFLATED, MAX_WBITS + 16, 8, Z_DEFAULT_STRATEGY) != Z_OK) {
+            return false;
+        }
+        strm.next_in = (Bytef*) src;
+        strm.avail_in = src_size;
+        //        std::string compressedData;
+        int have = 0, total = 0;
+        do {
+            strm.avail_out = src_size;
+            strm.next_out = (Bytef*) out;
+            if (::deflate(&strm, Z_FINISH) == Z_STREAM_ERROR) {
+                return false;
+            }
+            have = src_size - strm.avail_out;
+            total += have;
+            //            compressedData.append(out, have);
+        } while (strm.avail_out == 0);
+        if (deflateEnd(&strm) != Z_OK) {
+            return false;
+        }
+        content.assign(out, total);
+        return true;
     }
 
     std::string http_server::get_status_text(int status) {
@@ -196,7 +249,10 @@ namespace mongols {
         mongols::request req;
         mongols::response res;
         mongols::http_request_parser parser(req);
+        bool enable_zip = false;
+        http_server::zip_t zip_type = http_server::zip_t::unkown;
         if (parser.parse(input.first, input.second)) {
+
             std::unordered_map<std::string, std::string>::const_iterator tmp_iterator;
             std::string& body = parser.get_body();
             req.client = client.ip;
@@ -223,6 +279,16 @@ namespace mongols {
                     }
                 }
 
+                if ((tmp_iterator = req.headers.find("Accept-Encoding")) != req.headers.end()) {
+                    if (tmp_iterator->second.find("gzip") != std::string::npos) {
+                        zip_type = zip_t::gzip;
+                        enable_zip = true;
+                    } else if (tmp_iterator->second.find("deflate") != std::string::npos) {
+                        zip_type = zip_t::deflate;
+                        enable_zip = true;
+                    }
+                }
+
                 if ((tmp_iterator = req.headers.find("If-Modified-Since")) != req.headers.end()
                         && difftime(time(0), mongols::parse_http_time((u_char*) tmp_iterator->second.c_str(), tmp_iterator->second.size()))
                         <= this->lru_cache_expires) {
@@ -240,8 +306,14 @@ namespace mongols {
                             res.status = cache_ele->status;
                             res.content = cache_ele->content;
                             res.headers.find("Content-Type")->second = cache_ele->content_type;
-                            time_t now = time(0);
-                            res.headers.insert(std::move(std::make_pair("Last-Modified", mongols::http_time(&now))));
+                            res.headers.insert(std::move(std::make_pair("Last-Modified", mongols::http_time(&cache_ele->t))));
+                            if (cache_ele->enable_zip) {
+                                if (cache_ele->zip_type == zip_t::deflate) {
+                                    res.headers.insert(std::move(std::make_pair("Content-Encoding", "deflate")));
+                                } else if (cache_ele->zip_type == zip_t::gzip) {
+                                    res.headers.insert(std::move(std::make_pair("Content-Encoding", "gzip")));
+                                }
+                            }
                             return this->create_response(res, keepalive);
                         }
                     }
@@ -300,6 +372,31 @@ namespace mongols {
 
                 res_filter(req, res);
 
+                if (enable_zip) {
+                    size_t len = res.content.size();
+                    if ((len > http_server::zip_min_size && len <= http_server::zip_max_size)) {
+                        if (zip_type == zip_t::deflate) {
+                            if (this->deflate_compress(res.content)) {
+                                res.headers.insert(std::move(std::make_pair("Content-Encoding", "deflate")));
+                            } else {
+                                goto zip_error;
+                            }
+                        } else if (zip_type == zip_t::gzip) {
+                            if (this->gzip_compress(res.content)) {
+                                res.headers.insert(std::move(std::make_pair("Content-Encoding", "gzip")));
+                            } else {
+                                goto zip_error;
+                            }
+                        } else {
+                            goto zip_error;
+                        }
+                    } else {
+zip_error:
+                        enable_zip = false;
+                        zip_type = http_server::zip_t::unkown;
+                    }
+                }
+
                 std::unordered_map<std::string, std::string>* ptr = 0;
                 if (!res.session.empty() && this->db) {
 
@@ -331,9 +428,10 @@ namespace mongols {
                     cache_ele->content = res.content;
                     cache_ele->status = res.status;
                     cache_ele->content_type = res.headers.find("Content-Type")->second;
+                    cache_ele->enable_zip = enable_zip;
+                    cache_ele->zip_type = zip_type;
                     this->lru_cache->insert(cache_k, cache_ele);
-                    time_t now = time(0);
-                    res.headers.insert(std::move(std::make_pair("Last-Modified", mongols::http_time(&now))));
+                    res.headers.insert(std::move(std::make_pair("Last-Modified", mongols::http_time(&cache_ele->t))));
                 }
 
             }
@@ -419,7 +517,7 @@ namespace mongols {
         msgpack::unpack(str.c_str(), str.size()).get().convert(m);
     }
 
-    http_server::cache_t::cache_t() : status(200), t(time(0)), content_type(), content() {
+    http_server::cache_t::cache_t() : status(200), t(time(0)), content_type(), content(), enable_zip(false), zip_type(http_server::zip_t::unkown) {
     }
 
     bool http_server::cache_t::expired(long long expires) const {
