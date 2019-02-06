@@ -30,6 +30,7 @@ namespace mongols {
 
     int http_server::zip_level = Z_BEST_SPEED;
     size_t http_server::zip_min_size = 1024, http_server::zip_max_size = 307200; /*1kb<size<300kb*/
+    std::list<std::string> http_server::zip_mime_type = {"text/html", "text/css", "text/plain", "application/x-javascript", "text/xml"};
 
     http_server::http_server(const std::string& host, int port
             , int timeout
@@ -373,6 +374,13 @@ namespace mongols {
                 if (enable_zip) {
                     size_t len = res.content.size();
                     if ((len > http_server::zip_min_size && len <= http_server::zip_max_size)) {
+                        const std::string& res_content_type = res.headers.find("Content-Type")->second;
+                        auto zip_mime_type_iter = std::find_if(http_server::zip_mime_type.begin(), http_server::zip_mime_type.end(), [&](const std::string & item) {
+                            return res_content_type.find(item) != std::string::npos;
+                        });
+                        if (zip_mime_type_iter == http_server::zip_mime_type.end()) {
+                            goto zip_error;
+                        }
                         if (zip_type == zip_t::deflate) {
                             if (this->deflate_compress(res.content)) {
                                 res.headers.insert(std::move(std::make_pair("Content-Encoding", "deflate")));

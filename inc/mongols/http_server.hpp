@@ -6,6 +6,7 @@
 #include <ctime>
 #include <memory>
 #include <utility>
+#include <list>
 #include "tcp_server.hpp"
 #include "request.hpp"
 #include "response.hpp"
@@ -106,6 +107,7 @@ namespace mongols {
     public:
         static int zip_level;
         static size_t zip_min_size, zip_max_size;
+        static std::list<std::string> zip_mime_type;
     };
 
 
