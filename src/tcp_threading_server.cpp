@@ -54,6 +54,8 @@ namespace mongols {
         std::lock_guard<std::mutex> lk(this->main_mtx);
         this->sid_queue.push(this->clients.find(fd)->second.client.sid);
         this->clients.erase(fd);
+        shutdown(fd, SHUT_RDWR);
+        close(fd);
     }
 
     bool tcp_threading_server::send_to_other_client(int fd, int ffd, meta_data_t& meta_data, const std::string& str, const filter_handler_function& h) {
@@ -64,7 +66,6 @@ namespace mongols {
                 : send(ffd, str.c_str(), str.size(), MSG_NOSIGNAL) < 0)
                 ) {
             this->del_client(ffd);
-            close(ffd);
         }
         return false;
     }
@@ -123,7 +124,6 @@ ev_recv:
 
 ev_error:
             this->del_client(fd);
-            close(fd);
 
         }
         return false;
@@ -184,7 +184,6 @@ ev_recv:
 
 ev_error:
             this->del_client(fd);
-            close(fd);
         }
         return false;
     }

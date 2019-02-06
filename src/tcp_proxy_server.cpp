@@ -76,6 +76,7 @@ namespace mongols {
             SSL_free(this->ssl);
         }
         if (this->socket_fd > 0) {
+            shutdown(this->socket_fd,SHUT_RDWR);
             close(this->socket_fd);
         }
     }

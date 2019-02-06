@@ -156,6 +156,8 @@ namespace mongols {
     void tcp_server::del_client(int fd) {
         this->sid_queue.push(this->clients.find(fd)->second.client.sid);
         this->clients.erase(fd);
+        shutdown(fd, SHUT_RDWR);
+        close(fd);
     }
 
     bool tcp_server::send_to_all_client(int fd, const std::string& str, const filter_handler_function& h) {
@@ -166,7 +168,6 @@ namespace mongols {
                     : send(i->first, str.c_str(), str.size(), MSG_NOSIGNAL) < 0)
                     ) {
                 this->del_client(i->first);
-                close(i->first);
             } else {
                 ++i;
             }
@@ -218,7 +219,6 @@ ev_recv:
 
 ev_error:
             this->del_client(fd);
-            close(fd);
         }
 
         return false;
@@ -276,7 +276,6 @@ ev_recv:
 
 ev_error:
             this->del_client(fd);
-            close(fd);
 
         }
 
@@ -295,7 +294,6 @@ ev_error:
                     epoll.add(connfd, EPOLLIN | EPOLLRDHUP | EPOLLET);
                     if (!this->add_client(connfd, inet_ntoa(clientaddr.sin_addr), ntohs(clientaddr.sin_port))) {
                         this->del_client(connfd);
-                        close(connfd);
                         break;
                     }
                     this->setnonblocking(connfd);
@@ -310,7 +308,6 @@ ev_error:
                 this->work(event->data.fd, g);
             }
         } else {
-            close(event->data.fd);
             this->del_client(event->data.fd);
         }
     }
