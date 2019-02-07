@@ -225,12 +225,12 @@ namespace mongols {
                 response.assign(frame, frame_len);
                 free(frame);
             } else if (ret == 2) {
-                size_t frame_len = websocket_calc_frame_size((websocket_flags) (WS_OP_BINARY | WS_FINAL_FRAME), message.size());
+                size_t frame_len = websocket_calc_frame_size((websocket_flags) (WS_OP_TEXT | WS_FINAL_FRAME), binary_msg.size());
                 char * frame = (char*) malloc(sizeof (char) * frame_len);
-                frame_len = websocket_build_frame(frame, (websocket_flags) (WS_OP_BINARY | WS_FINAL_FRAME), NULL, message.c_str(), message.size());
+                frame_len = websocket_build_frame(frame, (websocket_flags) (WS_OP_TEXT | WS_FINAL_FRAME), NULL, binary_msg.c_str(), binary_msg.size());
                 response.assign(frame, frame_len);
                 free(frame);
-                send_to_other = true;
+                send_to_other = false;
                 keepalive = KEEPALIVE_CONNECTION;
             } else if (ret == 8) {
 ws_close:
