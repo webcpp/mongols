@@ -347,10 +347,6 @@ ws_done:
             return 0;
         };
         ws_settings.on_frame_end = [](websocket_parser * parser) {
-            ws_frame_t* THIS = (ws_frame_t*) parser->data;
-            if (THIS->body) {
-                free(THIS->body);
-            }
             return 0;
         };
 
@@ -361,6 +357,9 @@ ws_done:
                 THIS->message->assign(&THIS->body[parser->offset], length);
             } else {
                 THIS->message->assign(at, length);
+            }
+            if (THIS->body) {
+                free(THIS->body);
             }
             return 0;
         };
