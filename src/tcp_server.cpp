@@ -30,7 +30,7 @@ namespace mongols {
     std::atomic_bool tcp_server::done(true);
     int tcp_server::backlog = 511;
     size_t tcp_server::backlist_size = 1024;
-    size_t tcp_server::max_connetion_limit = 30;
+    size_t tcp_server::max_connection_limit = 30;
     size_t tcp_server::backlist_timeout = 24 * 60 * 60;
 
     void tcp_server::signal_normal_cb(int sig, siginfo_t *, void *) {
@@ -197,8 +197,8 @@ namespace mongols {
                 }
             }
 
-            if ((diff == 0 && black_ip->count > tcp_server::max_connetion_limit)
-                    || (diff > 0 && black_ip->count / diff > tcp_server::max_connetion_limit)) {
+            if ((diff == 0 && black_ip->count > tcp_server::max_connection_limit)
+                    || (diff > 0 && black_ip->count / diff > tcp_server::max_connection_limit)) {
                 black_ip->t = time(0);
                 black_ip->disallow = true;
                 return false;

@@ -93,8 +93,8 @@ namespace mongols {
                 }
             }
 
-            if ((diff == 0 && black_ip->count > tcp_server::max_connetion_limit)
-                    || (diff > 0 && black_ip->count / diff > tcp_server::max_connetion_limit)) {
+            if ((diff == 0 && black_ip->count > tcp_server::max_connection_limit)
+                    || (diff > 0 && black_ip->count / diff > tcp_server::max_connection_limit)) {
                 black_ip->t = time(0);
                 black_ip->disallow = true;
                 return false;

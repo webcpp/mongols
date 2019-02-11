@@ -75,7 +75,7 @@ namespace mongols {
 
         static int backlog;
         static size_t backlist_size;
-        static size_t max_connetion_limit;
+        static size_t max_connection_limit;
         static size_t backlist_timeout;
     private:
         std::string host;
