@@ -54,6 +54,7 @@ namespace mongols {
                 , const std::string& ciphers = openssl::ciphers
                 , long flags = openssl::flags);
         void set_lua_package_path(const std::string& package_path, const std::string& package_cpath);
+        void set_enable_blacklist(bool);
     private:
 
         tcp_server *server;

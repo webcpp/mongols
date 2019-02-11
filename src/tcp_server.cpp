@@ -29,6 +29,9 @@ namespace mongols {
 
     std::atomic_bool tcp_server::done(true);
     int tcp_server::backlog = 511;
+    size_t tcp_server::backlist_size = 1024;
+    size_t tcp_server::max_connetion_limit = 30;
+    size_t tcp_server::backlist_timeout = 24 * 60 * 60;
 
     void tcp_server::signal_normal_cb(int sig, siginfo_t *, void *) {
         switch (sig) {
@@ -48,7 +51,8 @@ namespace mongols {
             , int max_event_size) :
     host(host), port(port), listenfd(0), max_event_size(max_event_size), serveraddr()
     , buffer_size(buffer_size), thread_size(0), sid(0), timeout(timeout), sid_queue(), clients(), work_pool(0)
-    , openssl_manager(), openssl_crt_file(), openssl_key_file(), openssl_is_ok(false) {
+    , blacklist(tcp_server::backlist_size), openssl_manager(), openssl_crt_file(), openssl_key_file()
+    , openssl_is_ok(false), enable_blacklist(false) {
         this->listenfd = socket(AF_INET, SOCK_STREAM, 0);
 
         int on = 1;
@@ -98,6 +102,10 @@ namespace mongols {
 
     tcp_server::meta_data_t::meta_data_t(const std::string& ip, int port, size_t uid, size_t gid)
     : client(ip, port, uid, gid), ssl() {
+
+    }
+
+    tcp_server::black_ip_t::black_ip_t() : t(time(0)), count(1), disallow(false) {
 
     }
 
@@ -173,6 +181,34 @@ namespace mongols {
             }
         }
         return false;
+    }
+
+    bool tcp_server::check_blacklist(const std::string& ip) {
+        std::shared_ptr<black_ip_t> black_ip;
+        if (this->blacklist.tryGet(ip, black_ip)) {
+            double diff = difftime(time(0), black_ip->t);
+            if (black_ip->disallow) {
+                if (diff < tcp_server::backlist_timeout) {
+                    return false;
+                } else {
+                    black_ip->disallow = false;
+                    black_ip->count = 1;
+                    black_ip->t = time(0);
+                }
+            }
+
+            if ((diff == 0 && black_ip->count > tcp_server::max_connetion_limit)
+                    || (diff > 0 && black_ip->count / diff > tcp_server::max_connetion_limit)) {
+                black_ip->t = time(0);
+                black_ip->disallow = true;
+                return false;
+            } else {
+                black_ip->count++;
+            }
+        } else {
+            this->blacklist.insert(ip, std::make_shared<black_ip_t>());
+        }
+        return true;
     }
 
     bool tcp_server::work(int fd, const handler_function& g) {
@@ -291,8 +327,14 @@ ev_error:
                 socklen_t clilen;
                 int connfd = accept(listenfd, (struct sockaddr*) &clientaddr, &clilen);
                 if (connfd > 0) {
+                    std::string connfd_ip(inet_ntoa(clientaddr.sin_addr));
+                    if (this->enable_blacklist && !this->check_blacklist(connfd_ip)) {
+                        shutdown(connfd, SHUT_RDWR);
+                        close(connfd);
+                        break;
+                    }
                     epoll.add(connfd, EPOLLIN | EPOLLRDHUP | EPOLLET);
-                    if (!this->add_client(connfd, inet_ntoa(clientaddr.sin_addr), ntohs(clientaddr.sin_port))) {
+                    if (!this->add_client(connfd, connfd_ip, ntohs(clientaddr.sin_port))) {
                         this->del_client(connfd);
                         break;
                     }
@@ -325,6 +367,10 @@ ev_error:
         this->openssl_manager = std::move(std::make_shared<mongols::openssl>(this->openssl_crt_file, this->openssl_key_file, v, ciphers, flags));
         this->openssl_is_ok = this->openssl_manager && this->openssl_manager->is_ok();
         return this->openssl_is_ok;
+    }
+
+    void tcp_server::set_enable_blacklist(bool b) {
+        this->enable_blacklist = b;
     }
 
 

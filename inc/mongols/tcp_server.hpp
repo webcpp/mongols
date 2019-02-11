@@ -16,6 +16,7 @@
 
 #include "epoll.hpp"
 #include "thread_pool.hpp"
+#include "lib/LRUCache11.hpp"
 
 
 #include "openssl.hpp"
@@ -65,13 +66,17 @@ namespace mongols {
 
 
         bool set_openssl(const std::string&, const std::string&
-                , openssl::version_t v=openssl::version
-                , const std::string& ciphers=openssl::ciphers
-                , long flags =openssl::flags);
+                , openssl::version_t v = openssl::version
+                , const std::string& ciphers = openssl::ciphers
+                , long flags = openssl::flags);
 
+        void set_enable_blacklist(bool);
 
 
         static int backlog;
+        static size_t backlist_size;
+        static size_t max_connetion_limit;
+        static size_t backlist_timeout;
     private:
         std::string host;
         int port, listenfd, max_event_size;
@@ -92,21 +97,33 @@ namespace mongols {
             client_t client;
             std::shared_ptr<openssl::ssl> ssl;
         };
+
+        class black_ip_t {
+        public:
+            black_ip_t();
+            virtual~black_ip_t() = default;
+            time_t t;
+            size_t count;
+            bool disallow;
+        };
         size_t buffer_size, thread_size, sid;
         int timeout;
         std::queue<size_t, std::list<size_t>> sid_queue;
         std::unordered_map<int, meta_data_t > clients;
         mongols::thread_pool<std::function<bool() >> *work_pool;
 
+        lru11::Cache<std::string, std::shared_ptr<black_ip_t>> blacklist;
+
         std::shared_ptr<mongols::openssl> openssl_manager;
         std::string openssl_crt_file, openssl_key_file;
-        bool openssl_is_ok;
+        bool openssl_is_ok, enable_blacklist;
 
         virtual bool add_client(int, const std::string&, int);
         virtual void del_client(int);
         virtual bool send_to_all_client(int, const std::string&, const filter_handler_function&);
         virtual bool work(int, const handler_function&);
         virtual bool ssl_work(int, const handler_function&);
+        virtual bool check_blacklist(const std::string&);
     };
 }
 

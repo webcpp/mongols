@@ -76,7 +76,7 @@ namespace mongols {
             SSL_free(this->ssl);
         }
         if (this->socket_fd > 0) {
-            shutdown(this->socket_fd,SHUT_RDWR);
+            shutdown(this->socket_fd, SHUT_RDWR);
             close(this->socket_fd);
         }
     }
@@ -232,6 +232,10 @@ namespace mongols {
             , const std::string& ciphers
             , long flags) {
         return this->server->set_openssl(crt_file, key_file, v, ciphers, flags);
+    }
+
+    void tcp_proxy_server::set_enable_blacklist(bool b) {
+        this->server->set_enable_blacklist(b);
     }
 
     void tcp_proxy_server::set_enable_tcp_send_to_other(bool b) {

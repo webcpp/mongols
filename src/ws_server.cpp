@@ -72,6 +72,10 @@ namespace mongols {
         this->enable_origin_check = b;
     }
 
+    void ws_server::set_enable_blacklist(bool b) {
+        this->server->set_enable_blacklist(b);
+    }
+
     std::string ws_server::ws_json_parse(const std::string& message
             , bool& keepalive
             , bool& send_to_other
@@ -211,7 +215,9 @@ namespace mongols {
                     , binary_msg = "not accept binary message.", message;
             int ret;
             double diff = difftime(time(0), client.t);
-            if (diff > 0 && client.count / diff > ws_server::max_send_limit) {
+            if ((diff == 0 && client.count > ws_server::max_send_limit)
+                    || (diff > 0 && client.count / diff > ws_server::max_send_limit)
+                    ) {
                 goto ws_close;
             }
 

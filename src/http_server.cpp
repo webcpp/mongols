@@ -512,6 +512,10 @@ zip_error:
         return this->server->set_openssl(crt_file, key_file, v, ciphers, flags);
     }
 
+    void http_server::set_enable_blacklist(bool b) {
+        this->server->set_enable_blacklist(b);
+    }
+
     std::string http_server::serialize(const std::unordered_map<std::string, std::string>& m) {
         std::stringstream ss;
         msgpack::pack(ss, m);

@@ -144,6 +144,10 @@ namespace mongols {
         return this->server->set_openssl(crt_file, key_file, v, ciphers, flags);
     }
 
+    void lua_server::set_enable_blacklist(bool b) {
+        this->set_enable_blacklist(b);
+    }
+
 
 
 

@@ -52,6 +52,7 @@ namespace mongols {
                 , openssl::version_t = openssl::version_t::TLSv12
                 , const std::string& ciphers = openssl::ciphers
                 , long flags = openssl::flags);
+        void set_enable_blacklist(bool);
     private:
         std::string work(
                 const std::function<bool(const mongols::request&)>& req_filter

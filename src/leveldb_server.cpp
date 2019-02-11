@@ -137,6 +137,11 @@ leveldb_error:
         return this->server->set_openssl(crt_file, key_file, v, ciphers, flags);
     }
 
+    void leveldb_server::set_enable_blacklist(bool b) {
+        this->server->set_enable_blacklist(b);
+    }
+
+
 
 
 

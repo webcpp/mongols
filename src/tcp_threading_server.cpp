@@ -78,6 +78,35 @@ namespace mongols {
         return false;
     }
 
+    bool tcp_threading_server::check_blacklist(const std::string& ip) {
+        std::lock_guard<std::mutex> lk(this->main_mtx);
+        std::shared_ptr<black_ip_t> black_ip;
+        if (this->blacklist.tryGet(ip, black_ip)) {
+            double diff = difftime(time(0), black_ip->t);
+            if (black_ip->disallow) {
+                if (diff < tcp_server::backlist_timeout) {
+                    return false;
+                } else {
+                    black_ip->disallow = false;
+                    black_ip->count = 1;
+                    black_ip->t = time(0);
+                }
+            }
+
+            if ((diff == 0 && black_ip->count > tcp_server::max_connetion_limit)
+                    || (diff > 0 && black_ip->count / diff > tcp_server::max_connetion_limit)) {
+                black_ip->t = time(0);
+                black_ip->disallow = true;
+                return false;
+            } else {
+                black_ip->count++;
+            }
+        } else {
+            this->blacklist.insert(ip, std::make_shared<black_ip_t>());
+        }
+        return true;
+    }
+
     bool tcp_threading_server::work(int fd, const handler_function& g) {
         char buffer[this->buffer_size];
         bool rereaded = false;

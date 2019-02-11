@@ -273,6 +273,10 @@ namespace mongols {
 
     }
 
+    void medis_server::set_enable_blacklist(bool b) {
+        this->server->set_enable_blacklist(b);
+    }
+
     void medis_server::run(const std::string& path, const std::string& db_name) {
         this->options.create_if_missing = true;
         if (leveldb::DB::Open(this->options, path, &this->db).ok()) {

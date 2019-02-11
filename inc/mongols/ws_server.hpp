@@ -36,6 +36,7 @@ namespace mongols {
         void set_origin(const std::string&);
         void set_max_send_limit(size_t);
         void set_enable_origin_check(bool);
+        void set_enable_blacklist(bool);
     private:
         virtual std::string work(const message_handler_function&
                 , const std::pair<char*, size_t>&

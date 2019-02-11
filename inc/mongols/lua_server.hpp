@@ -34,6 +34,7 @@ namespace mongols {
                 , openssl::version_t = openssl::version_t::TLSv12
                 , const std::string& ciphers = openssl::ciphers
                 , long flags = openssl::flags);
+        void set_enable_blacklist(bool);
         void run(const std::string& package_path, const std::string& package_cpath);
 
         template <typename class_type, typename base_class_type = void>
