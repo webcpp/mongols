@@ -18,7 +18,7 @@ namespace mongols {
 
     ws_server::ws_server(const std::string& host, int port, int timeout
             , size_t buffer_size, size_t thread_size, int max_event_size)
-    : server(0), enable_origin_check(false), max_send_limit(5), origin("http://localhost") {
+    : server(0), enable_origin_check(false), origin("http://localhost") {
         if (thread_size > 0) {
             this->server = new tcp_threading_server(host, port, timeout, buffer_size, thread_size, max_event_size);
         } else {
@@ -60,10 +60,6 @@ namespace mongols {
                 ));
     }
 
-    void ws_server::set_max_send_limit(size_t len) {
-        this->max_send_limit = len;
-    }
-
     void ws_server::set_origin(const std::string& origin) {
         this->origin = origin;
     }
@@ -74,6 +70,10 @@ namespace mongols {
 
     void ws_server::set_enable_blacklist(bool b) {
         this->server->set_enable_blacklist(b);
+    }
+
+    void ws_server::set_enable_security_check(bool b) {
+        this->server->set_enable_security_check(b);
     }
 
     std::string ws_server::ws_json_parse(const std::string& message
@@ -213,15 +213,8 @@ namespace mongols {
 
             std::string close_msg = "connection closed.", pong_msg = "pong", ping_msg = "ping", error_msg = "error message."
                     , binary_msg = "not accept binary message.", message;
-            int ret;
-            double diff = difftime(time(0), client.t);
-            if ((diff == 0 && client.count > ws_server::max_send_limit)
-                    || (diff > 0 && client.count / diff > ws_server::max_send_limit)
-                    ) {
-                goto ws_close;
-            }
 
-            ret = this->ws_parse(input, message);
+            int ret = this->ws_parse(input, message);
 
             if (ret == 1) {
                 message = std::move(f(message, keepalive, send_to_other, client, send_to_other_filter));

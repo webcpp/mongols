@@ -145,8 +145,13 @@ namespace mongols {
     }
 
     void lua_server::set_enable_blacklist(bool b) {
-        this->set_enable_blacklist(b);
+        this->server->set_enable_blacklist(b);
     }
+
+    void lua_server::set_enable_security_check(bool b) {
+        this->server->set_enable_security_check(b);
+    }
+
 
 
 

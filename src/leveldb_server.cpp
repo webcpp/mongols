@@ -141,6 +141,11 @@ leveldb_error:
         this->server->set_enable_blacklist(b);
     }
 
+    void leveldb_server::set_enable_security_check(bool b) {
+        this->server->set_enable_security_check(b);
+    }
+
+
 
 
 

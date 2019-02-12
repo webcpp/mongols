@@ -33,6 +33,11 @@ namespace mongols {
     size_t tcp_server::max_connection_limit = 30;
     size_t tcp_server::backlist_timeout = 24 * 60 * 60;
 
+    size_t tcp_server::min_send_limit = 1;
+    size_t tcp_server::max_send_limit = 5;
+
+    size_t tcp_server::max_connection_keepalive = 60;
+
     void tcp_server::signal_normal_cb(int sig, siginfo_t *, void *) {
         switch (sig) {
             case SIGTERM:
@@ -52,7 +57,7 @@ namespace mongols {
     host(host), port(port), listenfd(0), max_event_size(max_event_size), serveraddr()
     , buffer_size(buffer_size), thread_size(0), sid(0), timeout(timeout), sid_queue(), clients(), work_pool(0)
     , blacklist(tcp_server::backlist_size), openssl_manager(), openssl_crt_file(), openssl_key_file()
-    , openssl_is_ok(false), enable_blacklist(false) {
+    , openssl_is_ok(false), enable_blacklist(false), enable_security_check(false) {
         this->listenfd = socket(AF_INET, SOCK_STREAM, 0);
 
         int on = 1;
@@ -211,6 +216,18 @@ namespace mongols {
         return true;
     }
 
+    bool tcp_server::security_check(tcp_server::client_t& client) {
+        time_t now = time(0);
+        double diff = difftime(now, client.t), div = 0;
+        if (diff > tcp_server::max_connection_keepalive ||
+                ((diff == 0 && (client.count > tcp_server::max_send_limit || client.count < tcp_server::min_send_limit))
+                || (diff > 0 && ((div = client.count / diff) > tcp_server::max_send_limit || div < tcp_server::min_send_limit))
+                )) {
+            return false;
+        }
+        return true;
+    }
+
     bool tcp_server::work(int fd, const handler_function& g) {
         char buffer[this->buffer_size];
         bool rereaded = false;
@@ -239,6 +256,11 @@ ev_recv:
             client_t& client = this->clients[fd].client;
             client.u_size = this->clients.size();
             client.count++;
+
+            if (this->enable_security_check&& !this->security_check(client)) {
+                goto ev_error;
+            }
+
             std::string output = std::move(g(input, keepalive, send_to_all, client, send_to_other_filter));
             ret = send(fd, output.c_str(), output.size(), MSG_NOSIGNAL);
             if (ret > 0) {
@@ -295,6 +317,12 @@ ev_recv:
             client_t& client = this->clients[fd].client;
             client.u_size = this->clients.size();
             client.count++;
+
+            if (this->enable_security_check&& !this->security_check(client)) {
+                goto ev_error;
+            }
+
+
             std::string output = std::move(g(input, keepalive, send_to_all, client, send_to_other_filter));
 
             ret = this->openssl_manager->write(ssl->get_ssl(), output);
@@ -371,6 +399,10 @@ ev_error:
 
     void tcp_server::set_enable_blacklist(bool b) {
         this->enable_blacklist = b;
+    }
+
+    void tcp_server::set_enable_security_check(bool b) {
+        this->enable_security_check = b;
     }
 
 

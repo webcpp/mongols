@@ -34,9 +34,9 @@ namespace mongols {
                 , const std::string& ciphers = openssl::ciphers
                 , long flags = openssl::flags);
         void set_origin(const std::string&);
-        void set_max_send_limit(size_t);
         void set_enable_origin_check(bool);
         void set_enable_blacklist(bool);
+        void set_enable_security_check(bool);
     private:
         virtual std::string work(const message_handler_function&
                 , const std::pair<char*, size_t>&
@@ -55,7 +55,6 @@ namespace mongols {
     private:
         mongols::tcp_server *server;
         bool enable_origin_check;
-        size_t max_send_limit;
         std::string origin;
 
     };

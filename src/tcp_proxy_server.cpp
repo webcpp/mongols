@@ -238,6 +238,10 @@ namespace mongols {
         this->server->set_enable_blacklist(b);
     }
 
+    void tcp_proxy_server::set_enable_security_check(bool b) {
+        this->server->set_enable_security_check(b);
+    }
+
     void tcp_proxy_server::set_enable_tcp_send_to_other(bool b) {
         this->enable_tcp_send_to_other = b;
     }

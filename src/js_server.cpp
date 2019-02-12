@@ -265,9 +265,15 @@ js_500:
             , long flags) {
         return this->server->set_openssl(crt_file, key_file, v, ciphers, flags);
     }
-        void js_server::set_enable_blacklist(bool b) {
-            this->server->set_enable_blacklist(b);
+
+    void js_server::set_enable_blacklist(bool b) {
+        this->server->set_enable_blacklist(b);
     }
+
+    void js_server::set_enable_security_check(bool b) {
+        this->server->set_enable_security_check(b);
+    }
+
 
 
 }

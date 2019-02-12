@@ -137,6 +137,11 @@ ev_recv:
                 tcp_server::client_t& client = this->clients[fd].client;
                 client.u_size = this->clients.size();
                 client.count++;
+
+                if (this->enable_security_check&& !this->security_check(client)) {
+                    goto ev_error;
+                }
+
                 output = std::move(g(input, keepalive, send_to_all, client, send_to_other_filter));
             }
             ret = send(fd, output.c_str(), output.size(), MSG_NOSIGNAL);
@@ -196,6 +201,11 @@ ev_recv:
                 tcp_server::client_t& client = this->clients[fd].client;
                 client.u_size = this->clients.size();
                 client.count++;
+
+                if (this->enable_security_check&& !this->security_check(client)) {
+                    goto ev_error;
+                }
+
                 output = std::move(g(input, keepalive, send_to_all, client, send_to_other_filter));
 
                 ret = this->openssl_manager->write(this->clients[fd].ssl->get_ssl(), output);

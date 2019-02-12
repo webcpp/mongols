@@ -71,12 +71,16 @@ namespace mongols {
                 , long flags = openssl::flags);
 
         void set_enable_blacklist(bool);
+        void set_enable_security_check(bool);
 
 
         static int backlog;
         static size_t backlist_size;
         static size_t max_connection_limit;
         static size_t backlist_timeout;
+        
+        static size_t min_send_limit,max_send_limit;
+        static size_t max_connection_keepalive;
     private:
         std::string host;
         int port, listenfd, max_event_size;
@@ -116,7 +120,7 @@ namespace mongols {
 
         std::shared_ptr<mongols::openssl> openssl_manager;
         std::string openssl_crt_file, openssl_key_file;
-        bool openssl_is_ok, enable_blacklist;
+        bool openssl_is_ok, enable_blacklist,enable_security_check;
 
         virtual bool add_client(int, const std::string&, int);
         virtual void del_client(int);
@@ -124,6 +128,7 @@ namespace mongols {
         virtual bool work(int, const handler_function&);
         virtual bool ssl_work(int, const handler_function&);
         virtual bool check_blacklist(const std::string&);
+        virtual bool security_check(tcp_server::client_t&);
     };
 }
 

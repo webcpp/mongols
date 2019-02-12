@@ -33,6 +33,7 @@ namespace mongols {
                 , const std::string& ciphers = openssl::ciphers
                 , long flags = openssl::flags);
         void set_enable_blacklist(bool);
+        void set_enable_security_check(bool);
         void run(const std::string&);
     private:
         http_server* server;

@@ -516,6 +516,10 @@ zip_error:
         this->server->set_enable_blacklist(b);
     }
 
+    void http_server::set_enable_security_check(bool b) {
+        this->server->set_enable_security_check(b);
+    }
+
     std::string http_server::serialize(const std::unordered_map<std::string, std::string>& m) {
         std::stringstream ss;
         msgpack::pack(ss, m);
