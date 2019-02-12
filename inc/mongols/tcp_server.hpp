@@ -78,8 +78,8 @@ namespace mongols {
         static size_t backlist_size;
         static size_t max_connection_limit;
         static size_t backlist_timeout;
-        
-        static size_t min_send_limit,max_send_limit;
+
+        static size_t max_send_limit;
         static size_t max_connection_keepalive;
     private:
         std::string host;
@@ -120,7 +120,7 @@ namespace mongols {
 
         std::shared_ptr<mongols::openssl> openssl_manager;
         std::string openssl_crt_file, openssl_key_file;
-        bool openssl_is_ok, enable_blacklist,enable_security_check;
+        bool openssl_is_ok, enable_blacklist, enable_security_check;
 
         virtual bool add_client(int, const std::string&, int);
         virtual void del_client(int);

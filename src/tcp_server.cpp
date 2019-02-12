@@ -33,7 +33,6 @@ namespace mongols {
     size_t tcp_server::max_connection_limit = 30;
     size_t tcp_server::backlist_timeout = 24 * 60 * 60;
 
-    size_t tcp_server::min_send_limit = 0;
     size_t tcp_server::max_send_limit = 5;
 
     size_t tcp_server::max_connection_keepalive = 60;
@@ -218,11 +217,11 @@ namespace mongols {
 
     bool tcp_server::security_check(tcp_server::client_t& client) {
         time_t now = time(0);
-        double diff = difftime(now, client.t), div = 0;
+        double diff = difftime(now, client.t);
         if (diff > tcp_server::max_connection_keepalive ||
-                ((diff == 0 && (client.count > tcp_server::max_send_limit || client.count < tcp_server::min_send_limit))
-                || (diff > 0 && ((div = client.count / diff) > tcp_server::max_send_limit || div < tcp_server::min_send_limit))
-                )) {
+                (diff == 0 && client.count > tcp_server::max_send_limit)
+                || (diff > 0 && client.count / diff > tcp_server::max_send_limit)
+                ) {
             return false;
         }
         return true;
