@@ -33,7 +33,7 @@ namespace mongols {
     size_t tcp_server::max_connection_limit = 30;
     size_t tcp_server::backlist_timeout = 24 * 60 * 60;
 
-    size_t tcp_server::min_send_limit = 1;
+    size_t tcp_server::min_send_limit = 0;
     size_t tcp_server::max_send_limit = 5;
 
     size_t tcp_server::max_connection_keepalive = 60;
