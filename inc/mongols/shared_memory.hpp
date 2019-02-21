@@ -7,7 +7,7 @@
 
 namespace mongols {
 
-    template<typename T, size_t  len= 1 >
+    template<typename T, size_t len = 1 >
     class shared_memory {
     public:
 
@@ -39,7 +39,7 @@ namespace mongols {
             if (this->mtx_attr)pthread_mutexattr_destroy(this->mtx_attr);
             if (this->mtx_attr)munmap(this->mtx_attr, sizeof (pthread_mutexattr_t));
             if (this->mtx)munmap(this->mtx, sizeof (pthread_mutex_t));
-            if (this->data)munmap(this->data, this->length*sizeof (T));
+            if (this->data)munmap(this->data, this->length * sizeof (T));
             this->ok = false;
 
         }
