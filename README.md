@@ -17,7 +17,7 @@ Both apache and nginx are very slow.
 
 ## feature
 
-[mogols document](https://mongols.hi-nginx.com)
+[mongols document](https://mongols.hi-nginx.com)
 
 
 ## install 
