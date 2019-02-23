@@ -1,9 +1,10 @@
 # mongols
-a library for c++
 
-Libevent, libev and libuv are outdated.
+- A high performance network library for c++.
 
-Both apache and nginx are very slow.
+  - Libevent, libev and libuv are outdated.
+
+  - Both apache and nginx are very slow.
 
 ![mongols.png](https://raw.githubusercontent.com/webcpp/mongols/master/example/html/image/mongols.png)
 
