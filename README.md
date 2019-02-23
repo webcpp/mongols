@@ -1,6 +1,6 @@
 # mongols
 
-- A high performance network library for c++.
+- A high performance network library for c++:
 
   - Libevent, libev and libuv are outdated.
 
