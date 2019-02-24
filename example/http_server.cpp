@@ -14,8 +14,23 @@ int main(int, char**) {
     server(host, port, 5000, 8096, 0/*2*/);
     server.set_enable_session(false);
     server.set_enable_cache(false);
-//    if (!server.set_openssl("openssl/localhost.crt", "openssl/localhost.key")) {
-//        return -1;
-//    }
+    //    if (!server.set_openssl("openssl/localhost.crt", "openssl/localhost.key")) {
+    //        return -1;
+    //    }
     server.run(f, g);
+
+    // or 
+    /*server.add_route({"GET"}, "^/get/([a-zA-Z]+)/?$"
+    , [](const mongols::request& req, mongols::response& res, const std::vector<std::string>& param) {
+        res.content = req.method + "<br/>" + param[1];
+        res.status = 200;
+    });
+
+    server.add_route({"POST"}, "^/post/([0-9]+)/?$"
+    , [](const mongols::request& req, mongols::response& res, const std::vector<std::string>& param) {
+        res.content = req.method + "<br/>" + param[1];
+        res.status = 200;
+    });
+    server.run_with_route(f);
+     */
 }

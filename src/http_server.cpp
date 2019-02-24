@@ -41,7 +41,7 @@ namespace mongols {
     : server(0), max_body_size(max_body_size), lru_cache_size(1024), db(0), db_options()
     , session_expires(3600), cache_expires(3600), lru_cache_expires(300)
     , enable_session(false), enable_cache(false), enable_lru_cache(false)
-    , db_path(LEVELDB_PATH), uri_rewrite_config(), lru_cache(0) {
+    , db_path(LEVELDB_PATH), uri_rewrite_config(), lru_cache(0), route_map() {
         if (thread_size > 0) {
             this->server = new tcp_threading_server(host, port, timeout, buffer_size, thread_size, max_event_size);
         } else {
@@ -86,6 +86,24 @@ namespace mongols {
             this->lru_cache = new lru11::Cache<std::string, std::shared_ptr < cache_t >> (this->lru_cache_size, 0);
         }
         this->server->run(g);
+    }
+
+    void http_server::run_with_route(const std::function<bool(const mongols::request&)>& req_filter) {
+        auto res_filter = [&](const mongols::request& req, mongols::response & res) {
+            std::vector<std::string> param;
+            auto f = [&](const std::string & m) {
+                return m == req.method;
+            };
+            for (auto &i : this->route_map) {
+                if (std::find_if(i.method.begin(), i.method.end(), f) != i.method.end()
+                        && mongols::regex_find(i.pattern, req.uri, param)) {
+                    i.handler(req, res, param);
+                    break;
+                }
+            }
+
+        };
+        this->run(req_filter, res_filter);
     }
 
     std::string http_server::create_response(mongols::response& res, bool b) {
@@ -537,6 +555,21 @@ zip_error:
     bool http_server::cache_t::expired(long long expires) const {
         return difftime(time(0), this->t) > expires;
     }
+
+    void http_server::add_route(const std::list<std::string>& method, const std::string& pattern
+            , const std::function<void(const mongols::request&, mongols::response&, const std::vector<std::string>&)>& hander) {
+        route_t r;
+        r.method = method;
+        r.pattern = pattern;
+        r.handler = hander;
+        auto iter = std::find_if(this->route_map.begin(), this->route_map.end(), [&](const route_t & i) {
+            return i.pattern == pattern;
+        });
+        if (iter == this->route_map.end()) {
+            this->route_map.emplace_back(std::move(r));
+        }
+    }
+
 
 }
 

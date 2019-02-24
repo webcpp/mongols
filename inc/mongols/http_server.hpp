@@ -34,6 +34,10 @@ namespace mongols {
         void run(const std::function<bool(const mongols::request&)>& req_filter
                 , const std::function<void(const mongols::request&, mongols::response&)>& res_filter);
 
+        void add_route(const std::list<std::string>&, const std::string&
+                , const std::function<void(const mongols::request&, mongols::response&, const std::vector<std::string>&)>&);
+        void run_with_route(const std::function<bool(const mongols::request&)>& req_filter);
+
         void set_session_expires(long long);
         void set_cache_expires(long long);
         void set_enable_session(bool);
@@ -106,6 +110,12 @@ namespace mongols {
         std::vector<std::pair<std::string, std::string>> uri_rewrite_config;
         lru11::Cache<std::string, std::shared_ptr<cache_t>>*lru_cache;
 
+        struct route_t {
+            std::string pattern;
+            std::list<std::string> method;
+            std::function<void(const mongols::request& req, mongols::response&, const std::vector<std::string>&) > handler;
+        };
+        std::list<route_t> route_map;
     public:
         static int zip_level;
         static size_t zip_min_size, zip_max_size;
