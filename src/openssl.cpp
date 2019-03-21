@@ -36,7 +36,9 @@ namespace mongols {
 
         if (this->ctx) {
             SSL_CTX_set_ecdh_auto(this->ctx, 1024);
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
             this->ctx->freelist_max_len = 0;
+#endif
             SSL_CTX_set_mode(this->ctx, SSL_MODE_RELEASE_BUFFERS
                     | SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER
                     | SSL_MODE_AUTO_RETRY
