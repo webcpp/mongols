@@ -20,7 +20,7 @@ namespace simple_resp {
         EMPTY_INPUT = 1,
         INVAILID_RESP_TYPE = 2,
         INVAILID_RESP_FORMAT = 3,
-        UNKNOWN_INTERNAL_ERROR = 3,
+        UNKNOWN_INTERNAL_ERROR = 4
     };
 
     enum PARSE_STATE {
