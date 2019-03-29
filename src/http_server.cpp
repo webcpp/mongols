@@ -290,10 +290,8 @@ namespace mongols {
                     }
                 }
 
-                if ((tmp_iterator = req.headers.find("Connection")) != req.headers.end()) {
-                    if (tmp_iterator->second == "keep-alive") {
-                        keepalive = KEEPALIVE_CONNECTION;
-                    }
+                if(parser.keep_alive()){
+                    keepalive = KEEPALIVE_CONNECTION;
                 }
 
                 if ((tmp_iterator = req.headers.find("Accept-Encoding")) != req.headers.end()) {

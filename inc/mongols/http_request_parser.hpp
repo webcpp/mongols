@@ -20,6 +20,7 @@ namespace mongols {
 
         const std::string& get_body()const;
         std::string& get_body();
+        bool keep_alive()const;
 
     private:
 

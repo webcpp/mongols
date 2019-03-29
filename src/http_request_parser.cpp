@@ -115,4 +115,8 @@ namespace mongols {
     std::string& http_request_parser::get_body() {
         return this->body;
     }
+
+    bool http_request_parser::keep_alive()const{
+        return http_should_keep_alive(&this->parser);
+    }
 }
