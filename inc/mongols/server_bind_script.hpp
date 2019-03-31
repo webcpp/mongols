@@ -104,19 +104,15 @@ namespace mongols {
         }
 
         void header(const std::string& key, const std::string& value) {
-            if (key == "Content-Type") {
-                this->res->headers.find(key)->second = value;
-            } else {
-                this->res->headers.insert(std::make_pair(key, value));
-            }
+            this->res->set_header(key,value);
         }
 
         void session(const std::string& key, const std::string& value) {
-            this->res->session.insert(std::make_pair(key, value));
+            this->res->set_session(key, value);
         }
 
         void cache(const std::string& key, const std::string& value) {
-            this->res->cache.insert(std::make_pair(key, value));
+            this->res->set_cache(key, value);
         }
 
     private:
