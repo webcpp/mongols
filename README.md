@@ -31,7 +31,7 @@ A high performance network library for c++:
 `pkg-config --libs --cflags mongols openssl`
 
 
-## bind
+## binding
 
 [pymongols](https://github.com/webcpp/pymongols)
 
