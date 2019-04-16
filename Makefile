@@ -38,7 +38,7 @@ CXXFLAGS+=-O3 -std=c++11 -Wall -fPIC
 CXXFLAGS+=`pkg-config --cflags openssl`
 CXXFLAGS+=-Iinc/mongols -Iinc/mongols/lib 
 CXXFLAGS+=-Isrc/MPFDParser
-CXXFLAGS+=-Iinc/mongols/lib/leveldb -Isrc/leveldb -DLEVELDB_PLATFORM_POSIX
+CXXFLAGS+=-Iinc/mongols/lib/leveldb -Isrc/leveldb -DLEVELDB_PLATFORM_POSIX -DLEVELDB_HAS_PORT_CONFIG_H
 CXXFLAGS+= -DKAGUYA_USE_CPP11
 CXXFLAGS+=-Isrc -Isrc/re2 
 CXXFLAGS+=-Iinc/mongols/lib/sqlite
