@@ -63,8 +63,8 @@ namespace mongols {
     };
 
 
-    std::string base64_encode(const std::string&, bool = false);
-    std::string base64_decode(const std::string&, bool = false);
+    std::string base64_encode(const std::string&);
+    std::string base64_decode(const std::string&);
 
 
     std::string bin2hex(const std::string&);
