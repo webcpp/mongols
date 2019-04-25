@@ -1,6 +1,7 @@
 #ifndef WS_SERVER_HPP
 #define WS_SERVER_HPP
 
+#include "request.hpp"
 #include "tcp_server.hpp"
 #include "tcp_threading_server.hpp"
 
@@ -31,7 +32,7 @@ public:
 private:
     virtual std::string work(const message_handler_function&, const std::pair<char*, size_t>&, bool&, bool&, tcp_server::client_t&, tcp_server::filter_handler_function&);
     std::string ws_json_parse(const std::string& message, bool& keepalive, bool& send_to_other, tcp_server::client_t& client, tcp_server::filter_handler_function& send_to_other_filter);
-    bool ws_handshake(const std::pair<char*, size_t>& request, std::string& response, std::unordered_map<std::string, std::string>& headers);
+    bool ws_handshake(const mongols::request& req, std::string& response);
     int ws_parse(const std::pair<char*, size_t>& frame, std::string& message, bool& is_final);
 
 private:

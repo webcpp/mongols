@@ -166,15 +166,14 @@ std::string ws_server::work(const message_handler_function& f, const std::pair<c
         if (ws_req_parser.parse(input.first, input.second)) {
             client.type = tcp_server::connection_t::HTTP;
             if (ws_req_parser.upgrade()) {
-                std::unordered_map<std::string, std::string> headers;
                 std::unordered_map<std::string, std::string>::const_iterator headers_iterator;
-                if (this->ws_handshake(input, response, headers)) {
+                if (this->ws_handshake(req, response)) {
                     client.type = tcp_server::connection_t::WEBSOCKET;
-                    if ((headers_iterator = headers.find("X-Real-IP")) != headers.end()) {
+                    if ((headers_iterator = req.headers.find("X-Real-IP")) != req.headers.end()) {
                         client.ip = headers_iterator->second;
                     }
                     if (this->enable_origin_check) {
-                        if ((headers_iterator = headers.find("Origin")) != headers.end()) {
+                        if ((headers_iterator = req.headers.find("Origin")) != req.headers.end()) {
                             if (headers_iterator->second != this->origin) {
                                 goto http_error;
                             }
@@ -260,32 +259,19 @@ ws_done:
     return response;
 }
 
-bool ws_server::ws_handshake(const std::pair<char*, size_t>& request, std::string& response, std::unordered_map<std::string, std::string>& headers)
+bool ws_server::ws_handshake(const mongols::request& req, std::string& response)
 {
     bool ret = false;
-    std::istringstream stream(std::string(request.first, request.second));
-    std::string req_type;
-    std::getline(stream, req_type);
-    if (req_type.substr(0, 4) != "GET ") {
+    std::string websocket_key;
+
+    if (req.method != "GET") {
         return ret;
     }
 
-    std::string header;
-    std::string::size_type pos = 0;
-    std::string websocketKey;
-    while (std::getline(stream, header) && header != "\r") {
-        header.erase(header.end() - 1);
-        pos = header.find(": ", 0);
-        if (pos != std::string::npos) {
-            std::string key = header.substr(0, pos);
-            std::string value = header.substr(pos + 2);
-            headers.insert(std::make_pair(key, value));
-            if (key == "Sec-WebSocket-Key") {
-                ret = true;
-                websocketKey = value;
-                break;
-            }
-        }
+    std::unordered_map<std::string, std::string>::const_iterator iterator;
+    if ((iterator = req.headers.find("Sec-WebSocket-Key")) != req.headers.end()) {
+        ret = true;
+        websocket_key = iterator->second;
     }
 
     if (!ret) {
@@ -298,7 +284,7 @@ bool ws_server::ws_handshake(const std::pair<char*, size_t>& request, std::strin
     response += "Sec-WebSocket-Accept: ";
 
     char output[29] = {};
-    WebSocketHandshake::generate(websocketKey.c_str(), output);
+    WebSocketHandshake::generate(websocket_key.c_str(), output);
     std::string serverKey = std::move(output);
     serverKey += "\r\n\r\n";
     response += serverKey;
