@@ -2,92 +2,106 @@
 <html>
 
 <head>
-  <meta charset="utf-8" />
-  <title>WebSocket Test</title>
+    <meta charset="utf-8" />
+    <title>WebSocket Test</title>
 </head>
 
 <body>
-  <h2>WebSocket Test</h2>
+    <h2>WebSocket Test</h2>
 
 
-  <div id="req_output"></div><br/>
-  <div id="res_output"></div><br/>
-  <div id="err_output"></div><br/>
+    <div id="req_output"></div><br />
+    <div id="res_output"></div><br />
+    <div id="err_output"></div><br />
 
-  <script language="javascript" type="text/javascript">
+    <script language="javascript" type="text/javascript">
 
-    var wsUri = "ws://127.0.0.1:9090";
-    var req_output,res_output,err_output;
-    var j;
+        var wsUri = "ws://127.0.0.1:9090";
+        var req_output, res_output, err_output;
+        var j;
 
-    function init() {
-      req_output = document.getElementById("req_output");
-      res_output = document.getElementById('res_output');
-      err_output = document.getElementById('err_output')
-      testWebSocket();
-      var i = 0, max_i = 1000;
-      j=setInterval(function () {
-            if (i < max_i) {
-                var data = {};
-                data.gid = 0;
-                data.uid = 0;
-                data.gfilter = [];
-                data.ufilter = [];
-                data.name = 'Bugger';
-                data.message = "websocket test: "+ i;
-                data.room = 'cpp';
-                data.time = ((new Date()).toLocaleString());
-                  doSend((JSON.stringify(data)))
-                  i++;
+        function ab2str(buf) {
+            return String.fromCharCode.apply(null, new Uint8Array(buf));
+        }
+
+        function str2ab(str) {
+            var buf = new ArrayBuffer(str.length);
+            var bufView = new Uint8Array(buf);
+            for (var i = 0; i < str.length; i++) {
+                bufView[i] = str.charCodeAt(i);
             }
-      }, 500)
-    }
+            return buf;
+        }
 
-    function testWebSocket() {
-      websocket = new WebSocket(wsUri);
-      websocket.onopen = function (evt) { onOpen(evt) };
-      websocket.onclose = function (evt) { onClose(evt) };
-      websocket.onmessage = function (evt) { onMessage(evt) };
-      websocket.onerror = function (evt) { onError(evt) };
-    }
+        function init() {
+            req_output = document.getElementById("req_output");
+            res_output = document.getElementById('res_output');
+            err_output = document.getElementById('err_output')
+            testWebSocket();
+            var i = 0, max_i = 1000;
+            j = setInterval(function () {
+                if (i < max_i) {
+                    var data = {};
+                    data.gid = 0;
+                    data.uid = 0;
+                    data.gfilter = [];
+                    data.ufilter = [];
+                    data.name = 'Bugger';
+                    data.message = "websocket test: " + i;
+                    data.room = 'cpp';
+                    data.time = ((new Date()).toLocaleString());
+                    doSend(JSON.stringify(data))
+                    i++;
+                }
+            }, 10)
+        }
 
-    function onOpen(evt) {
-      writeToScreen("CONNECTED",err_output);
-      doSend("WebSocket rocks");
-    }
+        function testWebSocket() {
+            websocket = new WebSocket(wsUri);
+            websocket.binaryType = "arraybuffer";
+            websocket.onopen = function (evt) { onOpen(evt) };
+            websocket.onclose = function (evt) { onClose(evt) };
+            websocket.onmessage = function (evt) { onMessage(evt) };
+            websocket.onerror = function (evt) { onError(evt) };
+        }
 
-    function onClose(evt) {
-      clearInterval(j);
-      writeToScreen("DISCONNECTED",err_output);
-    }
+        function onOpen(evt) {
+            writeToScreen("CONNECTED", err_output);
+            doSend("WebSocket rocks");
+        }
 
-    function onMessage(evt) {
-      writeToScreen('<span style="color: blue;">RESPONSE: ' + evt.data + '</span>',res_output);
-    }
+        function onClose(evt) {
+            clearInterval(j);
+            writeToScreen("DISCONNECTED", err_output);
+        }
 
-    function onError(evt) {
-      writeToScreen('<span style="color: red;">ERROR:</span> ' + evt.data,err_output);
-    }
+        function onMessage(evt) {
+            writeToScreen('<span style="color: blue;">RESPONSE: ' + ab2str(evt.data) + '</span>', res_output);
+        }
 
-    function doSend(message) {
-      writeToScreen("SENT: " + message,req_output);
-      websocket.send(message);
-    }
+        function onError(evt) {
+            writeToScreen('<span style="color: red;">ERROR:</span> ' + evt.data, err_output);
+        }
 
-    function writeToScreen(message,ele) {
-      var pre = document.createElement("p");
-      pre.style.wordWrap = "break-word";
-      pre.innerHTML = message;
-      if (ele.childNodes.length == 0) {
-        ele.appendChild(pre);
-      } else {
-        ele.replaceChild(pre, ele.childNodes[0]);
-      }
-    }
+        function doSend(message) {
+            writeToScreen("SENT: " + message, req_output);
+            websocket.send(str2ab(message));
+        }
 
-    window.addEventListener("load", init, false);
+        function writeToScreen(message, ele) {
+            var pre = document.createElement("p");
+            pre.style.wordWrap = "break-word";
+            pre.innerHTML = message;
+            if (ele.childNodes.length == 0) {
+                ele.appendChild(pre);
+            } else {
+                ele.replaceChild(pre, ele.childNodes[0]);
+            }
+        }
 
-  </script>
+        window.addEventListener("load", init, false);
+
+    </script>
 </body>
 
 </html>

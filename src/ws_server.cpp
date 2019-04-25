@@ -201,29 +201,21 @@ std::string ws_server::work(const message_handler_function& f, const std::pair<c
         bool is_final = true;
         int ret = this->ws_parse(input, message, is_final);
 
-        if (ret == 1) {
+        if (ret == 1 || ret == 2) {
             if (is_final) {
                 if (this->message_buffer.find(client.sid) != this->message_buffer.end()) {
                     message = std::move(this->message_buffer[client.sid].append(message));
                     this->message_buffer.erase(client.sid);
                 }
                 message = std::move(f(message, keepalive, send_to_other, client, send_to_other_filter));
-                size_t frame_len = websocket_calc_frame_size((websocket_flags)(WS_OP_TEXT | WS_FINAL_FRAME), message.size());
+                size_t frame_len = websocket_calc_frame_size((websocket_flags)((ret == 1 ? WS_OP_TEXT : WS_OP_BINARY) | WS_FINAL_FRAME), message.size());
                 char* frame = (char*)malloc(sizeof(char) * frame_len);
-                frame_len = websocket_build_frame(frame, (websocket_flags)(WS_OP_TEXT | WS_FINAL_FRAME), NULL, message.c_str(), message.size());
+                frame_len = websocket_build_frame(frame, (websocket_flags)((ret == 1 ? WS_OP_TEXT : WS_OP_BINARY) | WS_FINAL_FRAME), NULL, message.c_str(), message.size());
                 response.assign(frame, frame_len);
                 free(frame);
             } else {
                 this->message_buffer[client.sid].append(message);
             }
-        } else if (ret == 2) {
-            size_t frame_len = websocket_calc_frame_size((websocket_flags)(WS_OP_TEXT | WS_FINAL_FRAME), binary_msg.size());
-            char* frame = (char*)malloc(sizeof(char) * frame_len);
-            frame_len = websocket_build_frame(frame, (websocket_flags)(WS_OP_TEXT | WS_FINAL_FRAME), NULL, binary_msg.c_str(), binary_msg.size());
-            response.assign(frame, frame_len);
-            free(frame);
-            send_to_other = false;
-            keepalive = KEEPALIVE_CONNECTION;
         } else if (ret == 8) {
         ws_close:
             size_t frame_len = websocket_calc_frame_size((websocket_flags)(WS_OP_CLOSE | WS_FINAL_FRAME), close_msg.size());
