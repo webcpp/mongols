@@ -100,7 +100,8 @@ tcp_server::~tcp_server()
 }
 
 tcp_server::client_t::client_t()
-    : ip()
+    : type(tcp_server::connection_t::TCP)
+    , ip()
     , port(-1)
     , t(time(0))
     , sid(0)
@@ -113,7 +114,8 @@ tcp_server::client_t::client_t()
 }
 
 tcp_server::client_t::client_t(const std::string& ip, int port, size_t uid, size_t gid)
-    : ip(ip)
+    : type(tcp_server::connection_t::TCP)
+    , ip(ip)
     , port(port)
     , t(time(0))
     , sid(0)

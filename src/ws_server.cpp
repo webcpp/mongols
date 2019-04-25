@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "http_request_parser.hpp"
 #include "lib/libwshandshake.hpp"
 #include "lib/websocket_parser.h"
 #include "ws_server.hpp"
@@ -159,33 +160,44 @@ std::string ws_server::work(const message_handler_function& f, const std::pair<c
     keepalive = KEEPALIVE_CONNECTION;
     send_to_other = false;
 
-    if (input.first[0] == 'G') {
-        std::unordered_map<std::string, std::string> headers;
-        std::unordered_map<std::string, std::string>::const_iterator headers_iterator;
-        if (this->ws_handshake(input, response, headers)) {
-            if ((headers_iterator = headers.find("X-Real-IP")) != headers.end()) {
-                client.ip = headers_iterator->second;
-            }
-            if (this->enable_origin_check) {
-                if ((headers_iterator = headers.find("Origin")) != headers.end()) {
-                    if (headers_iterator->second != this->origin) {
-                        keepalive = CLOSE_CONNECTION;
+    if (client.type == tcp_server::connection_t::TCP) {
+        mongols::request req;
+        mongols::http_request_parser ws_req_parser(req);
+        if (ws_req_parser.parse(input.first, input.second)) {
+            client.type = tcp_server::connection_t::HTTP;
+            if (ws_req_parser.upgrade()) {
+                std::unordered_map<std::string, std::string> headers;
+                std::unordered_map<std::string, std::string>::const_iterator headers_iterator;
+                if (this->ws_handshake(input, response, headers)) {
+                    client.type = tcp_server::connection_t::WEBSOCKET;
+                    if ((headers_iterator = headers.find("X-Real-IP")) != headers.end()) {
+                        client.ip = headers_iterator->second;
+                    }
+                    if (this->enable_origin_check) {
+                        if ((headers_iterator = headers.find("Origin")) != headers.end()) {
+                            if (headers_iterator->second != this->origin) {
+                                goto http_error;
+                            }
+                        } else {
+                            goto http_error;
+                        }
                     }
                 } else {
-                    keepalive = CLOSE_CONNECTION;
+                    goto http_error;
                 }
+                goto ws_done;
+            } else {
+                goto http_error;
             }
         } else {
+        http_error:
             keepalive = CLOSE_CONNECTION;
-        }
-        if (keepalive == CLOSE_CONNECTION) {
+            client.type = tcp_server::connection_t::TCP;
             response = "HTTP/1.1 403 Forbidden\r\n";
             response += "Connection: close\r\n";
+            goto ws_done;
         }
-
-        goto ws_done;
-    } else {
-
+    } else if (client.type == tcp_server::connection_t::WEBSOCKET) {
         std::string close_msg = "connection closed.", pong_msg = "pong", ping_msg = "ping", error_msg = "error message.", binary_msg = "not accept binary message.", message;
         bool is_final = true;
         int ret = this->ws_parse(input, message, is_final);
@@ -222,6 +234,7 @@ std::string ws_server::work(const message_handler_function& f, const std::pair<c
             free(frame);
             send_to_other = false;
             keepalive = CLOSE_CONNECTION;
+            client.type = tcp_server::connection_t::HTTP;
         } else if (ret == 9) {
             size_t frame_len = websocket_calc_frame_size((websocket_flags)(WS_OP_PONG | WS_FINAL_FRAME), pong_msg.size());
             char* frame = (char*)malloc(sizeof(char) * frame_len);
@@ -239,15 +252,10 @@ std::string ws_server::work(const message_handler_function& f, const std::pair<c
             keepalive = KEEPALIVE_CONNECTION;
             send_to_other = false;
         } else {
-            size_t frame_len = websocket_calc_frame_size((websocket_flags)(WS_OP_TEXT | WS_FINAL_FRAME), error_msg.size());
-            char* frame = (char*)malloc(sizeof(char) * frame_len);
-            frame_len = websocket_build_frame(frame, (websocket_flags)(WS_OP_TEXT | WS_FINAL_FRAME), NULL, error_msg.c_str(), error_msg.size());
-            response.assign(frame, frame_len);
-            free(frame);
-            keepalive = CLOSE_CONNECTION;
-            send_to_other = false;
+            goto ws_close;
         }
     }
+
 ws_done:
     return response;
 }

@@ -269,7 +269,7 @@ namespace mongols {
         bool enable_zip = false;
         http_server::zip_t zip_type = http_server::zip_t::unkown;
         if (parser.parse(input.first, input.second)) {
-
+            client.type = tcp_server::connection_t::HTTP;
             std::unordered_map<std::string, std::string>::const_iterator tmp_iterator;
             std::string& body = parser.get_body();
             req.client = client.ip;
