@@ -20,7 +20,7 @@
         var ws, ws_uri = "ws://127.0.0.1:9090";
 
         var tag = $('#tag>strong');
-        var default_step = 5;
+        var default_step = 8092;
         var upload_info = {
             size: 0, name: '', uploaded: 0, step: default_step
         }
@@ -51,7 +51,7 @@
             upload_info.name = file.name;
             upload_info.uploaded = 0;
             upload_info.step = default_step;
-            // console.log(upload_info);
+            console.log(upload_info);
             ws = new WebSocket(ws_uri);
             ws.onopen = function () {
                 log('<<已连接上！');
