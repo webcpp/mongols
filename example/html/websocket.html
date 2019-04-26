@@ -58,7 +58,6 @@
 
         function testWebSocket() {
             websocket = new WebSocket(wsUri);
-            websocket.binaryType = "arraybuffer";
             websocket.onopen = function (evt) { onOpen(evt) };
             websocket.onclose = function (evt) { onClose(evt) };
             websocket.onmessage = function (evt) { onMessage(evt) };
@@ -76,7 +75,7 @@
         }
 
         function onMessage(evt) {
-            writeToScreen('<span style="color: blue;">RESPONSE: ' + ab2str(evt.data) + '</span>', res_output);
+            writeToScreen('<span style="color: blue;">RESPONSE: ' + (evt.data) + '</span>', res_output);
         }
 
         function onError(evt) {
@@ -85,7 +84,7 @@
 
         function doSend(message) {
             writeToScreen("SENT: " + message, req_output);
-            websocket.send(str2ab(message));
+            websocket.send((message));
         }
 
         function writeToScreen(message, ele) {

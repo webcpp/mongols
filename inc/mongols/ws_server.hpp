@@ -9,9 +9,13 @@ namespace mongols {
 
 class ws_server {
 public:
+    enum ws_message_t {
+        TEXT = 0,
+        BINARY = 1
+    };
     typedef tcp_server::handler_function handler_function;
     typedef std::function<std::string(
-        const std::string&, bool&, bool&, tcp_server::client_t&, tcp_server::filter_handler_function&)>
+        const std::string&, bool&, bool&, tcp_server::client_t&, tcp_server::filter_handler_function&, ws_message_t&)>
         message_handler_function;
 
 public:

@@ -1,3 +1,4 @@
+#include <fstream>
 #include <mongols/ws_server.hpp>
 
 int main(int, char**)
@@ -11,17 +12,14 @@ int main(int, char**)
 
     auto f = [](const std::string& input, bool& keepalive, bool& send_to_other, mongols::tcp_server::client_t& client, mongols::tcp_server::filter_handler_function& send_to_other_filter, mongols::ws_server::ws_message_t& ws_msg_type) -> std::string {
         keepalive = KEEPALIVE_CONNECTION;
-        send_to_other = true;
+        send_to_other = false;
         if (ws_msg_type == mongols::ws_server::ws_message_t::BINARY) {
+            std::ofstream of("html/upload.bin", std::ios::binary | std::ios::out);
+            of << input;
             ws_msg_type = mongols::ws_server::ws_message_t::TEXT;
-            goto ws_close;
+            return "upload success";
         }
-        if (input == "close") {
-        ws_close:
-            keepalive = CLOSE_CONNECTION;
-            send_to_other = false;
-            return "close";
-        }
+
         return input;
     };
     //server.set_enable_origin_check(true);

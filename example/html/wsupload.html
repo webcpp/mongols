@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>WebSocket Upload Test</title>
+</head>
+
+<body>
+    <h2>WebSocket Update File Test</h2>
+
+    <form id="frm1">
+        <input type="file" id="myFile">
+    </form>
+    <div id="log"></div>
+    <script src="https://cdn.bootcss.com/jquery/3.4.0/jquery.min.js"></script>
+    <script language="javascript" type="text/javascript">
+
+        var wsUri = "ws://127.0.0.1:9090";
+
+
+        function formReset() {
+            document.getElementById("frm1").reset();
+        }
+
+
+
+        $('#myFile').on('change', function (event) {
+            var ws = new WebSocket(wsUri);
+            ws.onopen = function () {
+                log('<<已连接上！');
+                ws.send("start upload");
+            }
+
+            ws.onclose = function () {
+                log('<<连接已关闭！');
+            }
+
+            ws.onmessage = function (e) {
+                log(">>收到服务器消息:" + e.data + "\n");
+                if (e.data == 'start upload') {
+                    log('<<开始上传文件');
+                    var file = document.getElementById("myFile").files[0];
+
+                    var reader = new FileReader();
+                    reader.readAsArrayBuffer(file);
+
+                    reader.onload = function (e) {
+                        ws.send(e.target.result);
+                        log('<<正在上传数据...');
+                    }
+
+                } else if (e.data == 'upload success') {
+                    log('<<上传完成');
+                    formReset();
+                    ws.close();
+                }
+
+
+
+            }
+
+        });
+        //在消息框中打印内容
+        function log(text) {
+            $("#log").append(text + "<br/>");
+        }
+
+    </script>
+</body>
+
+</html>
