@@ -22,7 +22,7 @@ int main(int, char**)
             return "continue";
         }
         std::vector<std::string> v = mongols::split(input, ':');
-        if (v.size() > 1) {
+        if (v.size() > 1 && v[0] == "name") {
             file_manage[client.sid].first = v.back();
             file_manage[client.sid].second = std::ofstream("upload/" + file_manage[client.sid].first, std::ios::binary | std::ios::out | std::ios::ate);
             return "start upload";
