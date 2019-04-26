@@ -32,6 +32,7 @@
 *.app
 *.bin
 nbproject/
+upload/
 /example/http_server
 /example/leveldb_server
 /example/lua_server

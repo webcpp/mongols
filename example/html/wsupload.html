@@ -12,24 +12,50 @@
     <form id="frm1">
         <input type="file" id="myFile">
     </form>
+    <div id='tag'>上传进度: <strong>0%</strong></div>
     <div id="log"></div>
-    <script src="https://cdn.bootcss.com/jquery/3.4.0/jquery.min.js"></script>
+    <script src="http://cdn.bootcss.com/jquery/3.4.0/jquery.min.js"></script>
     <script language="javascript" type="text/javascript">
 
-        var wsUri = "ws://127.0.0.1:9090";
+        var ws, ws_uri = "ws://127.0.0.1:9090";
 
-
-        function formReset() {
-            document.getElementById("frm1").reset();
+        var tag = $('#tag>strong');
+        var default_step = 5;
+        var upload_info = {
+            size: 0, name: '', uploaded: 0, step: default_step
         }
+        var file;
 
+        function upload(upload_info) {
+            if (upload_info.uploaded + upload_info.step > upload_info.size) {
+                upload_info.step = upload_info.size - upload_info.uploaded;
+            }
+            var buffer = file.slice(upload_info.uploaded, upload_info.uploaded + upload_info.step)
 
+            var reader = new FileReader();
+            reader.readAsArrayBuffer(buffer);
 
+            reader.onload = function (e) {
+                ws.send(e.target.result);
+                // log('<<正在上传数据...');
+            }
+
+            reader.onloadend = function (e) {
+                tag.html(upload_info.uploaded / upload_info.size * 100 + '%');
+                upload_info.uploaded = upload_info.uploaded + upload_info.step;
+            }
+        }
         $('#myFile').on('change', function (event) {
-            var ws = new WebSocket(wsUri);
+            file = document.getElementById("myFile").files[0];
+            upload_info.size = file.size;
+            upload_info.name = file.name;
+            upload_info.uploaded = 0;
+            upload_info.step = default_step;
+            // console.log(upload_info);
+            ws = new WebSocket(ws_uri);
             ws.onopen = function () {
                 log('<<已连接上！');
-                ws.send("start upload");
+                ws.send("name:" + upload_info.name);
             }
 
             ws.onclose = function () {
@@ -37,31 +63,26 @@
             }
 
             ws.onmessage = function (e) {
-                log(">>收到服务器消息:" + e.data + "\n");
+                // log(">>收到服务器消息:" + e.data + "\n");
                 if (e.data == 'start upload') {
                     log('<<开始上传文件');
-                    var file = document.getElementById("myFile").files[0];
 
-                    var reader = new FileReader();
-                    reader.readAsArrayBuffer(file);
+                    upload(upload_info);
 
-                    reader.onload = function (e) {
-                        ws.send(e.target.result);
-                        log('<<正在上传数据...');
+                } else if (e.data == 'continue') {
+                    if (upload_info.size > upload_info.uploaded) {
+                        upload(upload_info);
+                    } else {
+                        ws.send('upload success');
                     }
-
                 } else if (e.data == 'upload success') {
                     log('<<上传完成');
-                    formReset();
+                    tag.html(upload_info.uploaded / upload_info.size * 100 + '%');
                     ws.close();
                 }
-
-
-
             }
 
         });
-        //在消息框中打印内容
         function log(text) {
             $("#log").append(text + "<br/>");
         }
