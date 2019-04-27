@@ -12,17 +12,18 @@
     <form id="frm1">
         <input type="file" id="myFile">
     </form>
-    <div id='tag'>上传进度: <strong>0%</strong></div>
+    <div>上传进度: <strong id='tag'>0%</strong><br />耗时：<strong id='time'>0 ms</strong> </div>
     <div id="log"></div>
     <script src="http://cdn.bootcss.com/jquery/3.4.0/jquery.min.js"></script>
     <script language="javascript" type="text/javascript">
 
         var ws, ws_uri = "ws://127.0.0.1:9090";
 
-        var tag = $('#tag>strong');
+        var tag = $('#tag');
+        var ttag = $('#time');
         var default_step = 8092;
         var upload_info = {
-            size: 0, name: '', uploaded: 0, step: default_step
+            size: 0, name: '', uploaded: 0, step: default_step, t: 0
         }
         var file;
 
@@ -66,18 +67,20 @@
                 // log(">>收到服务器消息:" + e.data + "\n");
                 if (e.data == 'start upload') {
                     log('<<开始上传文件');
-
+                    upload_info.t = new Date().getTime();
                     upload(upload_info);
 
                 } else if (e.data == 'continue') {
                     if (upload_info.size > upload_info.uploaded) {
+                        ttag.html(new Date().getTime() - upload_info.t + " ms");
                         upload(upload_info);
                     } else {
                         ws.send('upload success');
                     }
                 } else if (e.data == 'upload success') {
                     log('<<上传完成');
-                    tag.html(upload_info.uploaded / upload_info.size * 100 + '%');
+                    tag.html(upload_info.uploaded / upload_info.size * 100 + ' %');
+                    ttag.html(new Date().getTime() - upload_info.t + " ms");
                     ws.close();
                 }
             }
