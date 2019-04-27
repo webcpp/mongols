@@ -72,7 +72,7 @@
 
                 } else if (e.data == 'continue') {
                     if (upload_info.size > upload_info.uploaded) {
-                        ttag.html(new Date().getTime() - upload_info.t + " ms");
+                        ttag.html((new Date().getTime() - upload_info.t) + " ms");
                         upload(upload_info);
                     } else {
                         ws.send('upload success');
@@ -80,7 +80,7 @@
                 } else if (e.data == 'upload success') {
                     log('<<上传完成');
                     tag.html(upload_info.uploaded / upload_info.size * 100 + ' %');
-                    ttag.html(new Date().getTime() - upload_info.t + " ms");
+                    ttag.html((new Date().getTime() - upload_info.t) + " ms");
                     ws.close();
                 }
             }
