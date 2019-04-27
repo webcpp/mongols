@@ -12,7 +12,10 @@
     <form id="frm1">
         <input type="file" id="myFile">
     </form>
-    <div>上传进度: <strong id='tag'>0%</strong><br />耗时：<strong id='time'>0 ms</strong> </div>
+    <div><ul>
+        <li><div>名称：<strong id='name'>NULL</strong> 信息：<strong id='info'>准备</strong>上传进度: <strong id='tag'>0%</strong>耗时：<strong id='time'>0 ms</strong></div></li>
+    </ul>
+    </div>
     <div id="log"></div>
     <script src="http://cdn.bootcss.com/jquery/3.4.0/jquery.min.js"></script>
     <script language="javascript" type="text/javascript">
@@ -21,6 +24,8 @@
 
         var tag = $('#tag');
         var ttag = $('#time');
+        var info = $('#info');
+        var fname = $('#name');
         var default_step = 8092;
         var upload_info = {
             size: 0, name: '', uploaded: 0, step: default_step, t: 0
@@ -52,6 +57,7 @@
             upload_info.name = file.name;
             upload_info.uploaded = 0;
             upload_info.step = default_step;
+            fname.html(file.name);
             console.log(upload_info);
             ws = new WebSocket(ws_uri);
             ws.onopen = function () {
@@ -87,7 +93,8 @@
 
         });
         function log(text) {
-            $("#log").append(text + "<br/>");
+            //$("#log").append(text + "<br/>");
+            info.html(text);
         }
 
     </script>

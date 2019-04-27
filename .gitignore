@@ -55,5 +55,7 @@ nbproject/
 /example/http_proxy_server
 /example/tcp_server_benchmark
 /.vscode
-example/upload/helloworld.txt
-example/upload/th.jpeg
+example/upload/*.txt
+example/upload/*.jpeg
+example/upload/*.sh
+example/upload/*.pdf
