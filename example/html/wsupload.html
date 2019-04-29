@@ -9,93 +9,88 @@
 <body>
     <h2>WebSocket Update File Test</h2>
 
-    <form id="frm1">
-        <input type="file" id="myFile">
+    <form id='upload_form'>
+        <input type="file" id="my_file" multiple>
     </form>
-    <div><ul>
-        <li><div>名称：<strong id='name'>NULL</strong> 信息：<strong id='info'>准备</strong>上传进度: <strong id='tag'>0%</strong>耗时：<strong id='time'>0 ms</strong></div></li>
-    </ul>
+    <div>
+        <ul id=box></ul>
     </div>
     <div id="log"></div>
     <script src="http://cdn.bootcss.com/jquery/3.4.0/jquery.min.js"></script>
     <script language="javascript" type="text/javascript">
 
-        var ws, ws_uri = "ws://127.0.0.1:9090";
-
-        var tag = $('#tag');
-        var ttag = $('#time');
-        var info = $('#info');
-        var fname = $('#name');
+        var ws = new Array(), ws_uri = "ws://127.0.0.1:9090";
+        var tpl = "<li><div>名称：<strong class='name'>NULL</strong> 信息：<strong class='info'>准备</strong> 进度: <strong class='tag'>0%</strong> 耗时：<strong class='time'>0 ms</strong></div></li>"
+        var tag, ttag, info, fname, box = $('#box')
         var default_step = 8092;
-        var upload_info = {
-            size: 0, name: '', uploaded: 0, step: default_step, t: 0
-        }
-        var file;
+        var upload_info = new Array()
+        var files;
 
-        function upload(upload_info) {
-            if (upload_info.uploaded + upload_info.step > upload_info.size) {
-                upload_info.step = upload_info.size - upload_info.uploaded;
+        function upload(i) {
+            if (upload_info[i].uploaded + upload_info[i].step > upload_info[i].size) {
+                upload_info[i].step = upload_info[i].size - upload_info[i].uploaded;
             }
-            var buffer = file.slice(upload_info.uploaded, upload_info.uploaded + upload_info.step)
+            var buffer = files[i].slice(upload_info[i].uploaded, upload_info[i].uploaded + upload_info[i].step)
 
             var reader = new FileReader();
             reader.readAsArrayBuffer(buffer);
 
             reader.onload = function (e) {
-                ws.send(e.target.result);
-                // log('<<正在上传数据...');
+                ws[i].send(e.target.result);
+                info.eq(i).html('正在上传数据');
             }
 
             reader.onloadend = function (e) {
-                tag.html(upload_info.uploaded / upload_info.size * 100 + '%');
-                upload_info.uploaded = upload_info.uploaded + upload_info.step;
+                tag.eq(i).html(upload_info[i].uploaded / upload_info[i].size * 100 + '%');
+                upload_info[i].uploaded = upload_info[i].uploaded + upload_info[i].step;
             }
         }
-        $('#myFile').on('change', function (event) {
-            file = document.getElementById("myFile").files[0];
-            upload_info.size = file.size;
-            upload_info.name = file.name;
-            upload_info.uploaded = 0;
-            upload_info.step = default_step;
-            fname.html(file.name);
-            console.log(upload_info);
-            ws = new WebSocket(ws_uri);
-            ws.onopen = function () {
-                log('<<已连接上！');
-                ws.send("name:" + upload_info.name);
+        $('#my_file').on('change', function (event) {
+            files = document.getElementById("my_file").files;
+            for (var i = 0; i < files.length; ++i) {
+                upload_info.push({ size: files[i].size, name: files[i].name, uploaded: 0, step: default_step, t: 0 })
+                box.append(tpl)
+                ws.push(new WebSocket(ws_uri))
             }
+            tag = $('.tag');
+            ttag = $('.time');
+            info = $('.info');
+            fname = $('.name');
 
-            ws.onclose = function () {
-                log('<<连接已关闭！');
-            }
-
-            ws.onmessage = function (e) {
-                // log(">>收到服务器消息:" + e.data + "\n");
-                if (e.data == 'start upload') {
-                    log('<<开始上传文件');
-                    upload_info.t = new Date().getTime();
-                    upload(upload_info);
-
-                } else if (e.data == 'continue') {
-                    if (upload_info.size > upload_info.uploaded) {
-                        ttag.html((new Date().getTime() - upload_info.t) + " ms");
-                        upload(upload_info);
-                    } else {
-                        ws.send('upload success');
-                    }
-                } else if (e.data == 'upload success') {
-                    log('<<上传完成');
-                    tag.html(upload_info.uploaded / upload_info.size * 100 + ' %');
-                    ttag.html((new Date().getTime() - upload_info.t) + " ms");
-                    ws.close();
+            ws.forEach(function (item, j) {
+                fname.eq(j).html(files[j].name);
+                ws[j].onopen = function () {
+                    info.eq(j).html('已连接上');
+                    ws[j].send("name:" + upload_info[j].name);
                 }
-            }
+
+                ws[j].onclose = function () {
+                    info.eq(j).html('连接已关闭');
+                }
+
+                ws[j].onmessage = function (e) {
+                    if (e.data == 'start upload') {
+                        info.eq(j).html('开始上传文件');
+                        upload_info[j].t = new Date().getTime();
+                        upload(j);
+
+                    } else if (e.data == 'continue') {
+                        if (upload_info[j].size > upload_info[j].uploaded) {
+                            ttag.eq(j).html((new Date().getTime() - upload_info[j].t) + " ms");
+                            upload(j);
+                        } else {
+                            ws[j].send('upload success');
+                        }
+                    } else if (e.data == 'upload success') {
+                        info.eq(j).html('上传完成');
+                        tag.eq(j).html(upload_info[j].uploaded / upload_info[j].size * 100 + ' %');
+                        ttag.eq(j).html((new Date().getTime() - upload_info[j].t) + " ms");
+                        ws[j].close();
+                    }
+                }
+            });
 
         });
-        function log(text) {
-            //$("#log").append(text + "<br/>");
-            info.html(text);
-        }
 
     </script>
 </body>
