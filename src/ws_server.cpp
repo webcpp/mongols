@@ -40,7 +40,7 @@ void ws_server::run(const message_handler_function& f)
 
 void ws_server::run()
 {
-    message_handler_function f = std::bind(&ws_server::ws_json_parse, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5);
+    message_handler_function f = std::bind(&ws_server::ws_json_parse, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6);
     this->server->run(std::bind(&ws_server::work, this, f, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5));
 }
 
@@ -64,9 +64,9 @@ void ws_server::set_enable_security_check(bool b)
     this->server->set_enable_security_check(b);
 }
 
-std::string ws_server::ws_json_parse(const std::string& message, bool& keepalive, bool& send_to_other, tcp_server::client_t& client, tcp_server::filter_handler_function& send_to_other_filter)
+std::string ws_server::ws_json_parse(const std::string& message, bool& keepalive, bool& send_to_other, tcp_server::client_t& client, tcp_server::filter_handler_function& send_to_other_filter, ws_message_t& ws_msg_type)
 {
-
+    ws_msg_type = ws_message_t::TEXT;
     Json::Reader json_reader;
     Json::Value root;
     if (json_reader.parse(message, root)) {
