@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>WebSocket Benchmark</title>
+</head>
+
+<body>
+    <button>stop</button>
+    <div id='box'>
+        <ul></ul>
+    </div>
+    <script src="http://cdn.bootcss.com/jquery/3.4.0/jquery.min.js"></script>
+    <script language="javascript" type="text/javascript">
+        var uri = 'ws://127.0.0.1:9090'
+        var limit = 50;
+        var log = $('#box>ul'), stop = $('button');
+        var interval = 8000;
+        var ws = new Array();
+        var message = ['我爱LINUX', 'I like LINUX', '私は linux が好き']
+
+        function rnd_integer(min, max) {
+            return Math.floor(Math.random() * (max - min)) + min;
+        }
+        for (var i = 0; i < limit; ++i) {
+            ws.push({ ws: new WebSocket(uri), loop: null });
+        }
+
+        ws.forEach(function (item, j) {
+            ws[j].ws.onopen = function () {
+                log.append('<li id="item-' + j + '">ws[' + j + '] is opened.</li>')
+                item.loop = setInterval(function () {
+                    var t = (new Date()).toLocaleString();
+                    var msg = 'ws[' + j + '] said: ' + message[rnd_integer(0, 3)] + ' at ' + t;
+                    item.ws.send(msg)
+                    log.find('#item-' + j).html(msg);
+                }, rnd_integer(1000, 8000))
+            }
+
+            ws[j].ws.onclose = function () {
+                log.find('#item-' + j).html('ws[' + j + '] is closed')
+                clearInterval(ws[j].loop)
+            }
+
+            ws[j].ws.onmessage = function (e) {
+                log.find('#item-' + j).html('ws[' + j + '] recv message: ' + e.data)
+            }
+        });
+        stop.click(function () {
+            ws.forEach(function (item, j) {
+                clearInterval(item.loop);
+                item.ws.close()
+            })
+        });
+    </script>
+</body>
+
+</html>
