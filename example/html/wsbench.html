@@ -8,14 +8,15 @@
 
 <body>
     <button>stop</button>
+    <p>ws客户端数目: <strong id='client'>0</strong></p>
     <div id='box'>
         <ul></ul>
     </div>
     <script src="http://cdn.bootcss.com/jquery/3.4.0/jquery.min.js"></script>
     <script language="javascript" type="text/javascript">
         var uri = 'ws://127.0.0.1:9090'
-        var limit = 50;
-        var log = $('#box>ul'), stop = $('button');
+        var limit = 256, client_count = 0;
+        var log = $('#box>ul'), stop = $('button'), client_tag = $('#client');
         var interval = 8000;
         var ws = new Array();
         var message = ['我爱LINUX', 'I like LINUX', '私は linux が好き']
@@ -29,6 +30,8 @@
 
         ws.forEach(function (item, j) {
             ws[j].ws.onopen = function () {
+                ++client_count;
+                client_tag.text(client_count);
                 log.append('<li id="item-' + j + '">ws[' + j + '] is opened.</li>')
                 item.loop = setInterval(function () {
                     var t = (new Date()).toLocaleString();
