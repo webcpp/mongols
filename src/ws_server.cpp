@@ -148,8 +148,13 @@ std::string ws_server::ws_json_parse(const std::string& message, bool& keepalive
             return json_writer.write(root);
         }
     } else {
-        keepalive = CLOSE_CONNECTION;
+        //keepalive = CLOSE_CONNECTION;
+        Json::Value msg_error;
+        msg_error["error"] = true;
+        msg_error["message"] = "Failed to send message.";
         send_to_other = false;
+        Json::FastWriter json_writer;
+        return json_writer.write(msg_error);
     }
     return message;
 }
