@@ -17,7 +17,6 @@
         var uri = 'ws://127.0.0.1:9090'
         var limit = 256, client_count = 0;
         var log = $('#box>ul'), stop = $('button'), client_tag = $('#client');
-        var interval = 8000;
         var ws = new Array();
         var message = ['我爱LINUX', 'I like LINUX', '私は linux が好き']
 
@@ -38,7 +37,7 @@
                     var msg = 'ws[' + j + '] said: ' + message[rnd_integer(0, 3)] + ' at ' + t;
                     item.ws.send(msg)
                     log.find('#item-' + j).html(msg);
-                }, rnd_integer(1000, 8000))
+                }, rnd_integer(5000, 15000))
             }
 
             ws[j].ws.onclose = function () {
