@@ -1,64 +1,61 @@
 #ifndef JSON_HPP
 #define JSON_HPP
 
-#include <string>
-#include <memory>
 #include "lib/json/json.h"
+#include <memory>
+#include <string>
 
 namespace mongols {
 
-    class json {
-    private:
-        json(const Json::Value&);
-        void config_builder();
-    public:
-        json();
-        json(const json&);
-        virtual~json();
+class json {
+private:
+    json(const Json::Value&);
+    void config_builder();
 
-        void set_string(const std::string&, const std::string&);
-        void set_json(const std::string&, const json&);
-        void set_double(const std::string&, double);
-        void set_long(const std::string&, long);
-        void set_bool(const std::string&,bool);
+public:
+    json();
+    json(const json&);
+    virtual ~json();
 
+    void set_string(const std::string&, const std::string&);
+    void set_json(const std::string&, const json&);
+    void set_double(const std::string&, double);
+    void set_long(const std::string&, long);
+    void set_bool(const std::string&, bool);
 
-        std::string to_string();
+    std::string to_string();
 
-        double as_double()const;
-        long as_long()const;
-        std::string as_string()const;
-        bool as_bool()const;
+    double as_double() const;
+    long as_long() const;
+    std::string as_string() const;
+    bool as_bool() const;
 
+    bool parse_string(const std::string&);
+    bool parse_file(const std::string&);
 
-        bool parse_string(const std::string&);
-        bool parse_file(const std::string&);
+    json get_object(const std::string&);
+    json get_element(int);
 
-        json get_object(const std::string&);
-        json get_element(int);
+    void append_string(const std::string&);
+    void append_double(double);
+    void append_long(long);
+    void append_json(const json&);
+    void append_bool(bool);
 
-        void append_string(const std::string&);
-        void append_double(double);
-        void append_long(long);
-        void append_json(const json&);
-        void append_bool(bool);
-        
-        bool is_double()const;
-        bool is_long()const;
-        bool is_string()const;
-        bool is_object()const;
-        bool is_array()const;
-        bool is_bool()const;
-        
-        size_t size()const;
+    bool is_double() const;
+    bool is_long() const;
+    bool is_string() const;
+    bool is_object() const;
+    bool is_array() const;
+    bool is_bool() const;
 
+    size_t size() const;
 
-    private:
-        Json::Value root;
-        Json::StreamWriterBuilder builder;
-        Json::Reader reader;
-    };
+private:
+    Json::Value root;
+    Json::StreamWriterBuilder builder;
+    Json::Reader reader;
+};
 }
 
 #endif /* JSON_HPP */
-

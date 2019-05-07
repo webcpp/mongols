@@ -67,9 +67,11 @@ void ws_server::set_enable_security_check(bool b)
 std::string ws_server::ws_json_parse(const std::string& message, bool& keepalive, bool& send_to_other, tcp_server::client_t& client, tcp_server::filter_handler_function& send_to_other_filter, ws_message_t& ws_msg_type)
 {
     ws_msg_type = ws_message_t::TEXT;
-    Json::Reader json_reader;
+    std::string errs;
+    Json::CharReaderBuilder json_reader_builder;
+    std::unique_ptr<Json::CharReader> json_reader(json_reader_builder.newCharReader());
     Json::Value root;
-    if (json_reader.parse(message, root)) {
+    if (json_reader->parse(message.c_str(), message.c_str() + message.size(), &root, &errs) && errs.empty()) {
         if (root.isMember("uid")
             && root.isMember("gid")
             && root.isMember("ufilter")
@@ -143,9 +145,12 @@ std::string ws_server::ws_json_parse(const std::string& message, bool& keepalive
                 return res;
             };
             root["ip"] = client.ip;
-            root["u_size"] = client.u_size;
-            Json::FastWriter json_writer;
-            return json_writer.write(root);
+            root["u_size"] = Json::UInt64(client.u_size);
+            Json::StreamWriterBuilder json_writer_builder;
+            std::ostringstream os;
+            std::unique_ptr<Json::StreamWriter> json_writer(json_writer_builder.newStreamWriter());
+            json_writer->write(root, &os);
+            return os.str();
         }
     } else {
         //keepalive = CLOSE_CONNECTION;
@@ -153,8 +158,11 @@ std::string ws_server::ws_json_parse(const std::string& message, bool& keepalive
         msg_error["error"] = true;
         msg_error["message"] = "Failed to send message.";
         send_to_other = false;
-        Json::FastWriter json_writer;
-        return json_writer.write(msg_error);
+        Json::StreamWriterBuilder json_writer_builder;
+        std::ostringstream os;
+        std::unique_ptr<Json::StreamWriter> json_writer(json_writer_builder.newStreamWriter());
+        json_writer->write(root, &os);
+        return os.str();
     }
     return message;
 }
