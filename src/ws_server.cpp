@@ -283,7 +283,7 @@ bool ws_server::ws_handshake(const mongols::request& req, std::string& response)
 
     char output[29] = {};
     WebSocketHandshake::generate(websocket_key.c_str(), output);
-    std::string serverKey = std::move(output);
+    std::string serverKey(output);
     serverKey += "\r\n\r\n";
     response += serverKey;
 
