@@ -233,6 +233,7 @@ std::string ws_server::work(const message_handler_function& f, const std::pair<c
             keepalive = CLOSE_CONNECTION;
             client.type = tcp_server::connection_t::HTTP;
         } else if (ret == 9) {
+            pong_msg = message;
             size_t frame_len = websocket_calc_frame_size((websocket_flags)(WS_OP_PONG | WS_FINAL_FRAME), pong_msg.size());
             char* frame = (char*)malloc(sizeof(char) * frame_len);
             frame_len = websocket_build_frame(frame, (websocket_flags)(WS_OP_PONG | WS_FINAL_FRAME), NULL, pong_msg.c_str(), pong_msg.size());
