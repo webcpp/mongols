@@ -28,9 +28,7 @@ int tcp_server::backlog = 511;
 size_t tcp_server::backlist_size = 1024;
 size_t tcp_server::max_connection_limit = 30;
 size_t tcp_server::backlist_timeout = 24 * 60 * 60;
-
 size_t tcp_server::max_send_limit = 5;
-
 size_t tcp_server::max_connection_keepalive = 60;
 
 void tcp_server::signal_normal_cb(int sig, siginfo_t*, void*)
@@ -148,7 +146,7 @@ tcp_server::black_ip_t::black_ip_t()
 
 void tcp_server::run(const handler_function& g)
 {
-    std::vector<int> sigs = { SIGTERM, SIGINT, SIGQUIT };
+    std::vector<int> sigs = { SIGTERM, SIGINT, SIGQUIT, SIGPIPE };
 
     struct sigaction act;
     for (size_t i = 0; i < sigs.size(); ++i) {
@@ -404,7 +402,11 @@ void tcp_server::main_loop(struct epoll_event* event, const handler_function& g,
                 }
                 this->setnonblocking(connfd);
             } else {
-                break;
+                if (errno == EINTR) {
+                    continue;
+                } else {
+                    break;
+                }
             }
         }
     } else if (event->events & EPOLLIN) {
