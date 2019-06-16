@@ -95,6 +95,10 @@ tcp_server::~tcp_server()
     if (this->work_pool) {
         delete this->work_pool;
     }
+    if (this->listenfd) {
+        shutdown(this->listenfd, SHUT_RDWR);
+        close(this->listenfd);
+    }
 }
 
 tcp_server::client_t::client_t()
