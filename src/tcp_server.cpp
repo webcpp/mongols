@@ -50,6 +50,7 @@ tcp_server::tcp_server(const std::string& host, int port, int timeout, size_t bu
     , listenfd(0)
     , max_event_size(max_event_size)
     , serveraddr()
+    , serveraddr_v6()
     , buffer_size(buffer_size)
     , thread_size(0)
     , sid(0)
@@ -79,11 +80,19 @@ tcp_server::tcp_server(const std::string& host, int port, int timeout, size_t bu
     recv_timeout.tv_usec = 0;
     setsockopt(this->listenfd, SOL_SOCKET, SO_RCVTIMEO, &recv_timeout, sizeof(recv_timeout));
 
-    memset(&this->serveraddr, 0, sizeof(this->serveraddr));
-    this->serveraddr.sin_family = AF_INET;
-    inet_aton(this->host.c_str(), &serveraddr.sin_addr);
-    this->serveraddr.sin_port = htons(this->port);
-    bind(this->listenfd, (struct sockaddr*)&this->serveraddr, sizeof(this->serveraddr));
+    if (host.find(".") != std::string::npos) {
+        memset(&this->serveraddr, 0, sizeof(this->serveraddr));
+        this->serveraddr.sin_family = AF_INET;
+        inet_pton(AF_INET, host.c_str(), &(this->serveraddr.sin_addr));
+        this->serveraddr.sin_port = htons(this->port);
+        bind(this->listenfd, (struct sockaddr*)&this->serveraddr, sizeof(this->serveraddr));
+    } else {
+        memset(&this->serveraddr_v6, 0, sizeof(this->serveraddr_v6));
+        this->serveraddr_v6.sin6_family = AF_INET6;
+        inet_pton(AF_INET6, host.c_str(), &(this->serveraddr_v6.sin6_addr));
+        this->serveraddr_v6.sin6_port = htons(this->port);
+        bind(this->listenfd, (struct sockaddr*)&this->serveraddr_v6, sizeof(this->serveraddr_v6));
+    }
 
     this->setnonblocking(this->listenfd);
 
@@ -389,18 +398,23 @@ void tcp_server::main_loop(struct epoll_event* event, const handler_function& g,
 {
     if (event->data.fd == this->listenfd) {
         while (tcp_server::done) {
-            struct sockaddr_in clientaddr;
-            socklen_t clilen;
-            int connfd = accept(listenfd, (struct sockaddr*)&clientaddr, &clilen);
+            struct sockaddr_in6 clientaddr;
+            socklen_t clilen = sizeof(clientaddr);
+            int connfd = accept(listenfd, 0, 0);
             if (connfd > 0) {
-                std::string connfd_ip(inet_ntoa(clientaddr.sin_addr));
+                getpeername(connfd, (struct sockaddr*)&clientaddr, &clilen);
+                char clistr[INET6_ADDRSTRLEN];
+                std::string connfd_ip("unknown");
+                if (inet_ntop(AF_INET6, &clientaddr.sin6_addr, clistr, sizeof(clistr))) {
+                    connfd_ip = clistr;
+                }
                 if (this->enable_blacklist && !this->check_blacklist(connfd_ip)) {
                     shutdown(connfd, SHUT_RDWR);
                     close(connfd);
                     break;
                 }
                 epoll.add(connfd, EPOLLIN | EPOLLRDHUP | EPOLLET);
-                if (!this->add_client(connfd, connfd_ip, ntohs(clientaddr.sin_port))) {
+                if (!this->add_client(connfd, connfd_ip, ntohs(clientaddr.sin6_port))) {
                     this->del_client(connfd);
                     break;
                 }

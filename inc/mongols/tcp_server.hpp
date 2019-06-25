@@ -76,6 +76,7 @@ private:
     std::string host;
     int port, listenfd, max_event_size;
     struct sockaddr_in serveraddr;
+    struct sockaddr_in6 serveraddr_v6;
     static std::atomic_bool done;
     static void signal_normal_cb(int sig, siginfo_t*, void*);
     void setnonblocking(int fd);
