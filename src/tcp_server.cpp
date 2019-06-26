@@ -66,7 +66,9 @@ tcp_server::tcp_server(const std::string& host, int port, int timeout, size_t bu
     , enable_blacklist(false)
     , enable_security_check(false)
 {
-    this->listenfd = socket(AF_INET, SOCK_STREAM, 0);
+    bool is_ipv4 = host.find(".") != std::string::npos;
+
+    this->listenfd = socket(is_ipv4 ? AF_INET : AF_INET6, SOCK_STREAM, 0);
 
     int on = 1;
     setsockopt(this->listenfd, SOL_SOCKET, SO_REUSEPORT, &on, sizeof(on));
@@ -80,7 +82,7 @@ tcp_server::tcp_server(const std::string& host, int port, int timeout, size_t bu
     recv_timeout.tv_usec = 0;
     setsockopt(this->listenfd, SOL_SOCKET, SO_RCVTIMEO, &recv_timeout, sizeof(recv_timeout));
 
-    if (host.find(".") != std::string::npos) {
+    if (is_ipv4) {
         memset(&this->serveraddr, 0, sizeof(this->serveraddr));
         this->serveraddr.sin_family = AF_INET;
         inet_pton(AF_INET, host.c_str(), &(this->serveraddr.sin_addr));
