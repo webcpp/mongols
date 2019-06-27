@@ -49,8 +49,9 @@ tcp_server::tcp_server(const std::string& host, int port, int timeout, size_t bu
     , port(port)
     , listenfd(0)
     , max_event_size(max_event_size)
+    , serveraddr_v4(0)
+    , serveraddr_v6(0)
     , serveraddr()
-    , serveraddr_v6()
     , buffer_size(buffer_size)
     , thread_size(0)
     , sid(0)
@@ -83,17 +84,21 @@ tcp_server::tcp_server(const std::string& host, int port, int timeout, size_t bu
     setsockopt(this->listenfd, SOL_SOCKET, SO_RCVTIMEO, &recv_timeout, sizeof(recv_timeout));
 
     if (is_ipv4) {
-        memset(&this->serveraddr, 0, sizeof(this->serveraddr));
-        this->serveraddr.sin_family = AF_INET;
-        inet_pton(AF_INET, host.c_str(), &(this->serveraddr.sin_addr));
-        this->serveraddr.sin_port = htons(this->port);
-        bind(this->listenfd, (struct sockaddr*)&this->serveraddr, sizeof(this->serveraddr));
+        this->serveraddr_v4 = (struct sockaddr_in*)&this->serveraddr;
+        socklen_t addrlen = sizeof(struct sockaddr_in);
+        memset(this->serveraddr_v4, 0, addrlen);
+        this->serveraddr_v4->sin_family = AF_INET;
+        inet_pton(AF_INET, host.c_str(), &(this->serveraddr_v4->sin_addr));
+        this->serveraddr_v4->sin_port = htons(this->port);
+        bind(this->listenfd, (struct sockaddr*)this->serveraddr_v4, addrlen);
     } else {
-        memset(&this->serveraddr_v6, 0, sizeof(this->serveraddr_v6));
-        this->serveraddr_v6.sin6_family = AF_INET6;
-        inet_pton(AF_INET6, host.c_str(), &(this->serveraddr_v6.sin6_addr));
-        this->serveraddr_v6.sin6_port = htons(this->port);
-        bind(this->listenfd, (struct sockaddr*)&this->serveraddr_v6, sizeof(this->serveraddr_v6));
+        this->serveraddr_v6 = (struct sockaddr_in6*)&this->serveraddr;
+        socklen_t addrlen = sizeof(struct sockaddr_in6);
+        memset(this->serveraddr_v6, 0, addrlen);
+        this->serveraddr_v6->sin6_family = AF_INET6;
+        inet_pton(AF_INET6, host.c_str(), &(this->serveraddr_v6->sin6_addr));
+        this->serveraddr_v6->sin6_port = htons(this->port);
+        bind(this->listenfd, (struct sockaddr*)this->serveraddr_v6, addrlen);
     }
 
     this->setnonblocking(this->listenfd);
@@ -400,23 +405,23 @@ void tcp_server::main_loop(struct epoll_event* event, const handler_function& g,
 {
     if (event->data.fd == this->listenfd) {
         while (tcp_server::done) {
-            struct sockaddr_in6 clientaddr;
+            struct sockaddr_storage clientaddr;
             socklen_t clilen = sizeof(clientaddr);
-            int connfd = accept(listenfd, 0, 0);
+            int connfd = accept(listenfd, (struct sockaddr*)&clientaddr, &clilen);
             if (connfd > 0) {
-                getpeername(connfd, (struct sockaddr*)&clientaddr, &clilen);
-                char clistr[INET6_ADDRSTRLEN];
-                std::string connfd_ip("unknown");
-                if (inet_ntop(AF_INET6, &clientaddr.sin6_addr, clistr, sizeof(clistr))) {
-                    connfd_ip = clistr;
+                std::string clientip;
+                int clientport = 0;
+                if (!this->get_client_address(&clientaddr, clientip, clientport)) {
+                    goto accept_error;
                 }
-                if (this->enable_blacklist && !this->check_blacklist(connfd_ip)) {
+                if (this->enable_blacklist && !this->check_blacklist(clientip)) {
+                accept_error:
                     shutdown(connfd, SHUT_RDWR);
                     close(connfd);
                     break;
                 }
                 epoll.add(connfd, EPOLLIN | EPOLLRDHUP | EPOLLET);
-                if (!this->add_client(connfd, connfd_ip, ntohs(clientaddr.sin6_port))) {
+                if (!this->add_client(connfd, clientip, clientport)) {
                     this->del_client(connfd);
                     break;
                 }
@@ -443,6 +448,28 @@ void tcp_server::main_loop(struct epoll_event* event, const handler_function& g,
 size_t tcp_server::get_buffer_size() const
 {
     return this->buffer_size;
+}
+
+bool tcp_server::get_client_address(struct sockaddr_storage* address, std::string& ip, int& port)
+{
+    if (address->ss_family == AF_INET) {
+        struct sockaddr_in* clientaddr_v4 = (struct sockaddr_in*)address;
+        char clistr[INET_ADDRSTRLEN];
+        if (inet_ntop(AF_INET, &clientaddr_v4->sin_addr, clistr, INET_ADDRSTRLEN)) {
+            ip = clistr;
+            port = ntohs(clientaddr_v4->sin_port);
+            return true;
+        }
+    } else if (address->ss_family == AF_INET6) {
+        struct sockaddr_in6* clientaddr_v6 = (struct sockaddr_in6*)address;
+        char clistr[INET6_ADDRSTRLEN];
+        if (inet_ntop(AF_INET6, &clientaddr_v6->sin6_addr, clistr, INET6_ADDRSTRLEN)) {
+            ip = clistr;
+            port = ntohs(clientaddr_v6->sin6_port);
+            return true;
+        }
+    }
+    return false;
 }
 
 bool tcp_server::set_openssl(const std::string& crt_file, const std::string& key_file, openssl::version_t v, const std::string& ciphers, long flags)
