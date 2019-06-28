@@ -2,10 +2,9 @@
 
 A high performance network library for c++:
 
-  - Libevent, libev and libuv are outdated.
+    - Libevent, libev and libuv are outdated.
 
-  - Both apache and nginx are very slow.
-
+    - Both apache and nginx are very slow.
 
 ![mongols.png](https://raw.githubusercontent.com/webcpp/mongols/master/example/html/image/mongols.png)
 
@@ -24,14 +23,11 @@ mongols web_server 1 worker VS nginx 1 worker:
 - g++ (-std=c++11)
 - openssl
 
-
 ## feature
 
 [mongols document](https://mongols.hi-nginx.com)
 
-
-
-## install 
+## install
 
 `make clean && make -j2 && sudo make install && sudo ldconfig`
 
@@ -39,15 +35,10 @@ mongols web_server 1 worker VS nginx 1 worker:
 
 `pkg-config --libs --cflags mongols openssl`
 
-
 ## binding
 
 [pymongols](https://github.com/webcpp/pymongols)
 
-
 ## example
 
 [example](https://github.com/webcpp/mongols/tree/master/example)
-
-
-
