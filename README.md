@@ -2,9 +2,9 @@
 
 A high performance network library for c++:
 
-    - Libevent, libev and libuv are outdated.
+- Libevent, libev and libuv are outdated.
 
-    - Both apache and nginx are very slow.
+- Both apache and nginx are very slow.
 
 ![mongols.png](https://raw.githubusercontent.com/webcpp/mongols/master/example/html/image/mongols.png)
 
