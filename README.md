@@ -30,6 +30,7 @@ mongols web_server 1 worker VS nginx 1 worker:
 [mongols document](https://mongols.hi-nginx.com)
 
 
+
 ## install 
 
 `make clean && make -j2 && sudo make install && sudo ldconfig`
