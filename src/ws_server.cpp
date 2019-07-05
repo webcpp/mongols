@@ -223,38 +223,34 @@ std::string ws_server::work(const message_handler_function& f, const std::pair<c
                 ws_message_t ws_msg_type = (ret == 1 ? ws_message_t::TEXT : ws_message_t::BINARY);
                 message = std::move(f(message, keepalive, send_to_other, client, send_to_other_filter, ws_msg_type));
                 size_t frame_len = websocket_calc_frame_size((websocket_flags)((ws_msg_type == ws_message_t::TEXT ? WS_OP_TEXT : WS_OP_BINARY) | WS_FINAL_FRAME), message.size());
-                char* frame = (char*)malloc(sizeof(char) * frame_len);
+                char frame[frame_len];
                 frame_len = websocket_build_frame(frame, (websocket_flags)((ws_msg_type == ws_message_t::TEXT ? WS_OP_TEXT : WS_OP_BINARY) | WS_FINAL_FRAME), NULL, message.c_str(), message.size());
                 response.assign(frame, frame_len);
-                free(frame);
             } else {
                 this->message_buffer[client.sid].append(message);
             }
         } else if (ret == 8) {
         ws_close:
             size_t frame_len = websocket_calc_frame_size((websocket_flags)(WS_OP_CLOSE | WS_FINAL_FRAME), close_msg.size());
-            char* frame = (char*)malloc(sizeof(char) * frame_len);
+            char frame[frame_len];
             frame_len = websocket_build_frame(frame, (websocket_flags)(WS_OP_CLOSE | WS_FINAL_FRAME), NULL, close_msg.c_str(), close_msg.size());
             response.assign(frame, frame_len);
-            free(frame);
             send_to_other = false;
             keepalive = CLOSE_CONNECTION;
             client.type = tcp_server::connection_t::HTTP;
         } else if (ret == 9) {
             pong_msg = message;
             size_t frame_len = websocket_calc_frame_size((websocket_flags)(WS_OP_PONG | WS_FINAL_FRAME), pong_msg.size());
-            char* frame = (char*)malloc(sizeof(char) * frame_len);
+            char frame[frame_len];
             frame_len = websocket_build_frame(frame, (websocket_flags)(WS_OP_PONG | WS_FINAL_FRAME), NULL, pong_msg.c_str(), pong_msg.size());
             response.assign(frame, frame_len);
-            free(frame);
             keepalive = KEEPALIVE_CONNECTION;
             send_to_other = false;
         } else if (ret == 10) {
             size_t frame_len = websocket_calc_frame_size((websocket_flags)(WS_OP_PING | WS_FINAL_FRAME), ping_msg.size());
-            char* frame = (char*)malloc(sizeof(char) * frame_len);
+            char frame[frame_len];
             frame_len = websocket_build_frame(frame, (websocket_flags)(WS_OP_PING | WS_FINAL_FRAME), NULL, ping_msg.c_str(), ping_msg.size());
             response.assign(frame, frame_len);
-            free(frame);
             keepalive = KEEPALIVE_CONNECTION;
             send_to_other = false;
         } else {
