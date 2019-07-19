@@ -300,8 +300,11 @@ public:
             return false;
         }
         lseek(this->fd, 0, SEEK_END);
-        std::string tmp(len - this->len, '\n');
-        write(fd, tmp.c_str(), tmp.size());
+        std::string tmp(1, '\n');
+        size_t count = len - this->len;
+        for (size_t i = 0; i < count; ++i) {
+            write(fd, tmp.c_str(), tmp.size());
+        }
         lseek(this->fd, 0, SEEK_SET);
         this->ptr = old_ptr;
         this->len = len;
