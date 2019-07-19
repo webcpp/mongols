@@ -184,7 +184,7 @@ public:
     shared_file_memory(size_t len)
         : file_name(mongols::random_string("").append(".bin"))
         , fd(-1)
-        , len(len)
+        , len(0)
         , ptr(0)
         , ok(false)
         , rm_file(true)
@@ -192,8 +192,7 @@ public:
     {
         this->fd = open(this->file_name.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0664);
         if (this->fd > 0) {
-            std::string tmp(this->len, '\n');
-            this->len = write(this->fd, tmp.c_str(), tmp.size());
+            this->alloc(len);
             this->ptr = (char*)mmap(0, this->len, PROT_READ | PROT_WRITE, MAP_SHARED, this->fd, 0);
             if (this->ptr == MAP_FAILED) {
                 this->ptr = 0;
@@ -300,16 +299,38 @@ public:
             return false;
         }
         lseek(this->fd, 0, SEEK_END);
-        std::string tmp(1, '\n');
-        size_t count = len - this->len;
-        for (size_t i = 0; i < count; ++i) {
-            write(fd, tmp.c_str(), tmp.size());
-        }
+        this->alloc(len);
         lseek(this->fd, 0, SEEK_SET);
         this->ptr = old_ptr;
-        this->len = len;
         this->mtx.unlock();
         return true;
+    }
+
+private:
+    void alloc(size_t len)
+    {
+        size_t diff = len - this->len, count = diff / 1024, increase = 0;
+        std::string tmp;
+        if (count == 0) {
+            tmp.assign(diff, '\n');
+            if ((increase = write(fd, tmp.c_str(), tmp.size())) > 0) {
+                this->len += increase;
+            }
+        } else {
+            tmp.assign(1024, '\n');
+            for (size_t i = 0; i < count; ++i) {
+                if ((increase = write(fd, tmp.c_str(), tmp.size())) > 0) {
+                    this->len += increase;
+                }
+            }
+            size_t mod = diff % 1024;
+            if (mod > 0) {
+                tmp.assign(mod, '\n');
+                if ((increase = write(fd, tmp.c_str(), tmp.size())) > 0) {
+                    this->len += increase;
+                }
+            }
+        }
     }
 };
 }
