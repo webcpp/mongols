@@ -1,6 +1,7 @@
 #ifndef SHARED_MEMORY_HPP
 #define SHARED_MEMORY_HPP
 
+#include "util.hpp"
 #include <cmath>
 #include <fcntl.h>
 #include <functional>
@@ -116,10 +117,10 @@ public:
         return this->length;
     }
 
-    void run(const std::function<void(T*)>& f)
+    void run(const std::function<void(T*, size_t)>& f)
     {
         this->mtx.lock();
-        f(this->data);
+        f(this->data, this->length);
         this->mtx.unlock();
     }
 
@@ -145,6 +146,169 @@ private:
     mongols::shared_mutex mtx;
 };
 
+class shared_file_memory {
+private:
+    std::string file_name;
+    int fd;
+    size_t len;
+    char* ptr;
+    bool ok, rm_file;
+    mongols::shared_mutex mtx;
+
+public:
+    shared_file_memory() = delete;
+    shared_file_memory(const std::string& file)
+        : file_name(file)
+        , fd(-1)
+        , len(0)
+        , ptr(0)
+        , ok(false)
+        , rm_file(false)
+        , mtx()
+    {
+        this->fd = open(this->file_name.c_str(), O_RDWR, 0664);
+
+        if (this->fd > 0) {
+            struct stat sb;
+            if (fstat(this->fd, &sb) == 0 && S_ISREG(sb.st_mode)) {
+                this->len = sb.st_size;
+                this->ptr = (char*)mmap(0, this->len, PROT_READ | PROT_WRITE, MAP_SHARED, this->fd, 0);
+                if (this->ptr == MAP_FAILED) {
+                    this->ptr = 0;
+                } else {
+                    this->ok = true;
+                }
+            }
+        }
+    }
+    shared_file_memory(size_t len)
+        : file_name(mongols::random_string("").append(".bin"))
+        , fd(-1)
+        , len(len)
+        , ptr(0)
+        , ok(false)
+        , rm_file(true)
+        , mtx()
+    {
+        this->fd = open(this->file_name.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0664);
+        if (this->fd > 0) {
+            std::string tmp(this->len, '\n');
+            this->len = write(this->fd, tmp.c_str(), tmp.size());
+            this->ptr = (char*)mmap(0, this->len, PROT_READ | PROT_WRITE, MAP_SHARED, this->fd, 0);
+            if (this->ptr == MAP_FAILED) {
+                this->ptr = 0;
+            } else {
+                this->ok = true;
+            }
+        }
+    }
+
+    virtual ~shared_file_memory()
+    {
+        if (this->ptr) {
+            munmap(this->ptr, this->len);
+        }
+        this->ok = false;
+        if (this->fd > 0) {
+            close(fd);
+        }
+        if (this->rm_file) {
+            remove(this->file_name.c_str());
+        }
+    }
+
+    bool is_ok() const
+    {
+        return this->ok;
+    }
+    bool is_ok()
+    {
+        return this->ok;
+    }
+
+    char* get() const
+    {
+        return this->ptr;
+    }
+    char* get()
+    {
+        return this->ptr;
+    }
+    size_t size() const
+    {
+        return this->len;
+    }
+    size_t size()
+    {
+        return this->len;
+    }
+
+    const std::string& get_file_name() const
+    {
+        return this->file_name;
+    }
+    const std::string& get_file_name()
+    {
+        return this->file_name;
+    }
+
+    void lock()
+    {
+        this->mtx.lock();
+    }
+
+    void unlock()
+    {
+        this->mtx.unlock();
+    }
+
+    void run(const std::function<void(char*, size_t)>& f)
+    {
+        this->mtx.lock();
+        f(this->ptr, this->len);
+        this->mtx.unlock();
+    }
+
+    void set_rm_file(bool b)
+    {
+        this->rm_file = b;
+    }
+
+    void sync()
+    {
+        this->mtx.lock();
+        msync(this->ptr, this->len, MS_SYNC);
+        this->mtx.unlock();
+    }
+
+    void async()
+    {
+        this->mtx.lock();
+        msync(this->ptr, this->len, MS_ASYNC);
+        this->mtx.unlock();
+    }
+
+    bool resize(size_t len)
+    {
+        if (len <= this->len) {
+            return false;
+        }
+        this->mtx.lock();
+        char* old_ptr = (char*)mremap(this->ptr, this->len, len, MREMAP_MAYMOVE);
+        if (old_ptr == MAP_FAILED) {
+            this->mtx.unlock();
+            return false;
+        }
+        lseek(this->fd, 0, SEEK_END);
+        std::string tmp(len - this->len, '\n');
+        write(fd, tmp.c_str(), tmp.size());
+        lseek(this->fd, 0, SEEK_SET);
+        this->ptr = old_ptr;
+        this->len = len;
+        this->mtx.unlock();
+        return true;
+    }
+};
 }
 
 #endif /* SHARED_MEMORY_HPP */
