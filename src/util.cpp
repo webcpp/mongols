@@ -650,7 +650,7 @@ multi_process::~multi_process()
 void multi_process::run(const std::function<void(pthread_mutex_t*, size_t*)>& f, const std::function<bool(int)>& g, size_t process_size)
 {
     std::function<void()> process_work = [&]() {
-        prctl(PR_SET_NAME, "mongols: worker");
+        prctl(PR_SET_NAME, std::to_string(getppid()).append(":worker").c_str());
         f(this->mtx, this->data);
     };
     mongols::forker((process_size > 0 ? process_size : std::thread::hardware_concurrency()), process_work, multi_process::pids);
