@@ -1,12 +1,14 @@
 var http = require('http');
-var port = 8889;
 
-http.createServer(function (request, response) {
+const hostname = '127.0.0.1';
+const port = 8889;
 
-    response.writeHead(200, {'Content-Type': 'text/plain','Content-Length':'12'});
+const server = http.createServer((req, res) => {
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'text/plain');
+    res.end('Hello World');
+});
 
-    response.end('Hello World\n');
-}).listen(port);
-
-
-console.log('Server running at http://127.0.0.1:' + 8889 + '/');
+server.listen(port, hostname, () => {
+    console.log(`Server running at http://${hostname}:${port}/`);
+});
