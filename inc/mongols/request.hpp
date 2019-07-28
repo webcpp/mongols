@@ -14,11 +14,6 @@ public:
         , method()
         , uri()
         , param()
-        , schema()
-        , host()
-        , port()
-        , fragment()
-        , user_info()
         , headers()
         , form()
         , cookies()
@@ -27,7 +22,7 @@ public:
     {
     }
     virtual ~request() = default;
-    std::string client, user_agent, method, uri, param, schema, host, port, fragment, user_info;
+    std::string client, user_agent, method, uri, param;
     std::unordered_map<std::string, std::string> headers, form, cookies, session, cache;
 };
 }
