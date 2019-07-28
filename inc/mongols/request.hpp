@@ -6,26 +6,30 @@
 
 namespace mongols {
 
-    class request {
-    public:
-
-        request() :
-        client()
+class request {
+public:
+    request()
+        : client()
         , user_agent()
         , method()
         , uri()
         , param()
+        , schema()
+        , host()
+        , port()
+        , fragment()
+        , user_info()
         , headers()
         , form()
         , cookies()
         , session()
-        , cache() {
-        }
-        virtual~request() = default;
-        std::string client, user_agent, method, uri, param;
-        std::unordered_map<std::string, std::string> headers, form, cookies, session,cache;
-    };
+        , cache()
+    {
+    }
+    virtual ~request() = default;
+    std::string client, user_agent, method, uri, param, schema, host, port, fragment, user_info;
+    std::unordered_map<std::string, std::string> headers, form, cookies, session, cache;
+};
 }
 
 #endif /* REQUEST_HPP */
-

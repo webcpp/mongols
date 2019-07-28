@@ -52,15 +52,27 @@ int http_request_parser::on_headers_complete(http_parser* p)
     struct http_parser_url u;
     http_parser_url_init(&u);
     http_parser_parse_url(THIS->parser->req.uri.c_str(), THIS->parser->req.uri.size(), 0, &u);
-    std::string path, param;
     if (u.field_set & (1 << UF_PATH)) {
-        path = std::move(THIS->parser->req.uri.substr(u.field_data[UF_PATH].off, u.field_data[UF_PATH].len));
+        THIS->parser->req.uri = std::move(THIS->parser->req.uri.substr(u.field_data[UF_PATH].off, u.field_data[UF_PATH].len));
     }
     if (u.field_set & (1 << UF_QUERY)) {
-        param = std::move(THIS->parser->req.uri.substr(u.field_data[UF_QUERY].off, u.field_data[UF_QUERY].len));
+        THIS->parser->req.param = std::move(THIS->parser->req.uri.substr(u.field_data[UF_QUERY].off, u.field_data[UF_QUERY].len));
     }
-    THIS->parser->req.param = std::move(param);
-    THIS->parser->req.uri = std::move(path);
+    if (u.field_set & (1 << UF_SCHEMA)) {
+        THIS->parser->req.schema = std::move(THIS->parser->req.uri.substr(u.field_data[UF_SCHEMA].off, u.field_data[UF_SCHEMA].len));
+    }
+    if (u.field_set & (1 << UF_HOST)) {
+        THIS->parser->req.host = std::move(THIS->parser->req.uri.substr(u.field_data[UF_HOST].off, u.field_data[UF_HOST].len));
+    }
+    if (u.field_set & (1 << UF_PORT)) {
+        THIS->parser->req.port = std::move(THIS->parser->req.uri.substr(u.field_data[UF_PORT].off, u.field_data[UF_PORT].len));
+    }
+    if (u.field_set & (1 << UF_FRAGMENT)) {
+        THIS->parser->req.fragment = std::move(THIS->parser->req.uri.substr(u.field_data[UF_FRAGMENT].off, u.field_data[UF_FRAGMENT].len));
+    }
+    if (u.field_set & (1 << UF_USERINFO)) {
+        THIS->parser->req.user_info = std::move(THIS->parser->req.uri.substr(u.field_data[UF_USERINFO].off, u.field_data[UF_USERINFO].len));
+    }
     return 0;
 }
 
