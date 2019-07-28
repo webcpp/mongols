@@ -58,7 +58,7 @@ int http_request_parser::on_status(http_parser* p, const char* at, size_t length
 int http_request_parser::on_url(http_parser* p, const char* buf, size_t len)
 {
     http_request_parser::tmp_* THIS = (http_request_parser::tmp_*)p->data;
-    THIS->parser->req.method = std::move(http_method_str((enum http_method)p->method));
+    THIS->parser->req.method = http_method_str((enum http_method)p->method);
     struct http_parser_url u;
     http_parser_url_init(&u);
     http_parser_parse_url(buf, len, 0, &u);
