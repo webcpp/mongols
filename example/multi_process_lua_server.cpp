@@ -106,7 +106,6 @@ int main(int, char**) {
     };
 
     std::function<bool(int) > g = [&](int status) {
-        std::cout << strsignal(WTERMSIG(status)) << std::endl;
         return false;
     };
 
