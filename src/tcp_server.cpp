@@ -50,9 +50,8 @@ tcp_server::tcp_server(const std::string& host, int port, int timeout, size_t bu
     , port(port)
     , listenfd(0)
     , max_event_size(max_event_size)
-    , serveraddr_v4(0)
-    , serveraddr_v6(0)
-    , serveraddr()
+    , server_is_ok(false)
+    , server_hints()
     , buffer_size(buffer_size)
     , thread_size(0)
     , sid(0)
@@ -68,9 +67,21 @@ tcp_server::tcp_server(const std::string& host, int port, int timeout, size_t bu
     , enable_blacklist(false)
     , enable_security_check(false)
 {
-    bool is_ipv4 = host.find(".") != std::string::npos;
 
-    this->listenfd = socket(is_ipv4 ? AF_INET : AF_INET6, SOCK_STREAM, 0);
+    memset(&this->server_hints, 0, sizeof(this->server_hints));
+    this->server_hints.ai_family = AF_UNSPEC;
+    this->server_hints.ai_socktype = SOCK_STREAM;
+    this->server_hints.ai_flags = AI_PASSIVE;
+
+    struct addrinfo* server_info = 0;
+    if (getaddrinfo(host.c_str(), std::to_string(port).c_str(), &this->server_hints, &server_info) != 0) {
+        perror("getaddrinfo error");
+        return;
+    } else {
+        this->server_is_ok = true;
+    }
+
+    this->listenfd = socket(server_info->ai_family, server_info->ai_socktype, server_info->ai_protocol);
 
     int on = 1;
     setsockopt(this->listenfd, SOL_SOCKET, SO_REUSEPORT, &on, sizeof(on));
@@ -84,23 +95,9 @@ tcp_server::tcp_server(const std::string& host, int port, int timeout, size_t bu
     recv_timeout.tv_usec = 0;
     setsockopt(this->listenfd, SOL_SOCKET, SO_RCVTIMEO, &recv_timeout, sizeof(recv_timeout));
 
-    if (is_ipv4) {
-        this->serveraddr_v4 = (struct sockaddr_in*)&this->serveraddr;
-        socklen_t addrlen = sizeof(struct sockaddr_in);
-        memset(this->serveraddr_v4, 0, addrlen);
-        this->serveraddr_v4->sin_family = AF_INET;
-        inet_pton(AF_INET, host.c_str(), &(this->serveraddr_v4->sin_addr));
-        this->serveraddr_v4->sin_port = htons(this->port);
-        bind(this->listenfd, (struct sockaddr*)this->serveraddr_v4, addrlen);
-    } else {
-        this->serveraddr_v6 = (struct sockaddr_in6*)&this->serveraddr;
-        socklen_t addrlen = sizeof(struct sockaddr_in6);
-        memset(this->serveraddr_v6, 0, addrlen);
-        this->serveraddr_v6->sin6_family = AF_INET6;
-        inet_pton(AF_INET6, host.c_str(), &(this->serveraddr_v6->sin6_addr));
-        this->serveraddr_v6->sin6_port = htons(this->port);
-        bind(this->listenfd, (struct sockaddr*)this->serveraddr_v6, addrlen);
-    }
+    bind(this->listenfd, server_info->ai_addr, server_info->ai_addrlen);
+    
+    freeaddrinfo(server_info);
 
     this->setnonblocking(this->listenfd);
 
@@ -167,6 +164,10 @@ tcp_server::black_ip_t::black_ip_t()
 
 void tcp_server::run(const handler_function& g)
 {
+    if (!this->server_is_ok) {
+        perror("server error");
+        return;
+    }
     std::vector<int> sigs = { SIGTERM, SIGINT, SIGQUIT, SIGPIPE };
 
     struct sigaction act;

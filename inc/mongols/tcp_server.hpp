@@ -4,10 +4,12 @@
 #include <atomic>
 #include <ctime>
 #include <list>
-#include <netinet/in.h>
+#include <netdb.h>
 #include <queue>
 #include <string>
 #include <sys/signal.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 #include <thread>
 #include <unordered_map>
 #include <utility>
@@ -75,9 +77,8 @@ public:
 private:
     std::string host;
     int port, listenfd, max_event_size;
-    struct sockaddr_in* serveraddr_v4;
-    struct sockaddr_in6* serveraddr_v6;
-    struct sockaddr_storage serveraddr;
+    bool server_is_ok;
+    struct addrinfo server_hints;
     static std::atomic_bool done;
     static void signal_normal_cb(int sig, siginfo_t*, void*);
     void setnonblocking(int fd);
