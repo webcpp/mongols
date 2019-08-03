@@ -96,7 +96,7 @@ tcp_server::tcp_server(const std::string& host, int port, int timeout, size_t bu
     setsockopt(this->listenfd, SOL_SOCKET, SO_RCVTIMEO, &recv_timeout, sizeof(recv_timeout));
 
     bind(this->listenfd, server_info->ai_addr, server_info->ai_addrlen);
-    
+
     freeaddrinfo(server_info);
 
     this->setnonblocking(this->listenfd);
@@ -443,6 +443,7 @@ void tcp_server::main_loop(struct epoll_event* event, const handler_function& g,
             this->work(event->data.fd, g);
         }
     } else {
+        epoll.del(event->data.fd);
         this->del_client(event->data.fd);
     }
 }
