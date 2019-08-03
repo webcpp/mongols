@@ -16,6 +16,11 @@ mongols web_server 1 worker VS nginx 1 worker:
 
 ![mongolsVSnginx_3.png](https://raw.githubusercontent.com/webcpp/mongols/master/benchmark/mongolsVSnginx_3.png)
 
+mongols web_server 4 worker VS nginx 4 worker:
+
+![mongolsVSnginx_4_worker.png](https://raw.githubusercontent.com/webcpp/mongols/master/benchmark/mongolsVSnginx_4_worker.png)
+
+
 ## dependency
 
 - linux
