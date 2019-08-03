@@ -443,7 +443,6 @@ void tcp_server::main_loop(struct epoll_event* event, const handler_function& g,
             this->work(event->data.fd, g);
         }
     } else {
-        epoll.del(event->data.fd);
         this->del_client(event->data.fd);
     }
 }

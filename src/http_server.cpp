@@ -427,6 +427,9 @@ std::string http_server::work(
             }
 
             res_filter(req, res);
+            if (res.status >= 400) {
+                keepalive = CLOSE_CONNECTION;
+            }
 
             if (enable_zip) {
                 size_t len = res.content.size();
