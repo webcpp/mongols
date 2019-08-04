@@ -10,6 +10,22 @@ A high performance network library for c++:
 
 ## benchmark
 
+```txt
+
+mongols@mongols ~/Downloads $ grep MemTotal /proc/meminfo
+MemTotal:        3939312 kB
+mongols@mongols ~/Downloads $ grep 'model name' /proc/cpuinfo
+model name	: Intel(R) Core(TM) i5-5200U CPU @ 2.20GHz
+model name	: Intel(R) Core(TM) i5-5200U CPU @ 2.20GHz
+model name	: Intel(R) Core(TM) i5-5200U CPU @ 2.20GHz
+model name	: Intel(R) Core(TM) i5-5200U CPU @ 2.20GHz
+mongols@mongols ~/Downloads $ uname -a
+Linux mongols 4.4.0-21-generic #37-Ubuntu SMP Mon Apr 18 18:33:37 UTC 2016 x86_64 x86_64 x86_64 GNU/Linux
+
+
+```
+
+
 mongols web_server 1 worker VS nginx 1 worker:
 
 ![mongolsVSnginx_2.png](https://raw.githubusercontent.com/webcpp/mongols/master/benchmark/mongolsVSnginx_2.png)
