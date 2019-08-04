@@ -15,9 +15,10 @@ OBJ=$(COBJ) $(CXXOBJ) $(CCOBJ) $(CPPOBJ)
 CC=gcc
 CXX=g++
 
-CFLAGS+=-O3 -std=c11 -Wall -fPIC
+CFLAGS+=-O3 -g -std=c11 -Wall -fPIC 
+CFLAGS+=-Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -DNDEBUG
 CFLAGS+=-Iinc/mongols -Iinc/mongols/lib
-CFLAGS+=-Iinc/mongols/lib/lua -Wextra -DLUA_COMPAT_5_2 -DLUA_COMPAT_5_1 -DLUA_USE_LINUX -D_GNU_SOURCE
+CFLAGS+=-Iinc/mongols/lib/lua -DLUA_COMPAT_5_2 -DLUA_COMPAT_5_1 -DLUA_USE_LINUX -D_GNU_SOURCE
 CFLAGS+=-DMULTIPLE_THREADS
 CFLAGS+=-Iinc/mongols/lib/sqlite  -DSQLITE_THREADSAFE=1 \
 	-DSQLITE_ENABLE_FTS4  \
@@ -30,11 +31,11 @@ CFLAGS+=-Iinc/mongols/lib/sqlite  -DSQLITE_THREADSAFE=1 \
 CFLAGS+=-Iinc/mongols/lib/z
 CFLAGS+=-Iinc/mongols/lib/hash
 CFLAGS+=-Iinc/mongols/lib/WjCryptLib
-CFLAGS+=-Iinc/mongols/lib/mmap_allocator
 
 
 
-CXXFLAGS+=-O3 -std=c++11 -Wall -fPIC
+CXXFLAGS+=-O3 -g -std=c++11 -Wall -fPIC
+CXXFLAGS+=-Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -DNDEBUG
 CXXFLAGS+=`pkg-config --cflags openssl`
 CXXFLAGS+=-Iinc/mongols -Iinc/mongols/lib 
 CXXFLAGS+=-Isrc/MPFDParser
@@ -42,7 +43,6 @@ CXXFLAGS+=-Iinc/mongols/lib/leveldb -Isrc/leveldb -DLEVELDB_PLATFORM_POSIX -DLEV
 CXXFLAGS+= -DKAGUYA_USE_CPP11
 CXXFLAGS+=-Isrc -Isrc/re2 
 CXXFLAGS+=-Iinc/mongols/lib/sqlite
-CFLAGS+=-Iinc/mongols/lib/mmap_allocator
 
 
 
