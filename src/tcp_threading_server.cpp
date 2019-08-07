@@ -30,6 +30,7 @@ tcp_threading_server::tcp_threading_server(const std::string& host, int port, in
 bool tcp_threading_server::add_client(int fd, const std::string& ip, int port)
 {
     std::lock_guard<std::mutex> lk(this->main_mtx);
+    this->server_epoll->add(fd, EPOLLIN | EPOLLRDHUP | EPOLLET);
     auto pair = this->clients.insert(std::move(std::make_pair(fd, std::move(meta_data_t(ip, port, 0, 0)))));
     if (this->sid_queue.empty()) {
         pair.first->second.client.sid = ++this->sid;
@@ -49,6 +50,7 @@ bool tcp_threading_server::add_client(int fd, const std::string& ip, int port)
 void tcp_threading_server::del_client(int fd)
 {
     std::lock_guard<std::mutex> lk(this->main_mtx);
+    this->server_epoll->del(fd);
     this->sid_queue.push(this->clients.find(fd)->second.client.sid);
     this->clients.erase(fd);
     shutdown(fd, SHUT_RDWR);

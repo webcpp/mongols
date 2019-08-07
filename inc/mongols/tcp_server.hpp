@@ -105,6 +105,7 @@ protected:
         size_t count;
         bool disallow;
     };
+    mongols::epoll* server_epoll;
     size_t buffer_size, thread_size, sid;
     int timeout;
     std::queue<size_t, std::list<size_t>> sid_queue;

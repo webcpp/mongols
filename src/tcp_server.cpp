@@ -52,6 +52,7 @@ tcp_server::tcp_server(const std::string& host, int port, int timeout, size_t bu
     , max_event_size(max_event_size)
     , server_is_ok(false)
     , server_hints()
+    , server_epoll(0)
     , buffer_size(buffer_size)
     , thread_size(0)
     , sid(0)
@@ -186,6 +187,7 @@ void tcp_server::run(const handler_function& g)
         perror("epoll error");
         return;
     }
+    this->server_epoll = &epoll;
     epoll.add(this->listenfd, EPOLLIN | EPOLLET);
     auto main_fun = std::bind(&tcp_server::main_loop, this, std::placeholders::_1, std::cref(g), std::ref(epoll));
     if (this->thread_size > 0) {
@@ -204,6 +206,7 @@ void tcp_server::setnonblocking(int fd)
 
 bool tcp_server::add_client(int fd, const std::string& ip, int port)
 {
+    this->server_epoll->add(fd, EPOLLIN | EPOLLRDHUP | EPOLLET);
     auto pair = this->clients.insert(std::move(std::make_pair(fd, std::move(meta_data_t(ip, port, 0, 0)))));
     if (this->sid_queue.empty()) {
         pair.first->second.client.sid = ++this->sid;
@@ -222,6 +225,7 @@ bool tcp_server::add_client(int fd, const std::string& ip, int port)
 
 void tcp_server::del_client(int fd)
 {
+    this->server_epoll->del(fd);
     this->sid_queue.push(this->clients.find(fd)->second.client.sid);
     this->clients.erase(fd);
     shutdown(fd, SHUT_RDWR);
@@ -422,7 +426,6 @@ void tcp_server::main_loop(struct epoll_event* event, const handler_function& g,
                     close(connfd);
                     break;
                 }
-                epoll.add(connfd, EPOLLIN | EPOLLRDHUP | EPOLLET);
                 if (!this->add_client(connfd, clientip, clientport)) {
                     this->del_client(connfd);
                     break;
