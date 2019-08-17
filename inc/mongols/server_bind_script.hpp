@@ -1,125 +1,147 @@
 #ifndef SERVER_BIND_SCRIPT_HPP
 #define SERVER_BIND_SCRIPT_HPP
 
-#include <string>
 #include "request.hpp"
 #include "response.hpp"
+#include <string>
 
 namespace mongols {
 
-    class server_bind_script_request {
-    public:
+class server_bind_script_request {
+public:
+    server_bind_script_request()
+        : req(0)
+    {
+    }
 
-        server_bind_script_request() : req(0) {
-        }
+    virtual ~server_bind_script_request() = default;
 
-        virtual~server_bind_script_request() = default;
+    void init(request* req)
+    {
+        this->req = req;
+    }
 
-        void init(request* req) {
-            this->req = req;
-        }
+    std::string uri() const
+    {
+        return this->req->uri;
+    }
 
-        std::string uri()const {
-            return this->req->uri;
-        }
+    std::string method() const
+    {
+        return this->req->method;
+    }
 
-        std::string method()const {
-            return this->req->method;
-        }
+    std::string client() const
+    {
+        return this->req->client;
+    }
 
-        std::string client()const {
-            return this->req->client;
-        }
+    std::string user_agent() const
+    {
+        return this->req->user_agent;
+    }
 
-        std::string user_agent()const {
-            return this->req->user_agent;
-        }
+    std::string param() const
+    {
+        return this->req->param;
+    }
 
-        std::string param()const {
-            return this->req->param;
-        }
+    bool has_header(const std::string& key) const
+    {
+        return this->req->headers.find(key) != this->req->headers.end();
+    }
 
-        bool has_header(const std::string& key) const {
-            return this->req->headers.find(key) != this->req->headers.end();
-        }
+    std::string get_header(const std::string& key) const
+    {
+        return this->req->headers[key];
+    }
 
-        std::string get_header(const std::string& key)const {
-            return this->req->headers[key];
-        }
+    bool has_form(const std::string& key) const
+    {
+        return this->req->form.find(key) != this->req->form.end();
+    }
 
-        bool has_form(const std::string& key) const {
-            return this->req->form.find(key) != this->req->form.end();
-        }
+    std::string get_form(const std::string& key) const
+    {
+        return this->req->form[key];
+    }
 
-        std::string get_form(const std::string& key)const {
-            return this->req->form[key];
-        }
+    bool has_cookie(const std::string& key) const
+    {
+        return this->req->cookies.find(key) != this->req->cookies.end();
+    }
 
-        bool has_cookie(const std::string& key) const {
-            return this->req->cookies.find(key) != this->req->cookies.end();
-        }
+    std::string get_cookie(const std::string& key) const
+    {
+        return this->req->cookies[key];
+    }
 
-        std::string get_cookie(const std::string& key)const {
-            return this->req->cookies[key];
-        }
+    bool has_session(const std::string& key) const
+    {
+        return this->req->session.find(key) != this->req->session.end();
+    }
 
-        bool has_session(const std::string& key) const {
-            return this->req->session.find(key) != this->req->session.end();
-        }
+    std::string get_session(const std::string& key) const
+    {
+        return this->req->session[key];
+    }
 
-        std::string get_session(const std::string& key)const {
-            return this->req->session[key];
-        }
+    bool has_cache(const std::string& key) const
+    {
+        return this->req->cache.find(key) != this->req->cache.end();
+    }
 
-        bool has_cache(const std::string& key) const {
-            return this->req->cache.find(key) != this->req->cache.end();
-        }
+    std::string get_cache(const std::string& key) const
+    {
+        return this->req->cache[key];
+    }
 
-        std::string get_cache(const std::string& key)const {
-            return this->req->cache[key];
-        }
+private:
+    request* req;
+};
 
-    private:
-        request* req;
-    };
+class server_bind_script_response {
+public:
+    server_bind_script_response()
+        : res(0)
+    {
+    }
 
-    class server_bind_script_response {
-    public:
+    virtual ~server_bind_script_response() = default;
 
-        server_bind_script_response() : res(0) {
-        }
+    void init(response* res)
+    {
+        this->res = res;
+    }
 
-        virtual~server_bind_script_response() = default;
+    void status(int c)
+    {
+        this->res->status = c;
+    }
 
-        void init(response* res) {
-            this->res = res;
-        }
+    void content(const std::string& content)
+    {
+        this->res->content = content;
+    }
 
-        void status(int c) {
-            this->res->status = c;
-        }
+    void header(const std::string& key, const std::string& value)
+    {
+        this->res->set_header(key, value);
+    }
 
-        void content(const std::string& content) {
-            this->res->content = content;
-        }
+    void session(const std::string& key, const std::string& value)
+    {
+        this->res->set_session(key, value);
+    }
 
-        void header(const std::string& key, const std::string& value) {
-            this->res->set_header(key,value);
-        }
+    void cache(const std::string& key, const std::string& value)
+    {
+        this->res->set_cache(key, value);
+    }
 
-        void session(const std::string& key, const std::string& value) {
-            this->res->set_session(key, value);
-        }
-
-        void cache(const std::string& key, const std::string& value) {
-            this->res->set_cache(key, value);
-        }
-
-    private:
-        response* res;
-    };
+private:
+    response* res;
+};
 }
 
-
 #endif /* SERVER_BIND_SCRIPT_HPP */
-

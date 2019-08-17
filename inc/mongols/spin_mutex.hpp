@@ -5,24 +5,28 @@
 
 namespace mongols {
 
-    class spin_mutex {
-    private:
-        std::atomic_flag flag;
-    public:
+class spin_mutex {
+private:
+    std::atomic_flag flag;
 
-        spin_mutex() : flag(ATOMIC_FLAG_INIT) {
-        }
-        virtual~spin_mutex() = default;
+public:
+    spin_mutex()
+        : flag(ATOMIC_FLAG_INIT)
+    {
+    }
+    virtual ~spin_mutex() = default;
 
-        void lock() {
-            while (this->flag.test_and_set(std::memory_order_acquire));
-        }
+    void lock()
+    {
+        while (this->flag.test_and_set(std::memory_order_acquire))
+            ;
+    }
 
-        void unlock() {
-            this->flag.clear(std::memory_order_release);
-        }
-    };
+    void unlock()
+    {
+        this->flag.clear(std::memory_order_release);
+    }
+};
 }
 
 #endif /* SPIN_MUTEX_HPP */
-
