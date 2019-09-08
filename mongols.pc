@@ -8,5 +8,5 @@ Description: C++ high performance networking with TCP/RESP/HTTP/WebSocket protoc
 Version: 1.7.4
 URL: https://github.com/webcpp/mongols
 Requires:
-Libs: -L${libdir} -lmongols -lpthread -ldl -lrt -lm -lstdc++
-Cflags: -I${includedir}/mongols -I${includedir}/mongols/lib
+Libs: -L${libdir} -lmongols -pthread -ldl -lrt -lm -lstdc++
+Cflags: -std=c++11 -pthread -I${includedir}/mongols -I${includedir}/mongols/lib
