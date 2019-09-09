@@ -11,6 +11,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <thread>
+#include <unistd.h>
 #include <unordered_map>
 #include <utility>
 
@@ -50,6 +51,7 @@ public:
     typedef std::function<std::string(
         const std::pair<char*, size_t>&, bool&, bool&, client_t&, filter_handler_function&)>
         handler_function;
+    typedef std::function<void(void)> shutdown_function;
 
 public:
     tcp_server() = delete;
@@ -65,6 +67,7 @@ public:
 
     void set_enable_blacklist(bool);
     void set_enable_security_check(bool);
+    void set_shutdown(const shutdown_function&);
 
     static int backlog;
     static size_t backlist_size;
@@ -79,6 +82,7 @@ private:
     int port, listenfd, max_event_size;
     bool server_is_ok;
     struct addrinfo server_hints;
+    shutdown_function cleaning_fun;
     static std::atomic_bool done;
     static void signal_normal_cb(int sig, siginfo_t*, void*);
     void setnonblocking(int fd);

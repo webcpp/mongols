@@ -52,6 +52,7 @@ tcp_server::tcp_server(const std::string& host, int port, int timeout, size_t bu
     , max_event_size(max_event_size)
     , server_is_ok(false)
     , server_hints()
+    , cleaning_fun()
     , server_epoll(0)
     , buffer_size(buffer_size)
     , thread_size(0)
@@ -113,6 +114,9 @@ tcp_server::~tcp_server()
     if (this->listenfd) {
         shutdown(this->listenfd, SHUT_RDWR);
         close(this->listenfd);
+    }
+    if (this->cleaning_fun) {
+        this->cleaning_fun();
     }
 }
 
@@ -196,6 +200,11 @@ void tcp_server::run(const handler_function& g)
     while (tcp_server::done) {
         epoll.loop(main_fun);
     }
+}
+
+void tcp_server::set_shutdown(const shutdown_function& f)
+{
+    this->cleaning_fun = f;
 }
 
 void tcp_server::setnonblocking(int fd)

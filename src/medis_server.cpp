@@ -277,6 +277,11 @@ void medis_server::set_enable_security_check(bool b)
     this->server->set_enable_security_check(b);
 }
 
+void medis_server::set_shutdown(const tcp_server::shutdown_function& f)
+{
+    this->server->set_shutdown(f);
+}
+
 void medis_server::run(const std::string& path, const std::string& db_name)
 {
     this->options.create_if_missing = true;

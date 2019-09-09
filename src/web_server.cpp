@@ -274,4 +274,8 @@ void web_server::set_enable_security_check(bool b)
 {
     this->server->set_enable_security_check(b);
 }
+void web_server::set_shutdown(const tcp_server::shutdown_function& f)
+{
+    this->server->set_shutdown(f);
+}
 }

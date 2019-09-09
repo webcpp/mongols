@@ -36,6 +36,9 @@ int main(int, char**)
     //server.set_enable_origin_check(true);./
     //server.set_origin("http://localhost");
     //server.set_max_send_limit(5);
+    server.set_shutdown([&]() {
+        std::cout << "process " << getpid() << " exit.\n";
+    });
     server.run(f);
     //server.run();
 }

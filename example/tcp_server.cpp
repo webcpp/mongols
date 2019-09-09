@@ -1,6 +1,7 @@
 
 #include <mongols/tcp_server.hpp>
 #include <mongols/tcp_threading_server.hpp>
+#include <unistd.h>
 
 int main(int, char**) {
     auto f = [](const std::pair<char*, size_t>& input
@@ -21,6 +22,8 @@ int main(int, char**) {
 //    if (!server.set_openssl("openssl/localhost.crt", "openssl/localhost.key")) {
 //        return -1;
 //    }
-
+    server.set_shutdown([&](){
+        std::cout << "process "<<getpid()<<" exit.\n";
+    });
     server.run(f);
 }

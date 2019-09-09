@@ -46,6 +46,7 @@ public:
     void set_lua_package_path(const std::string& package_path, const std::string& package_cpath);
     void set_enable_blacklist(bool);
     void set_enable_security_check(bool);
+    void set_shutdown(const tcp_server::shutdown_function&);
 
 private:
     tcp_server* server;

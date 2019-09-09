@@ -427,6 +427,11 @@ void tcp_proxy_server::set_default_http_content()
     this->default_content = tcp_proxy_server::DEFAULT_HTTP_CONTENT;
 }
 
+void tcp_proxy_server::set_shutdown(const tcp_server::shutdown_function& f)
+{
+    this->server->set_shutdown(f);
+}
+
 tcp_proxy_server::backend_server_t::backend_server_t(const std::string& server, int port, bool b)
 {
     this->server = server;

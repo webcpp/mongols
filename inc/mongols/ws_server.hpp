@@ -32,6 +32,7 @@ public:
     void set_enable_origin_check(bool);
     void set_enable_blacklist(bool);
     void set_enable_security_check(bool);
+    void set_shutdown(const tcp_server::shutdown_function&);
 
 private:
     virtual std::string work(const message_handler_function&, const std::pair<char*, size_t>&, bool&, bool&, tcp_server::client_t&, tcp_server::filter_handler_function&);

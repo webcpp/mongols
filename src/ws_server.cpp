@@ -371,4 +371,9 @@ bool ws_server::set_openssl(const std::string& crt_file, const std::string& key_
 {
     return this->server->set_openssl(crt_file, key_file, v, ciphers, flags);
 }
+
+void ws_server::set_shutdown(const tcp_server::shutdown_function& f)
+{
+    this->server->set_shutdown(f);
+}
 }
