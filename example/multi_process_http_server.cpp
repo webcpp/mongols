@@ -53,4 +53,5 @@ int main(int, char**)
 
     mongols::multi_process main_process;
     main_process.run(ff, gg);
+    return 0;
 }

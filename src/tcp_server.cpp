@@ -35,6 +35,7 @@ size_t tcp_server::max_connection_keepalive = 60;
 void tcp_server::signal_normal_cb(int sig, siginfo_t*, void*)
 {
     switch (sig) {
+    case SIGHUP:
     case SIGTERM:
     case SIGQUIT:
     case SIGINT:
@@ -173,7 +174,7 @@ void tcp_server::run(const handler_function& g)
         perror("server error");
         return;
     }
-    std::vector<int> sigs = { SIGTERM, SIGINT, SIGQUIT, SIGPIPE };
+    std::vector<int> sigs = { SIGHUP, SIGTERM, SIGINT, SIGQUIT, SIGPIPE };
 
     struct sigaction act;
     for (size_t i = 0; i < sigs.size(); ++i) {
