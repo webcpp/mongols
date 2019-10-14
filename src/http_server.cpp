@@ -592,6 +592,15 @@ void http_server::set_enable_security_check(bool b)
     this->server->set_enable_security_check(b);
 }
 
+void http_server::set_enable_whitelist(bool b)
+{
+    this->server->set_enable_whitelist(b);
+}
+void http_server::set_whitelist(const std::string& ip)
+{
+    this->server->set_whitelist(ip);
+}
+
 void http_server::set_shutdown(const tcp_server::shutdown_function& f)
 {
     this->server->set_shutdown(f);

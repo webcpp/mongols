@@ -67,6 +67,8 @@ public:
 
     void set_enable_blacklist(bool);
     void set_enable_security_check(bool);
+    void set_enable_whitelist(bool);
+    void set_whitelist(const std::string&);
     void set_shutdown(const shutdown_function&);
 
     static int backlog;
@@ -117,10 +119,11 @@ protected:
     mongols::thread_pool<std::function<bool()>>* work_pool;
 
     lru11::Cache<std::string, std::shared_ptr<black_ip_t>> blacklist;
+    std::list<std::string> whitelist;
 
     std::shared_ptr<mongols::openssl> openssl_manager;
     std::string openssl_crt_file, openssl_key_file;
-    bool openssl_is_ok, enable_blacklist, enable_security_check;
+    bool openssl_is_ok, enable_blacklist, enable_whitelist, enable_security_check;
 
     virtual bool add_client(int, const std::string&, int);
     virtual void del_client(int);
@@ -128,6 +131,7 @@ protected:
     virtual bool work(int, const handler_function&);
     virtual bool ssl_work(int, const handler_function&);
     virtual bool check_blacklist(const std::string&);
+    virtual bool check_whitelist(const std::string&);
     virtual bool security_check(tcp_server::client_t&);
 };
 }

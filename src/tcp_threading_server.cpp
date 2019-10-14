@@ -105,6 +105,12 @@ bool tcp_threading_server::check_blacklist(const std::string& ip)
     return true;
 }
 
+bool tcp_threading_server::check_whitelist(const std::string& ip)
+{
+    std::lock_guard<std::mutex> lk(this->main_mtx);
+    return std::find(this->whitelist.begin(), this->whitelist.end(), ip) != this->whitelist.end();
+}
+
 bool tcp_threading_server::work(int fd, const handler_function& g)
 {
     char buffer[this->buffer_size];

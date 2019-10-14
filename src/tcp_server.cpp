@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <cstring>
 
+#include <algorithm>
 #include <atomic>
 #include <functional>
 #include <iostream>
@@ -63,11 +64,13 @@ tcp_server::tcp_server(const std::string& host, int port, int timeout, size_t bu
     , clients()
     , work_pool(0)
     , blacklist(tcp_server::backlist_size)
+    , whitelist()
     , openssl_manager()
     , openssl_crt_file()
     , openssl_key_file()
     , openssl_is_ok(false)
     , enable_blacklist(false)
+    , enable_whitelist(false)
     , enable_security_check(false)
 {
 
@@ -208,6 +211,11 @@ void tcp_server::set_shutdown(const shutdown_function& f)
     this->cleaning_fun = f;
 }
 
+void tcp_server::set_whitelist(const std::string& ip)
+{
+    this->whitelist.push_back(ip);
+}
+
 void tcp_server::setnonblocking(int fd)
 {
     int flags = fcntl(fd, F_GETFL, 0);
@@ -281,6 +289,11 @@ bool tcp_server::check_blacklist(const std::string& ip)
         this->blacklist.insert(ip, std::make_shared<black_ip_t>());
     }
     return true;
+}
+
+bool tcp_server::check_whitelist(const std::string& ip)
+{
+    return std::find(this->whitelist.begin(), this->whitelist.end(), ip) != this->whitelist.end();
 }
 
 bool tcp_server::security_check(tcp_server::client_t& client)
@@ -436,6 +449,9 @@ void tcp_server::main_loop(struct epoll_event* event, const handler_function& g,
                     close(connfd);
                     break;
                 }
+                if (this->enable_whitelist && !this->check_whitelist(clientip)) {
+                    goto accept_error;
+                }
                 if (!this->add_client(connfd, clientip, clientport)) {
                     this->del_client(connfd);
                     break;
@@ -504,5 +520,9 @@ void tcp_server::set_enable_blacklist(bool b)
 void tcp_server::set_enable_security_check(bool b)
 {
     this->enable_security_check = b;
+}
+void tcp_server::set_enable_whitelist(bool b)
+{
+    this->enable_whitelist = b;
 }
 }

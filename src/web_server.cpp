@@ -270,6 +270,15 @@ void web_server::set_enable_blacklist(bool b)
     this->server->set_enable_blacklist(b);
 }
 
+void web_server::set_enable_whitelist(bool b)
+{
+    this->server->set_enable_whitelist(b);
+}
+void web_server::set_whitelist(const std::string& ip)
+{
+    this->server->set_whitelist(ip);
+}
+
 void web_server::set_enable_security_check(bool b)
 {
     this->server->set_enable_security_check(b);

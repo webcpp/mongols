@@ -151,6 +151,15 @@ void leveldb_server::set_enable_blacklist(bool b)
     this->server->set_enable_blacklist(b);
 }
 
+void leveldb_server::set_enable_whitelist(bool b)
+{
+    this->server->set_enable_whitelist(b);
+}
+void leveldb_server::set_whitelist(const std::string& ip)
+{
+    this->server->set_whitelist(ip);
+}
+
 void leveldb_server::set_enable_security_check(bool b)
 {
     this->server->set_enable_security_check(b);

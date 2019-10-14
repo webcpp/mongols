@@ -21,6 +21,7 @@ private:
     virtual bool work(int, const handler_function&);
     virtual bool ssl_work(int, const handler_function&);
     virtual bool check_blacklist(const std::string&);
+    virtual bool check_whitelist(const std::string&);
 
     bool send_to_other_client(int, int, meta_data_t&, const std::string&, const filter_handler_function&);
 
