@@ -159,7 +159,10 @@ void leveldb_server::set_whitelist(const std::string& ip)
 {
     this->server->set_whitelist(ip);
 }
-
+void leveldb_server::del_whitelist(const std::string& ip)
+{
+    this->server->del_whitelist(ip);
+}
 void leveldb_server::set_enable_security_check(bool b)
 {
     this->server->set_enable_security_check(b);

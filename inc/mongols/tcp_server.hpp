@@ -68,8 +68,10 @@ public:
     void set_enable_blacklist(bool);
     void set_enable_security_check(bool);
     void set_enable_whitelist(bool);
-    void set_whitelist(const std::string&);
     void set_shutdown(const shutdown_function&);
+
+    virtual void set_whitelist(const std::string&);
+    virtual void del_whitelist(const std::string&);
 
     static int backlog;
     static size_t backlist_size;

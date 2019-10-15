@@ -28,6 +28,7 @@ public:
     void set_enable_security_check(bool);
     void set_enable_whitelist(bool);
     void set_whitelist(const std::string&);
+    void del_whitelist(const std::string&);
     void set_shutdown(const tcp_server::shutdown_function&);
     void run(const std::string&);
 

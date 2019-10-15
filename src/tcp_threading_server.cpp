@@ -27,6 +27,18 @@ tcp_threading_server::tcp_threading_server(const std::string& host, int port, in
     this->thread_size = (thread_size == 0 ? std::thread::hardware_concurrency() : thread_size);
 }
 
+void tcp_threading_server::set_whitelist(const std::string& ip)
+{
+    std::lock_guard<std::mutex> lk(this->main_mtx);
+    this->whitelist.push_back(ip);
+}
+
+void tcp_threading_server::del_whitelist(const std::string& ip)
+{
+    std::lock_guard<std::mutex> lk(this->main_mtx);
+    this->whitelist.remove(ip);
+}
+
 bool tcp_threading_server::add_client(int fd, const std::string& ip, int port)
 {
     std::lock_guard<std::mutex> lk(this->main_mtx);

@@ -280,6 +280,10 @@ void medis_server::set_whitelist(const std::string& ip)
 {
     this->server->set_whitelist(ip);
 }
+void medis_server::del_whitelist(const std::string& ip)
+{
+    this->server->del_whitelist(ip);
+}
 
 void medis_server::set_enable_security_check(bool b)
 {

@@ -600,6 +600,10 @@ void http_server::set_whitelist(const std::string& ip)
 {
     this->server->set_whitelist(ip);
 }
+void http_server::del_whitelist(const std::string& ip)
+{
+    this->server->del_whitelist(ip);
+}
 
 void http_server::set_shutdown(const tcp_server::shutdown_function& f)
 {

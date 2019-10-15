@@ -216,6 +216,11 @@ void tcp_server::set_whitelist(const std::string& ip)
     this->whitelist.push_back(ip);
 }
 
+void tcp_server::del_whitelist(const std::string& ip)
+{
+    this->whitelist.remove(ip);
+}
+
 void tcp_server::setnonblocking(int fd)
 {
     int flags = fcntl(fd, F_GETFL, 0);
