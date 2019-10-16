@@ -605,6 +605,11 @@ void http_server::del_whitelist(const std::string& ip)
     this->server->del_whitelist(ip);
 }
 
+void http_server::set_whitelist_file(const std::string& path)
+{
+    this->server->set_whitelist_file(path);
+}
+
 void http_server::set_shutdown(const tcp_server::shutdown_function& f)
 {
     this->server->set_shutdown(f);

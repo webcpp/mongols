@@ -9,6 +9,7 @@
 #include <cstdlib>
 #include <cstring>
 
+#include <fstream>
 #include <functional>
 #include <iostream>
 #include <mutex>
@@ -17,6 +18,7 @@
 #include <vector>
 
 #include "tcp_threading_server.hpp"
+#include "util.hpp"
 
 namespace mongols {
 
@@ -37,6 +39,26 @@ void tcp_threading_server::del_whitelist(const std::string& ip)
 {
     std::lock_guard<std::mutex> lk(this->main_mtx);
     this->whitelist.remove(ip);
+}
+
+bool tcp_threading_server::read_whitelist_file(const std::string& path)
+{
+    if (mongols::is_file(path)) {
+        std::lock_guard<std::mutex> lk(this->main_mtx);
+        this->whitelist.clear();
+        std::ifstream input(path);
+        if (input) {
+            std::string line;
+            while (std::getline(input, line)) {
+                mongols::trim(line);
+                if (!line.empty()) {
+                    this->whitelist.push_back(line);
+                }
+            }
+            return true;
+        }
+    }
+    return false;
 }
 
 bool tcp_threading_server::add_client(int fd, const std::string& ip, int port)

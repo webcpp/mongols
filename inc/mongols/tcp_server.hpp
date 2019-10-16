@@ -18,7 +18,7 @@
 #include "epoll.hpp"
 #include "lib/LRUCache11.hpp"
 #include "thread_pool.hpp"
-
+#include "inotify.hpp"
 #include "openssl.hpp"
 
 #define CLOSE_CONNECTION true
@@ -72,6 +72,7 @@ public:
 
     virtual void set_whitelist(const std::string&);
     virtual void del_whitelist(const std::string&);
+    void set_whitelist_file(const std::string&);
 
     static int backlog;
     static size_t backlist_size;
@@ -87,6 +88,7 @@ private:
     bool server_is_ok;
     struct addrinfo server_hints;
     shutdown_function cleaning_fun;
+    std::shared_ptr<inotify> whitelist_inotify;
     static std::atomic_bool done;
     static void signal_normal_cb(int sig, siginfo_t*, void*);
     void setnonblocking(int fd);
@@ -134,6 +136,7 @@ protected:
     virtual bool ssl_work(int, const handler_function&);
     virtual bool check_blacklist(const std::string&);
     virtual bool check_whitelist(const std::string&);
+    virtual bool read_whitelist_file(const std::string&);
     virtual bool security_check(tcp_server::client_t&);
 };
 }

@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <fstream>
 #include <functional>
 #include <iostream>
 #include <mutex>
@@ -22,6 +23,7 @@
 
 #include "openssl.hpp"
 #include "tcp_server.hpp"
+#include "util.hpp"
 
 namespace mongols {
 
@@ -55,6 +57,7 @@ tcp_server::tcp_server(const std::string& host, int port, int timeout, size_t bu
     , server_is_ok(false)
     , server_hints()
     , cleaning_fun()
+    , whitelist_inotify()
     , server_epoll(0)
     , buffer_size(buffer_size)
     , thread_size(0)
@@ -196,7 +199,17 @@ void tcp_server::run(const handler_function& g)
         return;
     }
     this->server_epoll = &epoll;
-    epoll.add(this->listenfd, EPOLLIN | EPOLLET);
+    if (!epoll.add(this->listenfd, EPOLLIN | EPOLLET)) {
+        perror("epoll listen error");
+        return;
+    }
+    if (this->whitelist_inotify) {
+        int white_list_fd = this->whitelist_inotify->get_fd();
+        if (!epoll.add(white_list_fd, EPOLLIN | EPOLLET) || !this->whitelist_inotify->watch(IN_MODIFY)) {
+            epoll.del(white_list_fd);
+            this->whitelist_inotify.reset();
+        }
+    }
     auto main_fun = std::bind(&tcp_server::main_loop, this, std::placeholders::_1, std::cref(g), std::ref(epoll));
     if (this->thread_size > 0) {
         this->work_pool = new mongols::thread_pool<std::function<bool()>>(this->thread_size);
@@ -219,6 +232,52 @@ void tcp_server::set_whitelist(const std::string& ip)
 void tcp_server::del_whitelist(const std::string& ip)
 {
     this->whitelist.remove(ip);
+}
+
+bool tcp_server::read_whitelist_file(const std::string& path)
+{
+    if (mongols::is_file(path)) {
+        this->whitelist.clear();
+        std::ifstream input(path);
+        if (input) {
+            std::string line;
+            while (std::getline(input, line)) {
+                mongols::trim(line);
+                if (!line.empty()) {
+                    this->whitelist.push_back(line);
+                }
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
+void tcp_server::set_whitelist_file(const std::string& path)
+{
+    char path_buffer[PATH_MAX];
+    char * tmp = realpath(path.c_str(),path_buffer);
+    std::string real_path;
+    if(tmp){
+        real_path = tmp;
+    }else{
+        return ;
+    }
+    std::string dir = real_path.substr(0,real_path.find_last_of('/'));
+    if (this->read_whitelist_file(real_path)) {
+        this->whitelist_inotify = std::make_shared<inotify>(dir);
+        if (this->whitelist_inotify->get_fd() < 0) {
+            this->whitelist_inotify.reset();
+        } else {
+            this->whitelist_inotify->set_cb([&,real_path](struct inotify_event* event) {
+                if (event->len >0) {
+                    if (event->mask & this->whitelist_inotify->get_mask()) {
+                        this->read_whitelist_file(real_path);
+                    }
+                }
+            });
+        }
+    }
 }
 
 void tcp_server::setnonblocking(int fd)
@@ -470,6 +529,8 @@ void tcp_server::main_loop(struct epoll_event* event, const handler_function& g,
                 }
             }
         }
+    } else if (this->whitelist_inotify && event->data.fd == this->whitelist_inotify->get_fd()) {
+        this->whitelist_inotify->run();
     } else if (event->events & EPOLLIN) {
         if (this->openssl_is_ok) {
             this->ssl_work(event->data.fd, g);

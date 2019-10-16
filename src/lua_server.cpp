@@ -170,6 +170,12 @@ void lua_server::del_whitelist(const std::string& ip)
 {
     this->server->del_whitelist(ip);
 }
+
+void lua_server::set_whitelist_file(const std::string& path)
+{
+    this->server->set_whitelist_file(path);
+}
+
 void lua_server::set_enable_security_check(bool b)
 {
     this->server->set_enable_security_check(b);

@@ -25,5 +25,7 @@ int main(int, char**) {
     server.set_shutdown([&](){
         std::cout << "process "<<getpid()<<" exit.\n";
     });
+    server.set_whitelist_file("etc/whitelist.txt");
+    server.set_enable_whitelist(true);
     server.run(f);
 }

@@ -157,6 +157,15 @@ void sqlite_server::set_whitelist(const std::string& ip)
 {
     this->server->set_whitelist(ip);
 }
+void sqlite_server::del_whitelist(const std::string& ip)
+{
+    this->server->del_whitelist(ip);
+}
+
+void sqlite_server::set_whitelist_file(const std::string& path)
+{
+    this->server->set_whitelist_file(path);
+}
 void sqlite_server::set_enable_security_check(bool b)
 {
     this->server->set_enable_security_check(b);
