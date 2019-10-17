@@ -1,7 +1,6 @@
 #ifndef INOTIFY_HPP
 #define INOTIFY_HPP
 
-#include "epoll.hpp"
 #include <functional>
 #include <string>
 #include <sys/inotify.h>
