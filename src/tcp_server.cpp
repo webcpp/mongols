@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "openssl.hpp"
+#include "re2/re2.h"
 #include "tcp_server.hpp"
 #include "util.hpp"
 
@@ -243,7 +244,7 @@ bool tcp_server::read_whitelist_file(const std::string& path)
             std::string line;
             while (std::getline(input, line)) {
                 mongols::trim(line);
-                if (!line.empty()) {
+                if (!line.empty() && line.front() != '#') {
                     this->whitelist.push_back(line);
                 }
             }
@@ -256,21 +257,21 @@ bool tcp_server::read_whitelist_file(const std::string& path)
 void tcp_server::set_whitelist_file(const std::string& path)
 {
     char path_buffer[PATH_MAX];
-    char * tmp = realpath(path.c_str(),path_buffer);
+    char* tmp = realpath(path.c_str(), path_buffer);
     std::string real_path;
-    if(tmp){
+    if (tmp) {
         real_path = tmp;
-    }else{
-        return ;
+    } else {
+        return;
     }
-    std::string dir = real_path.substr(0,real_path.find_last_of('/'));
+    std::string dir = real_path.substr(0, real_path.find_last_of('/'));
     if (this->read_whitelist_file(real_path)) {
         this->whitelist_inotify = std::make_shared<inotify>(dir);
         if (this->whitelist_inotify->get_fd() < 0) {
             this->whitelist_inotify.reset();
         } else {
-            this->whitelist_inotify->set_cb([&,real_path](struct inotify_event* event) {
-                if (event->len >0) {
+            this->whitelist_inotify->set_cb([&, real_path](struct inotify_event* event) {
+                if (event->len > 0) {
                     if (event->mask & this->whitelist_inotify->get_mask()) {
                         this->read_whitelist_file(real_path);
                     }
@@ -357,7 +358,9 @@ bool tcp_server::check_blacklist(const std::string& ip)
 
 bool tcp_server::check_whitelist(const std::string& ip)
 {
-    return std::find(this->whitelist.begin(), this->whitelist.end(), ip) != this->whitelist.end();
+    return std::find_if(this->whitelist.begin(), this->whitelist.end(), [&](const std::string& v) {
+        return re2::RE2::FullMatch(ip, v);
+    }) != this->whitelist.end();
 }
 
 bool tcp_server::security_check(tcp_server::client_t& client)
