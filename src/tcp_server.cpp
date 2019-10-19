@@ -264,15 +264,16 @@ void tcp_server::set_whitelist_file(const std::string& path)
     } else {
         return;
     }
-    std::string dir = real_path.substr(0, real_path.find_last_of('/'));
+    size_t p = real_path.find_last_of('/');
+    std::string dir = real_path.substr(0, p), file_name = real_path.substr(p + 1);
     if (this->read_whitelist_file(real_path)) {
         this->whitelist_inotify = std::make_shared<inotify>(dir);
         if (this->whitelist_inotify->get_fd() < 0) {
             this->whitelist_inotify.reset();
         } else {
-            this->whitelist_inotify->set_cb([&, real_path](struct inotify_event* event) {
+            this->whitelist_inotify->set_cb([&, real_path, file_name](struct inotify_event* event) {
                 if (event->len > 0) {
-                    if (event->mask & this->whitelist_inotify->get_mask()) {
+                    if (strncmp(event->name, file_name.c_str(), event->len) == 0 && event->mask & this->whitelist_inotify->get_mask()) {
                         this->read_whitelist_file(real_path);
                     }
                 }
