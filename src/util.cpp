@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <fcntl.h>
+#include <limits.h>
 #include <unistd.h>
 
 #include <cstring>
@@ -54,6 +55,17 @@ bool is_dir(const std::string& s)
 {
     struct stat st;
     return stat(s.c_str(), &st) == 0 && S_ISDIR(st.st_mode);
+}
+
+std::string real_path(const std::string& path)
+{
+    char path_buffer[PATH_MAX];
+    char* tmp = realpath(path.c_str(), path_buffer);
+    std::string ret;
+    if (tmp) {
+        ret = tmp;
+    }
+    return ret;
 }
 
 static unsigned mday[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };

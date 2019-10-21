@@ -11,6 +11,7 @@
 #include <thread>
 #include <unordered_map>
 #include <vector>
+#include <unistd.h>
 
 namespace mongols {
 
@@ -21,6 +22,8 @@ bool read_file(const std::string& path, std::string& out);
 bool is_file(const std::string& s);
 
 bool is_dir(const std::string& s);
+
+std::string real_path(const std::string&);
 
 std::string http_time(time_t* t);
 
