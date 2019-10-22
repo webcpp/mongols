@@ -205,9 +205,9 @@ void tcp_server::run(const handler_function& g)
         return;
     }
     if (this->whitelist_inotify) {
-        int white_list_fd = this->whitelist_inotify->get_fd();
-        if (!epoll.add(white_list_fd, EPOLLIN | EPOLLET) || !this->whitelist_inotify->watch(IN_MODIFY)) {
-            epoll.del(white_list_fd);
+        int whitelist_fd = this->whitelist_inotify->get_fd();
+        if (!epoll.add(whitelist_fd, EPOLLIN | EPOLLET) || !this->whitelist_inotify->watch(IN_MODIFY)) {
+            epoll.del(whitelist_fd);
             this->whitelist_inotify.reset();
         }
     }
