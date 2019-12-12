@@ -123,9 +123,9 @@ extern "C" {
 ** [sqlite3_libversion_number()], [sqlite3_sourceid()],
 ** [sqlite_version()] and [sqlite_source_id()].
 */
-#define SQLITE_VERSION        "3.30.1"
-#define SQLITE_VERSION_NUMBER 3030001
-#define SQLITE_SOURCE_ID      "2019-10-10 20:19:45 18db032d058f1436ce3dea84081f4ee5a0f2259ad97301d43c426bc7f3df1b0b"
+#define SQLITE_VERSION        "3.31.0"
+#define SQLITE_VERSION_NUMBER 3031000
+#define SQLITE_SOURCE_ID      "2019-11-19 21:22:16 a48f6e17599d7ec794cfcd60858d6a69cf05caaae9321048b111fedd86a3b5b2"
 
 /*
 ** CAPI3REF: Run-Time Library Version Numbers
@@ -516,6 +516,7 @@ SQLITE_API int sqlite3_exec(
 #define SQLITE_CANTOPEN_FULLPATH       (SQLITE_CANTOPEN | (3<<8))
 #define SQLITE_CANTOPEN_CONVPATH       (SQLITE_CANTOPEN | (4<<8))
 #define SQLITE_CANTOPEN_DIRTYWAL       (SQLITE_CANTOPEN | (5<<8)) /* Not Used */
+#define SQLITE_CANTOPEN_SYMLINK        (SQLITE_CANTOPEN | (6<<8))
 #define SQLITE_CORRUPT_VTAB            (SQLITE_CORRUPT | (1<<8))
 #define SQLITE_CORRUPT_SEQUENCE        (SQLITE_CORRUPT | (2<<8))
 #define SQLITE_READONLY_RECOVERY       (SQLITE_READONLY | (1<<8))
@@ -568,6 +569,7 @@ SQLITE_API int sqlite3_exec(
 #define SQLITE_OPEN_SHAREDCACHE      0x00020000  /* Ok for sqlite3_open_v2() */
 #define SQLITE_OPEN_PRIVATECACHE     0x00040000  /* Ok for sqlite3_open_v2() */
 #define SQLITE_OPEN_WAL              0x00080000  /* VFS only */
+#define SQLITE_OPEN_NOFOLLOW         0x01000000  /* Ok for sqlite3_open_v2() */
 
 /* Reserved:                         0x00F00000 */
 
@@ -1406,6 +1408,7 @@ struct sqlite3_vfs {
 #define SQLITE_ACCESS_EXISTS    0
 #define SQLITE_ACCESS_READWRITE 1   /* Used by PRAGMA temp_store_directory */
 #define SQLITE_ACCESS_READ      2   /* Unused */
+#define SQLITE_ACCESS_SYMLINK   3   /* Test if file is symbolic link */
 
 /*
 ** CAPI3REF: Flags for the xShmLock VFS method
@@ -1742,6 +1745,7 @@ struct sqlite3_mem_methods {
 ** memory allocation statistics. ^(When memory allocation statistics are
 ** disabled, the following SQLite interfaces become non-operational:
 **   <ul>
+**   <li> [sqlite3_hard_heap_limit64()]
 **   <li> [sqlite3_memory_used()]
 **   <li> [sqlite3_memory_highwater()]
 **   <li> [sqlite3_soft_heap_limit64()]
@@ -2259,6 +2263,28 @@ struct sqlite3_mem_methods {
 ** default value of this setting is determined by the [-DSQLITE_DQS]
 ** compile-time option.
 ** </dd>
+**
+** [[SQLITE_DBCONFIG_LEGACY_FILE_FORMAT]]
+** <dt>SQLITE_DBCONFIG_LEGACY_FILE_FORMAT</td>
+** <dd>The SQLITE_DBCONFIG_LEGACY_FILE_FORMAT option activates or deactivates
+** the legacy file format flag.  When activated, this flag causes all newly
+** created database file to have a schema format version number (the 4-byte
+** integer found at offset 44 into the database header) of 1.  This in turn
+** means that the resulting database file will be readable and writable by
+** any SQLite version back to 3.0.0 ([dateof:3.0.0]).  Without this setting,
+** newly created databases are generally not understandable by SQLite versions
+** prior to 3.3.0 ([dateof:3.3.0]).  As these words are written, there
+** is now scarcely any need to generated database files that are compatible 
+** all the way back to version 3.0.0, and so this setting is of little
+** practical use, but is provided so that SQLite can continue to claim the
+** ability to generate new database files that are compatible with  version
+** 3.0.0.
+** <p>Note that when the SQLITE_DBCONFIG_LEGACY_FILE_FORMAT setting is on,
+** the [VACUUM] command will fail with an obscure error when attempting to
+** process a table with generated columns and a descending index.  This is
+** not considered a bug since SQLite versions 3.3.0 and earlier do not support
+** either generated columns or decending indexes.
+** </dd>
 ** </dl>
 */
 #define SQLITE_DBCONFIG_MAINDBNAME            1000 /* const char* */
@@ -2277,7 +2303,8 @@ struct sqlite3_mem_methods {
 #define SQLITE_DBCONFIG_DQS_DML               1013 /* int int* */
 #define SQLITE_DBCONFIG_DQS_DDL               1014 /* int int* */
 #define SQLITE_DBCONFIG_ENABLE_VIEW           1015 /* int int* */
-#define SQLITE_DBCONFIG_MAX                   1015 /* Largest DBCONFIG */
+#define SQLITE_DBCONFIG_LEGACY_FILE_FORMAT    1016 /* int int* */
+#define SQLITE_DBCONFIG_MAX                   1016 /* Largest DBCONFIG */
 
 /*
 ** CAPI3REF: Enable Or Disable Extended Result Codes
@@ -6116,6 +6143,9 @@ SQLITE_API int sqlite3_db_release_memory(sqlite3*);
 /*
 ** CAPI3REF: Impose A Limit On Heap Size
 **
+** These interfaces impose limits on the amount of heap memory that will be
+** by all database connections within a single process.
+**
 ** ^The sqlite3_soft_heap_limit64() interface sets and/or queries the
 ** soft limit on the amount of heap memory that may be allocated by SQLite.
 ** ^SQLite strives to keep heap memory utilization below the soft heap
@@ -6126,20 +6156,41 @@ SQLITE_API int sqlite3_db_release_memory(sqlite3*);
 ** an [SQLITE_NOMEM] error.  In other words, the soft heap limit 
 ** is advisory only.
 **
-** ^The return value from sqlite3_soft_heap_limit64() is the size of
-** the soft heap limit prior to the call, or negative in the case of an
+** ^The sqlite3_hard_heap_limit64(N) interface sets a hard upper bound of
+** N bytes on the amount of memory that will be allocated.  ^The
+** sqlite3_hard_heap_limit64(N) interface is similar to
+** sqlite3_soft_heap_limit64(N) except that memory allocations will fail
+** when the hard heap limit is reached.
+**
+** ^The return value from both sqlite3_soft_heap_limit64() and
+** sqlite3_hard_heap_limit64() is the size of
+** the heap limit prior to the call, or negative in the case of an
 ** error.  ^If the argument N is negative
-** then no change is made to the soft heap limit.  Hence, the current
-** size of the soft heap limit can be determined by invoking
-** sqlite3_soft_heap_limit64() with a negative argument.
+** then no change is made to the heap limit.  Hence, the current
+** size of heap limits can be determined by invoking
+** sqlite3_soft_heap_limit64(-1) or sqlite3_hard_heap_limit(-1).
 **
-** ^If the argument N is zero then the soft heap limit is disabled.
+** ^Setting the heap limits to zero disables the heap limiter mechanism.
 **
-** ^(The soft heap limit is not enforced in the current implementation
+** ^The soft heap limit may not be greater than the hard heap limit.
+** ^If the hard heap limit is enabled and if sqlite3_soft_heap_limit(N)
+** is invoked with a value of N that is greater than the hard heap limit,
+** the the soft heap limit is set to the value of the hard heap limit.
+** ^The soft heap limit is automatically enabled whenever the hard heap
+** limit is enabled. ^When sqlite3_hard_heap_limit64(N) is invoked and
+** the soft heap limit is outside the range of 1..N, then the soft heap
+** limit is set to N.  ^Invoking sqlite3_soft_heap_limit64(0) when the
+** hard heap limit is enabled makes the soft heap limit equal to the
+** hard heap limit.
+**
+** The memory allocation limits can also be adjusted using
+** [PRAGMA soft_heap_limit] and [PRAGMA hard_heap_limit].
+**
+** ^(The heap limits are not enforced in the current implementation
 ** if one or more of following conditions are true:
 **
 ** <ul>
-** <li> The soft heap limit is set to zero.
+** <li> The limit value is set to zero.
 ** <li> Memory accounting is disabled using a combination of the
 **      [sqlite3_config]([SQLITE_CONFIG_MEMSTATUS],...) start-time option and
 **      the [SQLITE_DEFAULT_MEMSTATUS] compile-time option.
@@ -6150,21 +6201,11 @@ SQLITE_API int sqlite3_db_release_memory(sqlite3*);
 **      from the heap.
 ** </ul>)^
 **
-** Beginning with SQLite [version 3.7.3] ([dateof:3.7.3]), 
-** the soft heap limit is enforced
-** regardless of whether or not the [SQLITE_ENABLE_MEMORY_MANAGEMENT]
-** compile-time option is invoked.  With [SQLITE_ENABLE_MEMORY_MANAGEMENT],
-** the soft heap limit is enforced on every memory allocation.  Without
-** [SQLITE_ENABLE_MEMORY_MANAGEMENT], the soft heap limit is only enforced
-** when memory is allocated by the page cache.  Testing suggests that because
-** the page cache is the predominate memory user in SQLite, most
-** applications will achieve adequate soft heap limit enforcement without
-** the use of [SQLITE_ENABLE_MEMORY_MANAGEMENT].
-**
-** The circumstances under which SQLite will enforce the soft heap limit may
+** The circumstances under which SQLite will enforce the heap limits may
 ** changes in future releases of SQLite.
 */
 SQLITE_API sqlite3_int64 sqlite3_soft_heap_limit64(sqlite3_int64 N);
+SQLITE_API sqlite3_int64 sqlite3_hard_heap_limit64(sqlite3_int64 N);
 
 /*
 ** CAPI3REF: Deprecated Soft Heap Limit Interface
