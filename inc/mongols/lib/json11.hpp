@@ -48,7 +48,6 @@
  * THE SOFTWARE.
  */
 
-
 #pragma once
 
 #include <string>

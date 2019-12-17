@@ -1,5 +1,9 @@
 // Read an INI file into easy-to-access name/value pairs.
 
+// SPDX-License-Identifier: BSD-3-Clause
+
+// Copyright (C) 2009-2019, Ben Hoyt
+
 // inih and INIReader are released under the New BSD license (see LICENSE.txt).
 // Go to the project home page for more info:
 //
@@ -19,6 +23,10 @@ public:
     // Construct INIReader and parse given filename. See ini.h for more info
     // about the parsing.
     explicit INIReader(const std::string& filename);
+
+    // Construct INIReader and parse given buffer. See ini.h for more info
+    // about the parsing.
+    explicit INIReader(const char *buffer, size_t buffer_size);
 
     // Return the result of ini_parse(), i.e., 0 on success, line number of
     // first error on parse error, or -1 on file open error.
