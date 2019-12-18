@@ -1,7 +1,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2018 Maxwell Flynn
+ * Copyright (c) 2019 Maxwell Flynn
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,14 +34,59 @@
 namespace CTML
 {
     /**
+     * Searches the original string and replaces all occurances of the specified
+     * string.
+     */
+    std::string replace_all(
+        std::string& original,
+        const std::string& target,
+        const std::string& replacement
+    )
+    {
+        size_t start = 0;
+
+        // while we are not at the end of the string, find the replacable string
+        while ((start = original.find(target, start)) != std::string::npos)
+        {
+            original.replace(start, target.length(), replacement);
+            start += replacement.length();
+        }
+        
+        return original;
+    }
+
+    /**
+     * Convenience function to escape HTML characters from a value.
+     * 
+     * Optionally disable escaping double or single quote marks for text content
+     * by setting the second value to false.
+     */
+    std::string html_escape(std::string value, bool escape_quotes=true)
+    {
+        std::string output = value;
+
+        output = replace_all(output, "&", "&amp;");
+        output = replace_all(output, "<", "&lt;");
+        output = replace_all(output, ">", "&gt;");
+
+        if (escape_quotes)
+        {
+            output = replace_all(output, "\"", "&quot;");
+            output = replace_all(output, "'", "&apos;");
+        }
+
+        return output;
+    }
+
+    /**
      * An enum representing the types of HTML nodes that can be constructed.
      */
     enum class NodeType : uint8_t
     {
-        COMMENT       = 0x00,
-        DOCUMENT_TYPE = 0x01,
-        ELEMENT       = 0x02,
-        TEXT          = 0x03
+        COMMENT,
+        DOCUMENT_TYPE,
+        ELEMENT,
+        TEXT
     };
 
     /**
@@ -50,9 +95,9 @@ namespace CTML
      */
     enum class NodeParserState : uint8_t
     {
-        NONE  = 0x00,
-        CLASS = 0x01,
-        ID    = 0x02
+        NONE,
+        CLASS,
+        ID
     };
 
     /**
@@ -60,10 +105,45 @@ namespace CTML
      */
     enum class StringFormatting : uint8_t
     {
-        SINGLE_LINE    = 0x00,
-        MULTIPLE_LINES = 0x01
+        SINGLE_LINE,
+        MULTIPLE_LINES
     };
 
+    /**
+     * A struct for options for a ToString call on a Node or Document.
+     */
+    struct ToStringOptions
+    {
+        StringFormatting formatting;
+        bool trailingNewline;
+        uint32_t indentLevel;
+        bool escapeContent;
+
+        ToStringOptions(
+            StringFormatting formatting=StringFormatting::SINGLE_LINE,
+            bool trailingNewLine=false,
+            uint32_t indentLevel=0,
+            bool escapeContent=true
+            )
+            :
+            formatting(formatting),
+            trailingNewline(trailingNewLine),
+            indentLevel(indentLevel),
+            escapeContent(escapeContent) {}
+    };
+
+    /**
+     * A class that represents any type of HTML node to construct in CTML.
+     * 
+     * For each node, there is at the minimum a type that represents the kind
+     * of node that is being constructed, see the `NodeType` enum for the
+     * different kinds of nodes that are able to be constructed at the moment.
+     * 
+     * Each node also has a vector of children that house other nodes.
+     * 
+     * Once you have constructed a node to your liking, you can get a string
+     * representation of this node through the ToString method.
+     */
     class Node
     {
     public:
@@ -77,8 +157,8 @@ namespace CTML
          */
         Node(
             const NodeType& type,
-            const std::string& name="",
-            const std::string& content=""
+            std::string name="",
+            std::string content=""
         )
             :
             m_type(type)
@@ -89,21 +169,12 @@ namespace CTML
             else if (type == NodeType::DOCUMENT_TYPE)
                 m_content = name;
             else if (type == NodeType::TEXT)
-            {
                 m_content = name;
-
-                // escape all of the content text for common characters
-                m_content = ReplaceAllOccurrences(m_content, "&", "&amp;");
-                m_content = ReplaceAllOccurrences(m_content, "<", "&lt;");
-                m_content = ReplaceAllOccurrences(m_content, ">", "&gt;");
-                m_content = ReplaceAllOccurrences(m_content, "\"", "&quot;");
-                m_content = ReplaceAllOccurrences(m_content, "'", "&apos;");
-            }
             else if (type == NodeType::ELEMENT)
             {
                 this->SetName(name);
 
-                if (!m_content.empty())
+                if (!content.empty())
                     this->AppendText(content);
             }
         }
@@ -111,7 +182,7 @@ namespace CTML
         /**
          * Create an element node with the name specified.
          */
-        Node(const std::string& name)
+        Node(std::string name)
             :
             m_type(NodeType::ELEMENT)
         {
@@ -122,7 +193,7 @@ namespace CTML
          * Create an element node with the specified name and containing a text node
          * with the content specified.
          */
-        Node(const std::string& name, const std::string& content)
+        Node(std::string name, std::string content)
             :
             m_type(NodeType::ELEMENT)
         {
@@ -139,25 +210,21 @@ namespace CTML
          * You may optionally specify a StringFormatting enum for how to format the string
          * as well as an indent level to append a number of spaces before this string.
          */
-        std::string ToString(
-            const StringFormatting& formatting=StringFormatting::SINGLE_LINE,
-            bool trailingNewline=false,
-            const uint32_t indentLevel=0
-        ) const
+        std::string ToString(ToStringOptions options={}) const
         {
             std::stringstream output;
 
             std::string indent = "";
 
-            if (indentLevel > 0 && formatting != StringFormatting::SINGLE_LINE)
-                indent = std::string(indentLevel * 4, ' ');
+            if (options.indentLevel > 0 && options.formatting != StringFormatting::SINGLE_LINE)
+                indent = std::string(options.indentLevel * 4, ' ');
 
             // format a comment node with only the set content
             if (m_type == NodeType::COMMENT)
             {
                 output << indent << "<!--" << m_content << "-->";
 
-                if (formatting == StringFormatting::MULTIPLE_LINES)
+                if (options.formatting == StringFormatting::MULTIPLE_LINES)
                     output << "\n";
             }
             // format a special document type node with the content
@@ -166,7 +233,7 @@ namespace CTML
             {
                 output << indent << "<!DOCTYPE " << m_content << ">";
 
-                if (formatting == StringFormatting::MULTIPLE_LINES)
+                if (options.formatting == StringFormatting::MULTIPLE_LINES)
                     output << "\n";
             }
             // format a text node with just the content, this node doesn't
@@ -174,7 +241,12 @@ namespace CTML
             // document output
             else if (m_type == NodeType::TEXT)
             {
-                output << indent << m_content;
+                output << indent;
+
+                if (options.escapeContent)
+                    output << html_escape(m_content, false);
+                else
+                    output << m_content;
             }
             else if (m_type == NodeType::ELEMENT)
             {
@@ -201,11 +273,21 @@ namespace CTML
                     output << " id=\"" << m_id << "\"";
 
                 for (const auto& attr : m_attributes)
-                    output << " " << attr.first + "=\"" << attr.second + "\"";
+                {
+                    // escape the attribute value of invalid characters
+                    std::string value = html_escape(attr.second);
+
+                    // attributes with just the name are identical to blank valued attributes
+                    // thus, output only the attribute name if a blank value is specified.
+                    if (value.empty())
+                        output << " " << attr.first;
+                    else
+                        output << " " << attr.first << "=\"" << value + "\"";
+                }
 
                 output << ">";
 
-                if (formatting == StringFormatting::MULTIPLE_LINES)
+                if (options.formatting == StringFormatting::MULTIPLE_LINES)
                     output << "\n";
 
                 // if we have a closing tag, then add children as well
@@ -213,15 +295,16 @@ namespace CTML
                 if (m_closeTag)
                 {
                     for (const auto& child : m_children)
-                        output << child.ToString(
-                            formatting,
+                        output << child.ToString(ToStringOptions(
+                            options.formatting,
                             true,
-                            indentLevel + 1
-                        );
+                            options.indentLevel + 1,
+                            true
+                        ));
 
                     output << indent << "</" << m_name << ">";
 
-                    if (formatting == StringFormatting::MULTIPLE_LINES && trailingNewline)
+                    if (options.formatting == StringFormatting::MULTIPLE_LINES && options.trailingNewline)
                         output << "\n";
                 }
             }
@@ -234,25 +317,23 @@ namespace CTML
          * 
          * Allows for Emmet-like abbreviations such as "div.className#id".
          */
-        Node& SetName(const std::string& name)
+        Node& SetName(std::string name)
         {
             const auto periodIndex = name.find('.');
             const auto poundIndex  = name.find('#');
 
-            std::string elementName = name;
-            
             // check and see if the name contains either a period or a pound symbol
             // which means that this is an element name that can use emmet abbrivations
             if (periodIndex != std::string::npos || poundIndex != std::string::npos)
             {
                 size_t startIndex = std::min(periodIndex, poundIndex);
 
-                elementName = name.substr(0, startIndex);
+                this->m_name = name.substr(0, startIndex);
 
                 ParseClassesAndIDS(name.substr(startIndex));
             }
-
-            this->m_name = elementName;
+            else
+                this->m_name = name;
 
             return *this;
         }
@@ -290,10 +371,12 @@ namespace CTML
             if (name == "id")
                 return m_id;
 
-            if (m_attributes.count(name) <= 0)
-                return "";
+            auto find = m_attributes.find(name);
 
-            return m_attributes.at(name);
+            if (find != m_attributes.end())
+                return find->second;
+            
+            return "";
         }
 
         /**
@@ -317,7 +400,7 @@ namespace CTML
         /**
          * Set a single attribute for a Node to a value.
          */
-        Node& SetAttribute(const std::string& name, const std::string& value)
+        Node& SetAttribute(std::string name, std::string value)
         {
             if (name == "id")
             {
@@ -326,6 +409,8 @@ namespace CTML
                 return *this;
             }
 
+            // if trying to manually set a class attribute, split the value by
+            // spaces and then add the classes to the class list
             if (name == "class")
             {
                 m_classes.clear();
@@ -375,7 +460,7 @@ namespace CTML
         /**
          * Toggle the state of a class based on its name.
          */
-        Node& ToggleClass(const std::string& className)
+        Node& ToggleClass(std::string className)
         {
             std::vector<std::string>::iterator find = std::find(
                 m_classes.begin(),
@@ -404,11 +489,11 @@ namespace CTML
 
         /**
          * Append a single text node to the element.
-         * 
+         * const std::string&
          * This is the recommended way to set content now
          * as opposed to using the SetContent method.
          */
-        Node& AppendText(const std::string& text)
+        Node& AppendText(std::string text)
         {
             Node textNode;
 
@@ -533,23 +618,6 @@ namespace CTML
          */
         std::unordered_map<std::string, std::string> m_attributes;
 
-        /**
-         * Replace every occurrence of a string within a string using the specified replace.
-         */
-        std::string ReplaceAllOccurrences(std::string& replacer, const std::string& replacable, const std::string& replace) const
-        {
-            size_t start = 0;
-
-            // while we are not at the end of the string, find the replacable string
-            while ((start = replacer.find(replacable, start)) != std::string::npos)
-            {
-                replacer.replace(start, replacable.length(), replace);
-                start += replace.length();
-            }
-            
-            return replacer;
-        }
-
         void ParseClassesAndIDS(const std::string& input)
         {
             NodeParserState state = NodeParserState::NONE;
@@ -603,9 +671,16 @@ namespace CTML
         }
     };
 
-    class Document {
+    /**
+     * A simple class that represents a HTML5 document with an <html> tag
+     * that houses <head> and <body> tags.
+     */
+    class Document
+    {
     public:
-        // the default constructor for a document
+        /**
+         * Construct a simple HTML5 document with a head and body.
+         */
         Document()
             :
             m_doctype(NodeType::DOCUMENT_TYPE, "html"),
@@ -616,26 +691,34 @@ namespace CTML
             this->m_html.AppendChild(Node("body"));
         }
 
-        // add a node to the head element
+        /**
+         * Append a single node element to the <head> tag.
+         */
         void AppendNodeToHead(const Node& node)
         {
             this->head().AppendChild(node);
         }
 
-        // add a node to the body element
+        /**
+         * Append a single node to the <body> tag.
+         */
         void AppendNodeToBody(const Node& node)
         {
             this->body().AppendChild(node);
         }
 
-        // gets the current document as a string
-        std::string ToString(const StringFormatting& formatting=StringFormatting::SINGLE_LINE) const
+        /**
+         * Grab the entire document as a string, with an optional
+         * StringFormatting enum accepted to change between
+         * outputting one line and multiple lines.
+         */
+        std::string ToString(ToStringOptions options={}) const
         {
             std::stringstream output;
 
-            output << m_doctype.ToString(formatting);
+            output << m_doctype.ToString(options);
 
-            output << m_html.ToString(formatting);
+            output << m_html.ToString(options);
 
             return output.str();
         }
