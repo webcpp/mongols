@@ -12,20 +12,31 @@ extern "C" {
 
 namespace mongols {
 
+size_t qjs_server::memory_limit = 1048576 * 1024 /*1GB*/, qjs_server::ctx_called_limit = 10240;
+
 qjs_server::qjs_server(const std::string& host, int port, int timeout, size_t buffer_size, size_t thread_size, size_t max_body_size, int max_event_size)
     : vm(0)
+    , ctx(0)
+    , ctx_called_count(0)
     , server(0)
     , root_path()
     , enable_bootstrap(false)
     , jsfile_mmap()
 {
     this->vm = JS_NewRuntime();
+    this->config_vm();
+    this->ctx = JS_NewContext(this->vm);
+    this->config_ctx();
     this->server = new http_server(host, port, timeout, buffer_size, thread_size, max_body_size, max_event_size);
 }
 
 qjs_server::~qjs_server()
 {
+    if (this->ctx) {
+        JS_FreeContext(this->ctx);
+    }
     if (this->vm) {
+        js_std_free_handlers(this->vm);
         JS_FreeRuntime(this->vm);
     }
     if (this->server) {
@@ -45,41 +56,52 @@ bool qjs_server::filter(const mongols::request& req)
 
 void qjs_server::work(const mongols::request& req, mongols::response& res)
 {
-    JSContext* ctx = JS_NewContext(this->vm);
-    if (ctx) {
+    if (this->ctx) {
         std::pair<const mongols::request*, mongols::response*> http_data;
         http_data.first = &req;
         http_data.second = &res;
-        JS_SetContextOpaque(ctx, &http_data);
-        JS_AddIntrinsicBigFloat(ctx);
-        JS_AddIntrinsicBigDecimal(ctx);
-        JS_AddIntrinsicOperators(ctx);
-        JS_EnableBignumExt(ctx, TRUE);
-        JS_SetModuleLoaderFunc(this->vm, NULL, js_module_loader, NULL);
-        js_init_module_std(ctx, "std");
-        js_init_module_os(ctx, "os");
-        js_init_module_bjson(ctx, "bjson");
-        js_init_module_mongols(ctx, "mongols");
+        JS_SetContextOpaque(this->ctx, &http_data);
 
         std::string path = std::move(this->enable_bootstrap ? this->root_path + "/index.js" : this->root_path + req.uri);
 
         std::pair<char*, struct stat> ele;
-        int ret;
-        // ret = eval_file(ctx, path.c_str(), JS_EVAL_TYPE_MODULE|JS_EVAL_FLAG_COMPILE_ONLY);
-        // if (ret) {
-        //     res.status = 500;
-        //     res.content = std::move("Internal Server Error");
-        // }
         if (this->jsfile_mmap.get(path, ele)) {
-            ret = eval_buf(ctx, ele.first, ele.second.st_size, path.c_str(), JS_EVAL_TYPE_MODULE | JS_EVAL_FLAG_COMPILE_ONLY);
+            int ret = eval_buf(this->ctx, ele.first, ele.second.st_size, path.c_str(), JS_EVAL_TYPE_MODULE | JS_EVAL_FLAG_COMPILE_ONLY);
             if (ret) {
                 res.status = 500;
                 res.content = std::move("Internal Server Error");
             }
+            js_std_loop(this->ctx);
+            JS_SetContextOpaque(this->ctx, NULL);
+            if (++this->ctx_called_count >= qjs_server::ctx_called_limit) {
+                JS_FreeContext(this->ctx);
+                this->ctx = JS_NewContext(this->vm);
+                this->config_ctx();
+                this->ctx_called_count = 0;
+            }
         }
-        js_std_loop(ctx);
-        js_std_free_handlers(this->vm);
-        JS_FreeContext(ctx);
+    }
+}
+
+void qjs_server::config_vm()
+{
+    if (this->vm) {
+        JS_SetMemoryLimit(this->vm, qjs_server::memory_limit);
+        JS_SetModuleLoaderFunc(this->vm, NULL, js_module_loader, NULL);
+    }
+}
+
+void qjs_server::config_ctx()
+{
+    if (this->ctx) {
+        JS_AddIntrinsicBigFloat(this->ctx);
+        JS_AddIntrinsicBigDecimal(this->ctx);
+        JS_AddIntrinsicOperators(this->ctx);
+        JS_EnableBignumExt(this->ctx, TRUE);
+        js_init_module_std(this->ctx, "std");
+        js_init_module_os(this->ctx, "os");
+        js_init_module_bjson(this->ctx, "bjson");
+        js_init_module_mongols(this->ctx, "mongols");
     }
 }
 

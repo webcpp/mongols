@@ -9,7 +9,7 @@ int main(int, char**)
         server(host, port, 5000, 8192, 0 /*2*/);
     server.set_root_path("html/qjs");
     server.set_enable_bootstrap(true);
-    server.set_enable_lru_cache(true);
+    server.set_enable_lru_cache(false);
     server.set_lru_cache_expires(1);
     //    if (!server.set_openssl("openssl/localhost.crt", "openssl/localhost.key")) {
     //        return -1;
@@ -32,5 +32,5 @@ int main(int, char**)
     };
 
     mongols::multi_process main_process;
-    main_process.run(ff, g, 1);
+    main_process.run(ff, g);
 }

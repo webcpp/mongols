@@ -10,6 +10,9 @@ namespace mongols {
 
 class qjs_server {
 public:
+    static size_t memory_limit,ctx_called_limit;
+
+public:
     qjs_server() = delete;
     qjs_server(const std::string& host, int port, int timeout = 5000, size_t buffer_size = 8192, size_t thread_size = std::thread::hardware_concurrency(), size_t max_body_size = 4096, int max_event_size = 64);
     virtual ~qjs_server();
@@ -38,6 +41,8 @@ public:
 
 private:
     JSRuntime* vm;
+    JSContext* ctx;
+    size_t ctx_called_count;
     mongols::http_server* server;
     std::string root_path;
     bool enable_bootstrap;
@@ -46,6 +51,8 @@ private:
 private:
     void work(const mongols::request& req, mongols::response& res);
     bool filter(const mongols::request& req);
+    void config_ctx();
+    void config_vm();
 };
 }
 
