@@ -6,7 +6,7 @@ int main(int, char**)
     const char* host = "127.0.0.1";
     mongols::qjs_server
         server(host, port, 5000, 8192, 0 /*2*/);
-    server.set_root_path("html/lua");
+    server.set_root_path("html/qjs");
     server.set_enable_bootstrap(true);
     server.set_enable_lru_cache(true);
     server.set_lru_cache_expires(1);
@@ -17,5 +17,5 @@ int main(int, char**)
     server.set_shutdown([&]() {
         std::cout << "process " << getpid() << " exit.\n";
     });
-    server.run("html/qjs");
+    server.run();
 }

@@ -33,9 +33,8 @@ qjs_server::~qjs_server()
     }
 }
 
-void qjs_server::run(const std::string& path)
+void qjs_server::run()
 {
-    this->root_path = path;
     this->server->run(std::bind(&qjs_server::filter, this, std::placeholders::_1), std::bind(&qjs_server::work, this, std::placeholders::_1, std::placeholders::_2));
 }
 

@@ -1,8 +1,8 @@
 #ifndef QJS_SERVER_HPP
 #define QJS_SERVER_HPP
 
-#include "http_server.hpp"
 #include "file_mmap.hpp"
+#include "http_server.hpp"
 #include "lib/qjs/quickjs.h"
 #include <string>
 
@@ -34,7 +34,7 @@ public:
     void del_whitelist(const std::string&);
     void set_whitelist_file(const std::string&);
     void set_shutdown(const tcp_server::shutdown_function&);
-    void run(const std::string& path);
+    void run();
 
 private:
     JSRuntime* vm;

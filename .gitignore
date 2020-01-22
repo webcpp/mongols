@@ -50,6 +50,7 @@ example/multi_process_http_server
 example/multi_process_js_server
 example/multi_process_lua_server
 example/js_server
+example/qjs_server
 example/mongols_leveldb/
 example/chai_server
 example/multi_process_chai_server
