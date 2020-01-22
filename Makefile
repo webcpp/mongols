@@ -31,6 +31,7 @@ CFLAGS+=-Iinc/mongols/lib/sqlite  -DSQLITE_THREADSAFE=1 \
 CFLAGS+=-Iinc/mongols/lib/z
 CFLAGS+=-Iinc/mongols/lib/hash
 CFLAGS+=-Iinc/mongols/lib/WjCryptLib
+CFLAGS+=-Iinc/mongols/lib/qjs -D_GNU_SOURCE -DCONFIG_VERSION=\"$(shell cat src/qjs/VERSION)\"
 
 
 
@@ -43,6 +44,7 @@ CXXFLAGS+=-Iinc/mongols/lib/leveldb -Isrc/leveldb -DLEVELDB_PLATFORM_POSIX -DLEV
 CXXFLAGS+= -DKAGUYA_USE_CPP11 -DFMT_HEADER_ONLY
 CXXFLAGS+=-Isrc -Isrc/re2 
 CXXFLAGS+=-Iinc/mongols/lib/sqlite
+CXXFLAGS+=-Iinc/mongols/lib/qjs -D_GNU_SOURCE -DCONFIG_VERSION=\"$(shell cat src/qjs/VERSION)\"
 
 
 
