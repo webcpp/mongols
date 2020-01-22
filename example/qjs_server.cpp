@@ -1,4 +1,5 @@
 #include <mongols/qjs_server.hpp>
+#include <mongols/util.hpp>
 
 int main(int, char**)
 {
@@ -14,8 +15,22 @@ int main(int, char**)
     //        return -1;
     //    }
 
-    server.set_shutdown([&]() {
-        std::cout << "process " << getpid() << " exit.\n";
-    });
-    server.run();
+    // server.set_shutdown([&]() {
+    //     std::cout << "process " << getpid() << " exit.\n";
+    // });
+    // server.run();
+
+    std::function<void(pthread_mutex_t*, size_t*)> ff = [&](pthread_mutex_t* mtx, size_t* data) {
+        server.set_shutdown([&]() {
+            std::cout << "process " << getpid() << " exit.\n";
+        });
+        server.run();
+    };
+
+    std::function<bool(int)> g = [&](int status) {
+        return false;
+    };
+
+    mongols::multi_process main_process;
+    main_process.run(ff, g, 1);
 }

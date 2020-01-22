@@ -53,6 +53,7 @@ void qjs_server::work(const mongols::request& req, mongols::response& res)
         JS_SetContextOpaque(ctx, &http_data);
         JS_AddIntrinsicBigFloat(ctx);
         JS_AddIntrinsicBigDecimal(ctx);
+        JS_AddIntrinsicOperators(ctx);
         JS_EnableBignumExt(ctx, TRUE);
         JS_SetModuleLoaderFunc(this->vm, NULL, js_module_loader, NULL);
         js_init_module_std(ctx, "std");
@@ -64,15 +65,20 @@ void qjs_server::work(const mongols::request& req, mongols::response& res)
 
         std::pair<char*, struct stat> ele;
         int ret;
+        // ret = eval_file(ctx, path.c_str(), JS_EVAL_TYPE_MODULE|JS_EVAL_FLAG_COMPILE_ONLY);
+        // if (ret) {
+        //     res.status = 500;
+        //     res.content = std::move("Internal Server Error");
+        // }
         if (this->jsfile_mmap.get(path, ele)) {
-            ret = eval_buf(ctx, ele.first, ele.second.st_size, path.c_str(), JS_EVAL_TYPE_MODULE);
-
-            // int ret = eval_file(ctx, path.c_str(), JS_EVAL_TYPE_MODULE);
+            ret = eval_buf(ctx, ele.first, ele.second.st_size, path.c_str(), JS_EVAL_TYPE_MODULE | JS_EVAL_FLAG_COMPILE_ONLY);
             if (ret) {
                 res.status = 500;
                 res.content = std::move("Internal Server Error");
             }
         }
+        js_std_loop(ctx);
+        js_std_free_handlers(this->vm);
         JS_FreeContext(ctx);
     }
 }
