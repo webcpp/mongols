@@ -2,6 +2,7 @@
 //import * as os from "os";
 //import * as bjson from "bjson";
 import * as mongols from "mongols";
+//import * as hash from "hash";
 //import Mustache from "./mustache.mjs"
 
 

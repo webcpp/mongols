@@ -6,6 +6,7 @@ extern "C" {
 #include "qjs/quickjs-libc.h"
 }
 
+#include "qjs/quickjs-hash.hpp"
 #include "qjs/quickjs-mongols.hpp"
 #include "util.hpp"
 #include <functional>
@@ -102,6 +103,7 @@ void qjs_server::config_ctx()
         js_init_module_os(this->ctx, "os");
         js_init_module_bjson(this->ctx, "bjson");
         js_init_module_mongols(this->ctx, "mongols");
+        js_init_module_hash(this->ctx, "hash");
     }
 }
 
