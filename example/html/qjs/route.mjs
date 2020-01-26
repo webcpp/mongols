@@ -14,7 +14,7 @@ var route = function () {
     this.get = function (pattern, callback) {
         this.add(['GET'], pattern, callback)
     }
-    
+
     this.post = function (pattern, callback) {
         this.add(['POST'], pattern, callback)
     }
@@ -22,7 +22,7 @@ var route = function () {
     this.put = function (pattern, callback) {
         this.add(['PUT'], pattern, callback)
     }
-    
+
     this.head = function (pattern, callback) {
         this.add(['HEAD'], pattern, callback)
     }
@@ -35,7 +35,7 @@ var route = function () {
             if (param != null) {
                 var ele = this.map[pattern]
                 if (ele.method.indexOf(m.method()) >= 0) {
-                    ele.callback(m,param)
+                    ele.callback(m, param)
                     break
                 }
             }
