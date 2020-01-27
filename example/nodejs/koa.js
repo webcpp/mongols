@@ -1,7 +1,7 @@
 const cluster = require('cluster');
 const numCPUs = require('os').cpus().length;
 const Koa = require('koa');
-//const route = require('koa-route');
+const route = require('koa-route');
 const app = new Koa();
 
 if (cluster.isMaster) {
@@ -14,12 +14,12 @@ if (cluster.isMaster) {
 
 } else {
 
-  // app.use(route.get('/', ctx => {
-  //   ctx.response.body = 'hello,world\n';
-  // }));
-  app.use(async ctx => {
-    ctx.body = 'hello,world\n';
-  });
+  app.use(route.get('/', ctx => {
+    ctx.response.body = 'hello,world\n';
+  }));
+  // app.use(async ctx => {
+  //   ctx.body = 'hello,world\n';
+  // });
 
   app.listen(3000);
 
