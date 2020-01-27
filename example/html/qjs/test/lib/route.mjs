@@ -28,15 +28,15 @@ var route = function () {
     };
 
     this.run = async function (m) {
-        var pattern = null;
+        var pattern = null,reg = null,param = null,ele = null;
         for (pattern in this.map) {
-            var reg = new RegExp(pattern, 'ig');
-            var param = await reg.exec(m.uri());
+            reg = new RegExp(pattern, 'ig');
+            param = await reg.exec(m.uri());
             if (param != null) {
-                var ele = this.map[pattern];
+                ele = this.map[pattern];
                 if (ele.method.indexOf(m.method()) >= 0) {
                     await ele.callback(m, param);
-                    break
+                    break;
                 }
             }
         }

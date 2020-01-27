@@ -67,11 +67,13 @@ void qjs_server::work(const mongols::request& req, mongols::response& res)
 
         std::pair<char*, struct stat> ele;
         if (this->jsfile_mmap.get(path, ele)) {
-            int ret = eval_buf(this->ctx, ele.first, ele.second.st_size, path.c_str(), JS_EVAL_TYPE_MODULE | JS_EVAL_FLAG_COMPILE_ONLY);
-            if (ret) {
+            JSValue ret = JS_Eval(this->ctx, ele.first, ele.second.st_size, path.c_str(), JS_EVAL_TYPE_MODULE);
+            if (JS_IsException(ret)) {
+                js_std_dump_error(this->ctx);
                 res.status = 500;
                 res.content = std::move("Internal Server Error");
             }
+            JS_FreeValue(ctx, ret);
             js_std_loop(this->ctx);
             JS_SetContextOpaque(this->ctx, NULL);
             if (++this->ctx_called_count >= qjs_server::ctx_called_limit) {

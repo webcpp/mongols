@@ -9,7 +9,7 @@ r.get('^/$', function (m, param) {
   m.content('hello,world\n');
 });
 
-r.get('^/get/(\\w+)$', function (m, param) {
+r.get('^/(.*)/?$', function (m, param) {
   m.header('Content-Type', 'text/plain;charset=UTF8')
   m.content(m.method() + '\n' + m.uri() + '\n' + param.toString())
   m.status(200)
