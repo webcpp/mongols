@@ -1,13 +1,13 @@
 var route = function () {
     this.instance = null;
-    this.map = {};
+    this.map = new Map();
     this.add = function (method, pattern, callback) {
-        if (typeof (this.map[pattern]) == "undefined") {
+        if (!this.map.has(pattern)) {
             var ele = {};
             ele.method = method;
             ele.pattern = pattern;
             ele.callback = callback;
-            this.map[pattern] = ele;
+            this.map.set(pattern, ele);
         }
     }
 
@@ -27,15 +27,13 @@ var route = function () {
         this.add(['HEAD'], pattern, callback);
     };
 
-    this.run = async function (m) {
-        var pattern = null,reg = null,param = null,ele = null;
-        for (pattern in this.map) {
-            reg = new RegExp(pattern, 'ig');
-            param = await reg.exec(m.uri());
-            if (param != null) {
-                ele = this.map[pattern];
-                if (ele.method.indexOf(m.method()) >= 0) {
-                    await ele.callback(m, param);
+    this.run = function (m) {
+        for (let [pattern, ele] of this.map.entries()) {
+            if (ele.method.indexOf(m.method()) >= 0) {
+                var reg = new RegExp(pattern, 'ig');
+                var param = reg.exec(m.uri());
+                if (param != null) {
+                    ele.callback(m, param);
                     break;
                 }
             }
