@@ -96,6 +96,9 @@ static JSValue js_mongols_request_get_param(JSContext* ctx, JSValueConst this_va
 static JSValue js_mongols_request_has_header(JSContext* ctx, JSValueConst this_val,
     int argc, JSValueConst* argv)
 {
+    if (argc < 1) {
+        return JS_EXCEPTION;
+    }
     std::pair<const mongols::request*, mongols::response*>* data = (std::pair<const mongols::request*, mongols::response*>*)JS_GetContextOpaque(ctx);
     const char* name = JS_ToCString(ctx, argv[0]);
     JSValue value = JS_NewBool(ctx, (data->first->headers.find(name) != data->first->headers.end()) ? TRUE : FALSE);
@@ -106,6 +109,9 @@ static JSValue js_mongols_request_has_header(JSContext* ctx, JSValueConst this_v
 static JSValue js_mongols_request_has_cookie(JSContext* ctx, JSValueConst this_val,
     int argc, JSValueConst* argv)
 {
+    if (argc < 1) {
+        return JS_EXCEPTION;
+    }
     std::pair<const mongols::request*, mongols::response*>* data = (std::pair<const mongols::request*, mongols::response*>*)JS_GetContextOpaque(ctx);
     const char* name = JS_ToCString(ctx, argv[0]);
     JSValue value = JS_NewBool(ctx, (data->first->cookies.find(name) != data->first->cookies.end()) ? TRUE : FALSE);
@@ -116,6 +122,9 @@ static JSValue js_mongols_request_has_cookie(JSContext* ctx, JSValueConst this_v
 static JSValue js_mongols_request_has_form(JSContext* ctx, JSValueConst this_val,
     int argc, JSValueConst* argv)
 {
+    if (argc < 1) {
+        return JS_EXCEPTION;
+    }
     std::pair<const mongols::request*, mongols::response*>* data = (std::pair<const mongols::request*, mongols::response*>*)JS_GetContextOpaque(ctx);
     const char* name = JS_ToCString(ctx, argv[0]);
     JSValue value = JS_NewBool(ctx, (data->first->form.find(name) != data->first->form.end()) ? TRUE : FALSE);
@@ -126,6 +135,9 @@ static JSValue js_mongols_request_has_form(JSContext* ctx, JSValueConst this_val
 static JSValue js_mongols_request_has_cache(JSContext* ctx, JSValueConst this_val,
     int argc, JSValueConst* argv)
 {
+    if (argc < 1) {
+        return JS_EXCEPTION;
+    }
     std::pair<const mongols::request*, mongols::response*>* data = (std::pair<const mongols::request*, mongols::response*>*)JS_GetContextOpaque(ctx);
     const char* name = JS_ToCString(ctx, argv[0]);
     JSValue value = JS_NewBool(ctx, (data->first->cache.find(name) != data->first->cache.end()) ? TRUE : FALSE);
@@ -136,6 +148,9 @@ static JSValue js_mongols_request_has_cache(JSContext* ctx, JSValueConst this_va
 static JSValue js_mongols_request_has_session(JSContext* ctx, JSValueConst this_val,
     int argc, JSValueConst* argv)
 {
+    if (argc < 1) {
+        return JS_EXCEPTION;
+    }
     std::pair<const mongols::request*, mongols::response*>* data = (std::pair<const mongols::request*, mongols::response*>*)JS_GetContextOpaque(ctx);
     const char* name = JS_ToCString(ctx, argv[0]);
     JSValue value = JS_NewBool(ctx, (data->first->session.find(name) != data->first->session.end()) ? TRUE : FALSE);
@@ -146,6 +161,9 @@ static JSValue js_mongols_request_has_session(JSContext* ctx, JSValueConst this_
 static JSValue js_mongols_request_get_header(JSContext* ctx, JSValueConst this_val,
     int argc, JSValueConst* argv)
 {
+    if (argc < 1) {
+        return JS_EXCEPTION;
+    }
     std::pair<const mongols::request*, mongols::response*>* data = (std::pair<const mongols::request*, mongols::response*>*)JS_GetContextOpaque(ctx);
     const char* name = JS_ToCString(ctx, argv[0]);
     JSValue value = JS_NewString(ctx, data->first->headers.at(name).c_str());
@@ -156,6 +174,9 @@ static JSValue js_mongols_request_get_header(JSContext* ctx, JSValueConst this_v
 static JSValue js_mongols_request_get_cookie(JSContext* ctx, JSValueConst this_val,
     int argc, JSValueConst* argv)
 {
+    if (argc < 1) {
+        return JS_EXCEPTION;
+    }
     std::pair<const mongols::request*, mongols::response*>* data = (std::pair<const mongols::request*, mongols::response*>*)JS_GetContextOpaque(ctx);
     const char* name = JS_ToCString(ctx, argv[0]);
     JSValue value = JS_NewString(ctx, data->first->cookies.at(name).c_str());
@@ -166,6 +187,9 @@ static JSValue js_mongols_request_get_cookie(JSContext* ctx, JSValueConst this_v
 static JSValue js_mongols_request_get_form(JSContext* ctx, JSValueConst this_val,
     int argc, JSValueConst* argv)
 {
+    if (argc < 1) {
+        return JS_EXCEPTION;
+    }
     std::pair<const mongols::request*, mongols::response*>* data = (std::pair<const mongols::request*, mongols::response*>*)JS_GetContextOpaque(ctx);
     const char* name = JS_ToCString(ctx, argv[0]);
     JSValue value = JS_NewString(ctx, data->first->form.at(name).c_str());
@@ -176,6 +200,9 @@ static JSValue js_mongols_request_get_form(JSContext* ctx, JSValueConst this_val
 static JSValue js_mongols_request_get_session(JSContext* ctx, JSValueConst this_val,
     int argc, JSValueConst* argv)
 {
+    if (argc < 1) {
+        return JS_EXCEPTION;
+    }
     std::pair<const mongols::request*, mongols::response*>* data = (std::pair<const mongols::request*, mongols::response*>*)JS_GetContextOpaque(ctx);
     const char* name = JS_ToCString(ctx, argv[0]);
     JSValue value = JS_NewString(ctx, data->first->session.at(name).c_str());
@@ -186,6 +213,9 @@ static JSValue js_mongols_request_get_session(JSContext* ctx, JSValueConst this_
 static JSValue js_mongols_request_get_cache(JSContext* ctx, JSValueConst this_val,
     int argc, JSValueConst* argv)
 {
+    if (argc < 1) {
+        return JS_EXCEPTION;
+    }
     std::pair<const mongols::request*, mongols::response*>* data = (std::pair<const mongols::request*, mongols::response*>*)JS_GetContextOpaque(ctx);
     const char* name = JS_ToCString(ctx, argv[0]);
     JSValue value = JS_NewString(ctx, data->first->cache.at(name).c_str());
@@ -198,10 +228,10 @@ static JSValue js_mongols_request_get_cache(JSContext* ctx, JSValueConst this_va
 static JSValue js_mongols_response_set_header(JSContext* ctx, JSValueConst this_val,
     int argc, JSValueConst* argv)
 {
-    std::pair<const mongols::request*, mongols::response*>* data = (std::pair<const mongols::request*, mongols::response*>*)JS_GetContextOpaque(ctx);
-    if (argc != 2) {
+    if (argc < 2) {
         return JS_NewBool(ctx, FALSE);
     }
+    std::pair<const mongols::request*, mongols::response*>* data = (std::pair<const mongols::request*, mongols::response*>*)JS_GetContextOpaque(ctx);
     const char* name = JS_ToCString(ctx, argv[0]);
     const char* value = JS_ToCString(ctx, argv[1]);
     data->second->set_header(name, value);
@@ -213,10 +243,10 @@ static JSValue js_mongols_response_set_header(JSContext* ctx, JSValueConst this_
 static JSValue js_mongols_response_set_cache(JSContext* ctx, JSValueConst this_val,
     int argc, JSValueConst* argv)
 {
-    std::pair<const mongols::request*, mongols::response*>* data = (std::pair<const mongols::request*, mongols::response*>*)JS_GetContextOpaque(ctx);
-    if (argc != 2) {
+    if (argc < 2) {
         return JS_NewBool(ctx, FALSE);
     }
+    std::pair<const mongols::request*, mongols::response*>* data = (std::pair<const mongols::request*, mongols::response*>*)JS_GetContextOpaque(ctx);
     const char* name = JS_ToCString(ctx, argv[0]);
     const char* value = JS_ToCString(ctx, argv[1]);
     data->second->set_cache(name, value);
@@ -228,10 +258,10 @@ static JSValue js_mongols_response_set_cache(JSContext* ctx, JSValueConst this_v
 static JSValue js_mongols_response_set_session(JSContext* ctx, JSValueConst this_val,
     int argc, JSValueConst* argv)
 {
-    std::pair<const mongols::request*, mongols::response*>* data = (std::pair<const mongols::request*, mongols::response*>*)JS_GetContextOpaque(ctx);
-    if (argc != 2) {
+    if (argc < 2) {
         return JS_NewBool(ctx, FALSE);
     }
+    std::pair<const mongols::request*, mongols::response*>* data = (std::pair<const mongols::request*, mongols::response*>*)JS_GetContextOpaque(ctx);
     const char* name = JS_ToCString(ctx, argv[0]);
     const char* value = JS_ToCString(ctx, argv[1]);
     data->second->set_session(name, value);
@@ -243,11 +273,11 @@ static JSValue js_mongols_response_set_session(JSContext* ctx, JSValueConst this
 static JSValue js_mongols_response_set_status(JSContext* ctx, JSValueConst this_val,
     int argc, JSValueConst* argv)
 {
-    std::pair<const mongols::request*, mongols::response*>* data = (std::pair<const mongols::request*, mongols::response*>*)JS_GetContextOpaque(ctx);
     int status;
-    if (argc != 1 || JS_ToInt32(ctx, &status, argv[0])) {
+    if (argc < 1 || JS_ToInt32(ctx, &status, argv[0])) {
         return JS_NewBool(ctx, FALSE);
     }
+    std::pair<const mongols::request*, mongols::response*>* data = (std::pair<const mongols::request*, mongols::response*>*)JS_GetContextOpaque(ctx);
     data->second->status = status;
     return JS_NewBool(ctx, TRUE);
 }
@@ -255,10 +285,10 @@ static JSValue js_mongols_response_set_status(JSContext* ctx, JSValueConst this_
 static JSValue js_mongols_response_set_content(JSContext* ctx, JSValueConst this_val,
     int argc, JSValueConst* argv)
 {
-    std::pair<const mongols::request*, mongols::response*>* data = (std::pair<const mongols::request*, mongols::response*>*)JS_GetContextOpaque(ctx);
-    if (argc != 1) {
+    if (argc < 1) {
         return JS_NewBool(ctx, FALSE);
     }
+    std::pair<const mongols::request*, mongols::response*>* data = (std::pair<const mongols::request*, mongols::response*>*)JS_GetContextOpaque(ctx);
     const char* content = JS_ToCString(ctx, argv[0]);
     data->second->content = content;
     JS_FreeCString(ctx, content);
