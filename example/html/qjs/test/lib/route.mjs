@@ -4,7 +4,7 @@ var route = function () {
     this.add = function (method, pattern, callback) {
         if (!this.map.has(pattern)) {
             var ele = {};
-            ele.method = method;
+            ele.method = typeof method == 'object' ? method : [method];
             ele.pattern = pattern;
             ele.callback = callback;
             this.map.set(pattern, ele);
