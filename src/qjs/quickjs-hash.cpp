@@ -1,6 +1,8 @@
 #include "quickjs-hash.hpp"
 #include "lib/hash/md5.hpp"
 #include "lib/hash/sha1.hpp"
+#include "lib/hash/sha256.hpp"
+#include "lib/hash/sha512.hpp"
 
 static JSValue js_hash_md5(JSContext* ctx, JSValueConst this_val,
     int argc, JSValueConst* argv)
@@ -26,9 +28,35 @@ static JSValue js_hash_sha1(JSContext* ctx, JSValueConst this_val,
     return ret;
 }
 
+static JSValue js_hash_sha256(JSContext* ctx, JSValueConst this_val,
+    int argc, JSValueConst* argv)
+{
+    if (argc != 1) {
+        return JS_EXCEPTION;
+    }
+    const char* content = JS_ToCString(ctx, argv[0]);
+    JSValue ret = JS_NewString(ctx, mongols::sha256(content).c_str());
+    JS_FreeCString(ctx, content);
+    return ret;
+}
+
+static JSValue js_hash_sha512(JSContext* ctx, JSValueConst this_val,
+    int argc, JSValueConst* argv)
+{
+    if (argc != 1) {
+        return JS_EXCEPTION;
+    }
+    const char* content = JS_ToCString(ctx, argv[0]);
+    JSValue ret = JS_NewString(ctx, mongols::sha512(content).c_str());
+    JS_FreeCString(ctx, content);
+    return ret;
+}
+
 static const JSCFunctionListEntry js_hash_funcs[] = {
-    JS_CFUNC_DEF("md5", 0, js_hash_md5),
-    JS_CFUNC_DEF("sha1", 0, js_hash_sha1),
+    JS_CFUNC_DEF("md5", 1, js_hash_md5),
+    JS_CFUNC_DEF("sha1", 1, js_hash_sha1),
+    JS_CFUNC_DEF("sha256", 1, js_hash_sha256),
+    JS_CFUNC_DEF("sha512", 1, js_hash_sha512),
 };
 
 static int js_hash_init(JSContext* ctx, JSModuleDef* m)
