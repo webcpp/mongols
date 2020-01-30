@@ -1,7 +1,5 @@
 #include "quickjs-crypto.hpp"
 #include "lib/crypto/aes.hpp"
-#include "util.hpp"
-#include <iostream>
 
 static JSClassID js_crypto_class_id;
 
@@ -35,9 +33,8 @@ static JSValue js_crypto_encode(JSContext* ctx, JSValueConst this_val,
     const char* str = JS_ToCString(ctx, argv[0]);
     mongols::aes* aes = (mongols::aes*)JS_GetOpaque2(ctx, this_val, js_crypto_class_id);
     std::string cipher = aes->encode(str);
-    JSValue ret = JS_NewString(ctx, mongols::base64_encode(cipher).c_str());
     JS_FreeCString(ctx, str);
-    return ret;
+    return JS_NewArrayBufferCopy(ctx, (uint8_t*)cipher.c_str(), cipher.size());
 }
 
 static JSValue js_crypto_decode(JSContext* ctx, JSValueConst this_val,
@@ -46,12 +43,11 @@ static JSValue js_crypto_decode(JSContext* ctx, JSValueConst this_val,
     if (argc < 1) {
         return JS_EXCEPTION;
     }
-    const char* str = JS_ToCString(ctx, argv[0]);
+    size_t len;
+    uint8_t* str = JS_GetArrayBuffer(ctx, &len, argv[0]);
     mongols::aes* aes = (mongols::aes*)JS_GetOpaque2(ctx, this_val, js_crypto_class_id);
-    std::string plain = aes->decode(mongols::base64_decode(str));
-    JSValue ret = JS_NewString(ctx, plain.c_str());
-    JS_FreeCString(ctx, str);
-    return ret;
+    std::string plain = aes->decode(std::string((char*)str, len));
+    return JS_NewString(ctx, plain.c_str());
 }
 
 static JSClassDef js_crypto_class = {
