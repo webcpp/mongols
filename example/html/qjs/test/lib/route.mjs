@@ -27,6 +27,18 @@ var route = function () {
         this.add(['HEAD'], pattern, callback);
     };
 
+    this.delete = function (pattern, callback) {
+        this.add(['DELETE'], pattern, callback);
+    }
+
+    this.patch = function (pattern, callback) {
+        this.add(['PATCH'], pattern, callback);
+    }
+
+    this.all = function (pattern, callback) {
+        this.add(['GET', 'POST', 'PUT', 'HEAD', 'DELETE', 'PATCH'], pattern, callback);
+    }
+
     this.run = function (m) {
         for (let [pattern, ele] of this.map.entries()) {
             if (ele.method.indexOf(m.method()) >= 0) {
