@@ -1,4 +1,5 @@
 import * as mongols from "mongols";
+import { crypto } from "crypto";
 import route from "./lib/route.mjs"
 
 var r = route.get_instance();
