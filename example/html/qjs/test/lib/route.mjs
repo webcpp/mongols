@@ -35,8 +35,12 @@ var route = function () {
         this.add(['PATCH'], pattern, callback);
     }
 
+    this.options = function(pattern,callback){
+        this.add(['OPTIONS'],pattern,callback);
+    };
+
     this.all = function (pattern, callback) {
-        this.add(['GET', 'POST', 'PUT', 'HEAD', 'DELETE', 'PATCH'], pattern, callback);
+        this.add(['GET', 'POST', 'PUT', 'HEAD', 'DELETE', 'PATCH','OPTIONS'], pattern, callback);
     }
 
     this.run = function (m) {

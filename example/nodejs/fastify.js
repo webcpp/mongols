@@ -17,6 +17,7 @@ if (cluster.isMaster) {
 
   // Declare a route
   fastify.get('/', async (request, reply) => {
+    reply.header('Content-Type', 'text/plain;charset=utf-8')
     return 'hello,world\n';
   })
 
@@ -27,7 +28,6 @@ if (cluster.isMaster) {
       fastify.log.info(`server listening on ${fastify.server.address().port}`)
     } catch (err) {
       fastify.log.error(err)
-      process.exit(1)
     }
   }
   start()
