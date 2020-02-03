@@ -446,6 +446,19 @@ std::string bin2hex(const std::string& input)
     return res;
 }
 
+std::string bin2hex(const char* input, size_t len)
+{
+    std::string res;
+    const char hex[] = "0123456789ABCDEF";
+    for (size_t i = 0; i < len; ++i) {
+        unsigned char c = static_cast<unsigned char>(input[i]);
+        res += hex[c >> 4];
+        res += hex[c & 0xf];
+    }
+
+    return res;
+}
+
 std::string url_encode(const std::string& str)
 {
     std::string new_str;

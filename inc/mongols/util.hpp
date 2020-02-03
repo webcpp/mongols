@@ -9,9 +9,9 @@
 #include <pthread.h>
 #include <string>
 #include <thread>
+#include <unistd.h>
 #include <unordered_map>
 #include <vector>
-#include <unistd.h>
 
 namespace mongols {
 
@@ -69,6 +69,7 @@ std::string base64_encode(const std::string&);
 std::string base64_decode(const std::string&);
 
 std::string bin2hex(const std::string&);
+std::string bin2hex(const char*, size_t);
 
 std::string url_encode(const std::string& str);
 
