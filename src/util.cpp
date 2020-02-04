@@ -597,35 +597,23 @@ bool process_bind_cpu(pid_t pid, int cpu)
     return sched_setaffinity(pid, sizeof(cpu_set_t), &set) == 0;
 }
 
+std::vector<int> multi_process::signals = { SIGHUP, SIGTERM, SIGINT, SIGQUIT, SIGPIPE, SIGUSR1, SIGUSR2 };
+int multi_process::sig = -1;
 std::vector<std::pair<pid_t, int>> multi_process::pids;
 
 void multi_process::signal_cb(int sig)
 {
-    switch (sig) {
-    case SIGHUP:
-        for (auto& i : multi_process::pids) {
-            if (i.first > 0) {
-                kill(i.first, SIGUSR1);
-            }
+    multi_process::sig = sig;
+    for (auto& i : multi_process::pids) {
+        if (i.first > 0) {
+            kill(i.first, sig);
         }
-        break;
-    case SIGTERM:
-    case SIGQUIT:
-    case SIGINT:
-        for (auto& i : multi_process::pids) {
-            if (i.first > 0) {
-                kill(i.first, sig);
-            }
-        }
-        break;
-    default:
-        break;
     }
 }
 
 void multi_process::set_signal()
 {
-    std::vector<int> sigs = { SIGHUP, SIGTERM, SIGINT, SIGQUIT };
+    std::vector<int> sigs = multi_process::signals;
     for (size_t i = 0; i < sigs.size(); ++i) {
         signal(sigs[i], multi_process::signal_cb);
     }
@@ -702,6 +690,9 @@ void multi_process::run(const std::function<void(pthread_mutex_t*, size_t*)>& f,
     pid_t pid;
     int status;
     while ((pid = wait(&status)) > 0) {
+        if (WIFEXITED(status) && multi_process::sig == SIGHUP) {
+            refork(pid);
+        }
         if (WIFSIGNALED(status)) {
             if (WCOREDUMP(status)) {
                 if (g(status)) {

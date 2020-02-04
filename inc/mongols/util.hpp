@@ -85,6 +85,9 @@ bool regex_find(const std::string& pattern, const std::string& str, std::vector<
 
 class multi_process {
 public:
+    static std::vector<int> signals;
+
+public:
     multi_process();
 
     virtual ~multi_process();
@@ -95,6 +98,7 @@ private:
     pthread_mutex_t* mtx;
     pthread_mutexattr_t* mtx_attr;
     size_t* data;
+    static int sig;
     static std::vector<std::pair<pid_t, int>> pids;
     static void signal_cb(int sig);
     static void set_signal();
