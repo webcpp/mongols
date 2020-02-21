@@ -4,8 +4,8 @@
 //import * as hash from "hash";
 // import { crypto } from "crypto";
 import * as mongols from "mongols";
-//import test from "./test/base_test.mjs"
-import test from "./test/route_test.mjs"
+import test from "./test/base_test.mjs"
+// import test from "./test/route_test.mjs"
 // import test from "./test/crypto_test.mjs"
 // import test from "./test/hash_test.mjs"
 //import test from "./test/tpl_test.mjs"
