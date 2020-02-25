@@ -10,6 +10,9 @@ namespace mongols {
 
 class posix_regex {
 public:
+    static int flags;
+
+public:
     posix_regex() = delete;
 
     posix_regex(const std::string& pattern);

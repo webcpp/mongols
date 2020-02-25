@@ -1,11 +1,13 @@
 #include "posix_regex.hpp"
 
 namespace mongols {
+
+int posix_regex::flags = REG_EXTENDED | REG_NOSUB;
 posix_regex::posix_regex(const std::string& pattern)
     : reg()
     , ok(false)
 {
-    this->ok = (regcomp(&this->reg, pattern.c_str(), REG_EXTENDED | REG_ICASE) == 0);
+    this->ok = (regcomp(&this->reg, pattern.c_str(), posix_regex::flags) == 0);
 }
 
 posix_regex::~posix_regex()
@@ -20,9 +22,9 @@ bool posix_regex::match(const std::string& subject, std::vector<std::string>& ma
     bool result = false;
     if (n > 1) {
         regmatch_t m[n];
-        if (this->ok && regexec(&this->reg, subject.c_str(), n, m, 0) == 0) {
+        if (this->ok && regexec(&this->reg, subject.c_str(), n, m, 0) == REG_NOERROR) {
             result = true;
-            for (size_t i = 0, len = 0; i < n && m[i].rm_so != -1; ++i) {
+            for (size_t i = 0, len = 0; i < this->reg.re_nsub; ++i) {
                 len = m[i].rm_eo - m[i].rm_so;
                 matches.push_back(std::move(subject.substr(m[i].rm_so, len)));
             }
