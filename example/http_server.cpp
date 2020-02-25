@@ -21,9 +21,10 @@ int main(int, char**)
     server.set_shutdown([&]() {
         std::cout << "process " << getpid() << " exit.\n";
     });
-    //server.run(f, g);
+    server.run(f, g);
 
     // or
+    /*
     server.add_route({"GET"}, "^/get/([a-zA-Z]+)/?$"
     , [](const mongols::request& req, mongols::response& res, const std::vector<std::string>& param) {
         res.content = req.method + "<br/>" + param[1];
@@ -36,5 +37,5 @@ int main(int, char**)
         res.status = 200;
     });
     server.run_with_route(f);
-     
+    */
 }
