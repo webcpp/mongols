@@ -5,6 +5,7 @@
 #include "lib/LRUCache11.hpp"
 #include "lib/leveldb/db.h"
 #include "lib/leveldb/options.h"
+#include "lib/re2/re2.h"
 #include "request.hpp"
 #include "response.hpp"
 #include "tcp_server.hpp"
@@ -99,6 +100,8 @@ private:
         std::string pattern;
         std::list<std::string> method;
         std::function<void(const mongols::request& req, mongols::response&, const std::vector<std::string>&)> handler;
+        std::shared_ptr<RE2::Options> re2_options;
+        std::shared_ptr<RE2> re2_engine;
     };
     std::list<route_t> route_map;
 

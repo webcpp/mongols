@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <unordered_map>
 #include <vector>
+#include "lib/re2/re2.h"
 
 namespace mongols {
 
@@ -79,8 +80,9 @@ pid_t forker(int, const std::function<void()>&, std::vector<std::pair<pid_t, int
 
 bool process_bind_cpu(pid_t pid, int cpu);
 
+bool regex_match(const RE2& re2, const std::string& str, std::vector<std::string>& results);
 bool regex_match(const std::string& pattern, const std::string& str, std::vector<std::string>& results);
-
+bool regex_find(const RE2& re2, const std::string& str, std::vector<std::string>& results);
 bool regex_find(const std::string& pattern, const std::string& str, std::vector<std::string>& results);
 
 class multi_process {
