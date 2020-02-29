@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "lib/llhttp.h"
+#include "lib/http_parser.h"
 #include "response.hpp"
 
 namespace mongols {
@@ -28,22 +28,22 @@ private:
 
 private:
     tmp_ tmp;
-    llhttp_t parser;
-    llhttp_settings_t settings;
+    http_parser parser;
+    http_parser_settings settings;
     mongols::response& res;
     std::string body;
 
 private:
-    static int on_message_begin(llhttp_t* p);
-    static int on_message_complete(llhttp_t* p);
-    static int on_header_field(llhttp_t* p, const char* buf, size_t len);
-    static int on_header_value(llhttp_t* p, const char* buf, size_t len);
-    static int on_url(llhttp_t* p, const char* buf, size_t len);
-    static int on_status(llhttp_t* p, const char* at, size_t length);
-    static int on_body(llhttp_t* p, const char* buf, size_t len);
-    static int on_headers_complete(llhttp_t* p);
-    static int on_chunk_header(llhttp_t* p);
-    static int on_chunk_complete(llhttp_t* p);
+    static int on_message_begin(http_parser* p);
+    static int on_message_complete(http_parser* p);
+    static int on_header_field(http_parser* p, const char* buf, size_t len);
+    static int on_header_value(http_parser* p, const char* buf, size_t len);
+    static int on_url(http_parser* p, const char* buf, size_t len);
+    static int on_status(http_parser* p, const char* at, size_t length);
+    static int on_body(http_parser* p, const char* buf, size_t len);
+    static int on_headers_complete(http_parser* p);
+    static int on_chunk_header(http_parser* p);
+    static int on_chunk_complete(http_parser* p);
 };
 }
 

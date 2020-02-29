@@ -1,37 +1,36 @@
 
 #include "http_request_parser.hpp"
-#include "lib/url_parser.h"
-#include <iostream>
+
 namespace mongols {
 
-int http_request_parser::on_message_begin(llhttp_t* p)
+int http_request_parser::on_message_begin(http_parser* p)
 {
     return 0;
 }
 
-int http_request_parser::on_message_complete(llhttp_t* p)
+int http_request_parser::on_message_complete(http_parser* p)
 {
     return 0;
 }
 
-int http_request_parser::on_body(llhttp_t* p, const char* buf, size_t len)
+int http_request_parser::on_body(http_parser* p, const char* buf, size_t len)
 {
     http_request_parser::tmp_* THIS = (http_request_parser::tmp_*)p->data;
     THIS->parser->body.assign(buf, len);
     return 0;
 }
 
-int http_request_parser::on_chunk_complete(llhttp_t* p)
+int http_request_parser::on_chunk_complete(http_parser* p)
 {
     return 0;
 }
 
-int http_request_parser::on_chunk_header(llhttp_t* p)
+int http_request_parser::on_chunk_header(http_parser* p)
 {
     return 0;
 }
 
-int http_request_parser::on_header_field(llhttp_t* p, const char* buf, size_t len)
+int http_request_parser::on_header_field(http_parser* p, const char* buf, size_t len)
 {
     http_request_parser::tmp_* THIS = (http_request_parser::tmp_*)p->data;
     THIS->pair.first = std::move(std::string(buf, len));
@@ -39,7 +38,7 @@ int http_request_parser::on_header_field(llhttp_t* p, const char* buf, size_t le
     return 0;
 }
 
-int http_request_parser::on_header_value(llhttp_t* p, const char* buf, size_t len)
+int http_request_parser::on_header_value(http_parser* p, const char* buf, size_t len)
 {
     http_request_parser::tmp_* THIS = (http_request_parser::tmp_*)p->data;
     THIS->parser->req.headers[THIS->pair.first] = std::move(std::string(buf, len));
@@ -47,20 +46,20 @@ int http_request_parser::on_header_value(llhttp_t* p, const char* buf, size_t le
     return 0;
 }
 
-int http_request_parser::on_headers_complete(llhttp_t* p)
+int http_request_parser::on_headers_complete(http_parser* p)
 {
     return 0;
 }
 
-int http_request_parser::on_status(llhttp_t* p, const char* at, size_t length)
+int http_request_parser::on_status(http_parser* p, const char* at, size_t length)
 {
     return 0;
 }
 
-int http_request_parser::on_url(llhttp_t* p, const char* buf, size_t len)
+int http_request_parser::on_url(http_parser* p, const char* buf, size_t len)
 {
     http_request_parser::tmp_* THIS = (http_request_parser::tmp_*)p->data;
-    THIS->parser->req.method = llhttp_method_name((llhttp_method_t)p->method);
+    THIS->parser->req.method = http_method_str((enum http_method)p->method);
     struct http_parser_url u;
     http_parser_url_init(&u);
     http_parser_parse_url(buf, len, 0, &u);
@@ -81,7 +80,10 @@ http_request_parser::http_request_parser(mongols::request& req)
     , req(req)
     , body()
 {
-    llhttp_settings_init(&this->settings);
+    http_parser_init(&this->parser, HTTP_REQUEST);
+    http_parser_settings_init(&this->settings);
+    this->tmp.parser = this;
+    this->parser.data = &this->tmp;
     this->settings.on_message_begin = http_request_parser::on_message_begin;
 
     this->settings.on_header_field = http_request_parser::on_header_field;
@@ -101,20 +103,16 @@ http_request_parser::http_request_parser(mongols::request& req)
     this->settings.on_chunk_header = http_request_parser::on_chunk_header;
 
     this->settings.on_chunk_complete = http_request_parser::on_chunk_complete;
-
-    llhttp_init(&this->parser, HTTP_REQUEST, &this->settings);
-    this->tmp.parser = this;
-    this->parser.data = &this->tmp;
 }
 
 bool http_request_parser::parse(const std::string& str)
 {
-    return llhttp_execute(&this->parser, str.c_str(), str.size()) == HPE_OK;
+    return http_parser_execute(&this->parser, &this->settings, str.c_str(), str.size()) == str.size();
 }
 
 bool http_request_parser::parse(const char* str, size_t len)
 {
-    return llhttp_execute(&this->parser, str, len) == HPE_OK;
+    return http_parser_execute(&this->parser, &this->settings, str, len) == len;
 }
 
 const std::string& http_request_parser::get_body() const
@@ -129,7 +127,7 @@ std::string& http_request_parser::get_body()
 
 bool http_request_parser::keep_alive() const
 {
-    return llhttp_should_keep_alive(&this->parser);
+    return http_should_keep_alive(&this->parser);
 }
 
 bool http_request_parser::upgrade() const
