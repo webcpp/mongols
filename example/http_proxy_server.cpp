@@ -37,9 +37,7 @@ int main(int, char**)
 
     std::function<void(pthread_mutex_t*, size_t*)> ff = [&](pthread_mutex_t* mtx, size_t* data) {
         server.set_shutdown([&]() {
-            pthread_mutex_lock(mtx);
             std::cout << "process " << getpid() << " exit.\n";
-            pthread_mutex_unlock(mtx);
         });
         server.run(f, h);
     };
