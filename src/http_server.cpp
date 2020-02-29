@@ -308,7 +308,7 @@ std::string http_server::work(
     mongols::response res;
     mongols::http_request_parser parser(req);
     bool enable_zip = false;
-    http_server::zip_t zip_type = http_server::zip_t::unkown;
+    http_server::zip_t zip_type = http_server::zip_t::unknown;
     if (parser.parse(input.first, input.second)) {
         client.type = tcp_server::connection_t::HTTP;
         std::unordered_map<std::string, std::string>::const_iterator tmp_iterator;
@@ -459,7 +459,7 @@ std::string http_server::work(
                 } else {
                 zip_error:
                     enable_zip = false;
-                    zip_type = http_server::zip_t::unkown;
+                    zip_type = http_server::zip_t::unknown;
                 }
             }
 
@@ -634,7 +634,7 @@ http_server::cache_t::cache_t()
     , content_type()
     , content()
     , enable_zip(false)
-    , zip_type(http_server::zip_t::unkown)
+    , zip_type(http_server::zip_t::unknown)
 {
 }
 

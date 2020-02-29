@@ -58,9 +58,9 @@ private:
 
 private:
     enum zip_t {
-        deflate,
-        gzip,
-        unkown
+        deflate = 0,
+        gzip = 1,
+        unknown = 2
     };
     std::string create_response(mongols::response& res, bool b);
     std::string get_status_text(int status);
