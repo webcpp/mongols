@@ -52,7 +52,7 @@ const std::string& aes::decode(const std::string& str)
     } else {
         this->plain = this->decode16(str);
     }
-    trim(this->plain);
+    trim(std::ref(this->plain));
     return this->plain;
 }
 }
