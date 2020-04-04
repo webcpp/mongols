@@ -24,9 +24,12 @@ bool posix_regex::match(const std::string& subject, std::vector<std::string>& ma
         regmatch_t m[n];
         if (this->ok && regexec(&this->reg, subject.c_str(), n, m, 0) == REG_NOERROR) {
             result = true;
+            if (posix_regex::flags & REG_NOSUB) {
+                return result;
+            }
             for (size_t i = 0, len = 0; i < this->reg.re_nsub; ++i) {
                 len = m[i].rm_eo - m[i].rm_so;
-                matches.push_back(std::move(subject.substr(m[i].rm_so, len)));
+                matches.emplace_back(std::move(subject.substr(m[i].rm_so, len)));
             }
         }
     }
