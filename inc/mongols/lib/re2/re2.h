@@ -196,6 +196,10 @@
 #include <mutex>
 #include <string>
 
+#if defined(__APPLE__)
+#include <TargetConditionals.h>
+#endif
+
 #include "re2/stringpiece.h"
 
 namespace re2 {
@@ -443,7 +447,7 @@ class RE2 {
 
   // Escapes all potentially meaningful regexp characters in
   // 'unquoted'.  The returned string, used as a regular expression,
-  // will exactly match the original string.  For example,
+  // will match exactly the original string.  For example,
   //           1.5-2.0?
   // may become:
   //           1\.5\-2\.0\?
@@ -737,29 +741,26 @@ class RE2 {
 
   re2::Prog* ReverseProg() const;
 
-  std::string   pattern_;          // string regular expression
-  Options       options_;          // option flags
-  std::string   prefix_;           // required prefix (before regexp_)
-  bool          prefix_foldcase_;  // prefix is ASCII case-insensitive
-  re2::Regexp*  entire_regexp_;    // parsed regular expression
-  re2::Regexp*  suffix_regexp_;    // parsed regular expression, prefix removed
-  re2::Prog*    prog_;             // compiled program for regexp
-  int           num_captures_;     // Number of capturing groups
-  bool          is_one_pass_;      // can use prog_->SearchOnePass?
+  std::string pattern_;         // string regular expression
+  Options options_;             // option flags
+  re2::Regexp* entire_regexp_;  // parsed regular expression
+  const std::string* error_;    // error indicator (or points to empty string)
+  ErrorCode error_code_;        // error code
+  std::string error_arg_;       // fragment of regexp showing error
+  std::string prefix_;          // required prefix (before suffix_regexp_)
+  bool prefix_foldcase_;        // prefix_ is ASCII case-insensitive
+  re2::Regexp* suffix_regexp_;  // parsed regular expression, prefix_ removed
+  re2::Prog* prog_;             // compiled program for regexp
+  int num_captures_;            // number of capturing groups
+  bool is_one_pass_;            // can use prog_->SearchOnePass?
 
-  mutable re2::Prog*          rprog_;    // reverse program for regexp
-  mutable const std::string*  error_;    // Error indicator
-                                         // (or points to empty string)
-  mutable ErrorCode      error_code_;    // Error code
-  mutable std::string    error_arg_;     // Fragment of regexp showing error
-
+  // Reverse Prog for DFA execution only
+  mutable re2::Prog* rprog_;
   // Map from capture names to indices
   mutable const std::map<std::string, int>* named_groups_;
-
   // Map from capture indices to names
   mutable const std::map<int, std::string>* group_names_;
 
-  // Onces for lazy computations.
   mutable std::once_flag rprog_once_;
   mutable std::once_flag named_groups_once_;
   mutable std::once_flag group_names_once_;
@@ -896,11 +897,8 @@ MAKE_INTEGER_PARSER(unsigned long long, ulonglong)
 #undef MAKE_INTEGER_PARSER
 
 #ifndef SWIG
-
 // Silence warnings about missing initializers for members of LazyRE2.
-// Note that we test for Clang first because it defines __GNUC__ as well.
-#if defined(__clang__)
-#elif defined(__GNUC__) && __GNUC__ >= 6
+#if !defined(__clang__) && defined(__GNUC__) && __GNUC__ >= 6
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 #endif
 
@@ -949,7 +947,52 @@ class LazyRE2 {
 
   void operator=(const LazyRE2&);  // disallowed
 };
-#endif  // SWIG
+#endif
+
+namespace hooks {
+
+// Most platforms support thread_local. Older versions of iOS don't support
+// thread_local, but for the sake of brevity, we lump together all versions
+// of Apple platforms that aren't macOS. If an iOS application really needs
+// the context pointee someday, we can get more specific then...
+#define RE2_HAVE_THREAD_LOCAL
+#if defined(__APPLE__) && !TARGET_OS_OSX
+#undef RE2_HAVE_THREAD_LOCAL
+#endif
+
+// A hook must not make any assumptions regarding the lifetime of the context
+// pointee beyond the current invocation of the hook. Pointers and references
+// obtained via the context pointee should be considered invalidated when the
+// hook returns. Hence, any data about the context pointee (e.g. its pattern)
+// would have to be copied in order for it to be kept for an indefinite time.
+//
+// A hook must not use RE2 for matching. Control flow reentering RE2::Match()
+// could result in infinite mutual recursion. To discourage that possibility,
+// RE2 will not maintain the context pointer correctly when used in that way.
+#ifdef RE2_HAVE_THREAD_LOCAL
+extern thread_local const RE2* context;
+#endif
+
+struct DFAStateCacheReset {
+  int64_t state_budget;
+  size_t state_cache_size;
+};
+
+struct DFASearchFailure {
+  // Nothing yet...
+};
+
+#define DECLARE_HOOK(type)                  \
+  using type##Callback = void(const type&); \
+  void Set##type##Hook(type##Callback* cb); \
+  type##Callback* Get##type##Hook();
+
+DECLARE_HOOK(DFAStateCacheReset)
+DECLARE_HOOK(DFASearchFailure)
+
+#undef DECLARE_HOOK
+
+}  // namespace hooks
 
 }  // namespace re2
 
