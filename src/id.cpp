@@ -22,4 +22,5 @@ void id::push(size_t t)
     std::lock_guard<std::mutex> guard(id::mtx);
     id::data_pool.push(t);
 }
+
 }

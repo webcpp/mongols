@@ -8,17 +8,21 @@ openssl::version_t openssl::version = openssl::version_t::TLSv12;
 std::string openssl::ciphers = "ECDHE-ECDSA-AES128-SHA256:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:RSA+AES128:!aNULL:!eNULL:!LOW:!ADH:!RC4:!3DES:!MD5:!EXP:!PSK:!SRP:!DSS"; //"AES128-GCM-SHA256";
 long openssl::flags = SSL_OP_NO_COMPRESSION | SSL_OP_NO_TICKET | SSL_OP_CIPHER_SERVER_PREFERENCE | SSL_OP_SINGLE_ECDH_USE | SSL_OP_SINGLE_DH_USE;
 const int openssl::ssl_session_ctx_id = 1;
-bool openssl::enable_verify = false, openssl::enable_cache = true;
+bool openssl::enable_verify = false;
+bool openssl::enable_cache = true;
 
 openssl::openssl(const std::string& crt_file, const std::string& key_file, openssl::version_t v, const std::string& ciphers, long flags)
     : ok(false)
     , crt_file(crt_file)
     , key_file(key_file)
     , ctx(0)
+    , v(v)
 {
+    SSL_library_init();
     SSL_load_error_strings();
-    OpenSSL_add_ssl_algorithms();
-    switch (v) {
+    ERR_load_BIO_strings();
+    OpenSSL_add_all_algorithms();
+    switch (this->v) {
     case openssl::version_t::SSLv23:
         this->ctx = SSL_CTX_new(SSLv23_server_method());
         break;
@@ -27,6 +31,9 @@ openssl::openssl(const std::string& crt_file, const std::string& key_file, opens
         break;
     case openssl::version_t::TLSv13:
         this->ctx = SSL_CTX_new(TLSv1_2_server_method());
+        break;
+    case openssl::version_t::DTLS:
+        this->ctx = SSL_CTX_new(DTLS_server_method());
         break;
     default:
         this->ctx = SSL_CTX_new(TLSv1_2_server_method());
@@ -85,10 +92,9 @@ bool openssl::set_socket_and_accept(SSL* ssl, int fd)
 {
     if (SSL_set_fd(ssl, fd)) {
         bool reconnectioned = false;
-        //            SSL_set_accept_state(ssl);
     ssl_accept:
         int ret = SSL_accept(ssl);
-        if (ret > 0 /*&& SSL_do_handshake(ssl) > 0*/) {
+        if (ret > 0) {
             return true;
         } else {
             int err = SSL_get_error(ssl, ret);
@@ -115,8 +121,15 @@ int openssl::write(SSL* ssl, const std::string& output)
     return SSL_write(ssl, output.c_str(), output.size());
 }
 
+mongols::openssl::version_t openssl::get_version() const
+{
+    return this->v;
+}
+
 openssl::ssl::ssl(SSL_CTX* ctx)
     : data(0)
+    , rbio(0)
+    , wbio(0)
 {
     this->data = SSL_new(ctx);
     if (this->data) {
@@ -136,4 +149,47 @@ SSL* openssl::ssl::get_ssl()
 {
     return this->data;
 }
+
+BIO* openssl::ssl::get_rbio()
+{
+    return this->rbio;
+}
+
+BIO* openssl::ssl::get_wbio()
+{
+    return this->wbio;
+}
+
+void openssl::ssl::set_rbio(BIO* b)
+{
+    this->rbio = b;
+}
+
+void openssl::ssl::set_wbio(BIO* b)
+{
+    this->wbio = b;
+}
+
+void openssl::ssl::set_rbio()
+{
+    this->rbio = BIO_new(BIO_s_mem());
+    BIO_set_mem_eof_return(this->rbio, -1);
+}
+
+void openssl::ssl::set_wbio()
+{
+    this->wbio = BIO_new(BIO_s_mem());
+    BIO_set_mem_eof_return(this->wbio, -1);
+}
+
+void openssl::ssl::set_bio(BIO* b)
+{
+    SSL_set_bio(this->data, b, b);
+}
+
+void openssl::ssl::bind()
+{
+    SSL_set_bio(this->data, this->rbio, this->wbio);
+}
+
 }

@@ -36,6 +36,8 @@ size_t tcp_server::backlist_timeout = 24 * 60 * 60;
 size_t tcp_server::max_send_limit = 5;
 size_t tcp_server::max_connection_keepalive = 60;
 
+tcp_server::setsockopt_function tcp_server::setsockopt_cb = nullptr;
+
 void tcp_server::signal_normal_cb(int sig, siginfo_t*, void*)
 {
     tcp_server::done = false;
@@ -96,6 +98,10 @@ tcp_server::tcp_server(const std::string& host, int port, int timeout, size_t bu
     recv_timeout.tv_usec = 0;
     setsockopt(this->listenfd, SOL_SOCKET, SO_RCVTIMEO, &recv_timeout, sizeof(recv_timeout));
 
+    if (tcp_server::setsockopt_cb) {
+        tcp_server::setsockopt_cb(this->listenfd);
+    }
+
     bind(this->listenfd, server_info->ai_addr, server_info->ai_addrlen);
 
     freeaddrinfo(server_info);
@@ -110,12 +116,12 @@ tcp_server::~tcp_server()
     if (this->work_pool) {
         delete this->work_pool;
     }
+    if (this->cleaning_fun) {
+        this->cleaning_fun();
+    }
     if (this->listenfd) {
         shutdown(this->listenfd, SHUT_RDWR);
         close(this->listenfd);
-    }
-    if (this->cleaning_fun) {
-        this->cleaning_fun();
     }
 }
 
@@ -234,7 +240,7 @@ bool tcp_server::read_whitelist_file(const std::string& path)
         if (input) {
             std::string line;
             while (std::getline(input, line)) {
-                mongols::trim(line);
+                mongols::trim(std::ref(line));
                 if (!line.empty() && line.front() != '#') {
                     this->whitelist.push_back(line);
                 }
@@ -355,7 +361,7 @@ bool tcp_server::check_whitelist(const std::string& ip)
     }) != this->whitelist.end();
 }
 
-bool tcp_server::security_check(tcp_server::client_t& client)
+bool tcp_server::security_check(const tcp_server::client_t& client)
 {
     time_t now = time(0);
     double diff = difftime(now, client.t);
@@ -495,7 +501,7 @@ void tcp_server::main_loop(struct epoll_event* event, const handler_function& g,
         while (tcp_server::done) {
             struct sockaddr_storage clientaddr;
             socklen_t clilen = sizeof(clientaddr);
-            int connfd = accept(listenfd, (struct sockaddr*)&clientaddr, &clilen);
+            int connfd = accept(this->listenfd, (struct sockaddr*)&clientaddr, &clilen);
             if (connfd > 0) {
                 std::string clientip;
                 int clientport = 0;

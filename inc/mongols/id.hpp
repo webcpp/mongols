@@ -8,7 +8,7 @@
 namespace mongols {
 class id {
 public:
-    id();
+    id() = default;
     virtual ~id() = default;
     void push(size_t);
     size_t poll();

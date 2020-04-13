@@ -40,6 +40,7 @@ example/sqlite_server
 example/tcp_server
 example/web_server
 example/ws_server
+example/udp_server
 example/wsupload_server
 example/multi_process_web_server
 example/html/leveldb/*
