@@ -10,10 +10,14 @@ int main(int, char**)
     int port = 9090;
     const char* host = "127.0.0.1";
 
-    mongols::udp_server  server(host, port);
+    mongols::udp_server::setsockopt_cb = [&](int fd) {
+        // call setsockopt
+    };
+
+    mongols::udp_server server(host, port);
 
     server.set_shutdown([&](int fd) {
-        std::cout << "listen fd :" << fd <<"\n";
+        // call setsockopt
         std::cout << "process " << getpid() << " exit.\n";
     });
     server.set_whitelist_file("etc/whitelist.txt");
