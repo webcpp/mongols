@@ -173,21 +173,26 @@ void openssl::ssl::set_wbio(BIO* b)
 void openssl::ssl::set_rbio()
 {
     this->rbio = BIO_new(BIO_s_mem());
-    BIO_set_mem_eof_return(this->rbio, -1);
 }
 
 void openssl::ssl::set_wbio()
 {
     this->wbio = BIO_new(BIO_s_mem());
-    BIO_set_mem_eof_return(this->wbio, -1);
 }
 
 void openssl::ssl::set_bio(BIO* b)
 {
+    this->rbio = this->wbio = b;
     SSL_set_bio(this->data, b, b);
 }
 
-void openssl::ssl::bind()
+void openssl::ssl::set_bio()
+{
+    this->rbio = BIO_new(BIO_s_mem());
+    this->wbio = this->rbio;
+}
+
+void openssl::ssl::bind_bio()
 {
     SSL_set_bio(this->data, this->rbio, this->wbio);
 }

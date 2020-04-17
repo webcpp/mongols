@@ -41,7 +41,8 @@ public:
         void set_rbio();
         void set_wbio();
         void set_bio(BIO*);
-        void bind();
+        void set_bio();
+        void bind_bio();
 
     private:
         SSL* data;
