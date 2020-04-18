@@ -139,6 +139,12 @@ openssl::ssl::ssl(SSL_CTX* ctx)
 
 openssl::ssl::~ssl()
 {
+    if (this->rbio) {
+        BIO_free(this->rbio);
+    }
+    if (this->wbio) {
+        BIO_free(this->wbio);
+    }
     if (this->data) {
         SSL_shutdown(this->data);
         SSL_free(this->data);
