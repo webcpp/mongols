@@ -41,7 +41,7 @@ CXXFLAGS+=`pkg-config --cflags openssl`
 CXXFLAGS+=-Iinc/mongols -Iinc/mongols/lib 
 CXXFLAGS+=-Isrc/MPFDParser
 CXXFLAGS+=-Iinc/mongols/lib/leveldb -Isrc/leveldb -DLEVELDB_PLATFORM_POSIX -DLEVELDB_HAS_PORT_CONFIG_H
-CXXFLAGS+= -DKAGUYA_USE_CPP11 -DFMT_HEADER_ONLY
+CXXFLAGS+= -DKAGUYA_USE_CPP11
 CXXFLAGS+=-Isrc -Isrc/re2 
 CXXFLAGS+=-Iinc/mongols/lib/sqlite
 CXXFLAGS+=-Iinc/mongols/lib/qjs -D_GNU_SOURCE -DCONFIG_VERSION=\"$(shell cat src/qjs/VERSION)\" -DCONFIG_BIGNUM
