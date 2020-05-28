@@ -30,6 +30,16 @@
 //   "(?i)hello"           -- (?i) turns on case-insensitive matching
 //   "/\\*(.*?)\\*/"       -- .*? matches . minimum no. of times possible
 //
+// The double backslashes are needed when writing C++ string literals.
+// However, they should NOT be used when writing C++11 raw string literals:
+//
+//   R"(hello (\w+) world)"  -- \w matches a "word" character
+//   R"(version (\d+))"      -- \d matches a digit
+//   R"(hello\s+world)"      -- \s matches any whitespace character
+//   R"(\b(\w+)\b)"          -- \b matches non-empty string at word boundary
+//   R"((?i)hello)"          -- (?i) turns on case-insensitive matching
+//   R"(/\*(.*?)\*/)"        -- .*? matches . minimum no. of times possible
+//
 // -----------------------------------------------------------------------
 // MATCHING INTERFACE:
 //
@@ -195,6 +205,7 @@
 #include <map>
 #include <mutex>
 #include <string>
+#include <vector>
 
 #if defined(__APPLE__)
 #include <TargetConditionals.h>
@@ -291,11 +302,11 @@ class RE2 {
   int ProgramSize() const;
   int ReverseProgramSize() const;
 
-  // EXPERIMENTAL! SUBJECT TO CHANGE!
-  // Outputs the program fanout as a histogram bucketed by powers of 2.
+  // If histogram is not null, outputs the program fanout
+  // as a histogram bucketed by powers of 2.
   // Returns the number of the largest non-empty bucket.
-  int ProgramFanout(std::map<int, int>* histogram) const;
-  int ReverseProgramFanout(std::map<int, int>* histogram) const;
+  int ProgramFanout(std::vector<int>* histogram) const;
+  int ReverseProgramFanout(std::vector<int>* histogram) const;
 
   // Returns the underlying Regexp; not for general use.
   // Returns entire_regexp_ so that callers don't need
@@ -629,17 +640,6 @@ class RE2 {
 
     Encoding encoding() const { return encoding_; }
     void set_encoding(Encoding encoding) { encoding_ = encoding; }
-
-    // Legacy interface to encoding.
-    // TODO(rsc): Remove once clients have been converted.
-    bool utf8() const { return encoding_ == EncodingUTF8; }
-    void set_utf8(bool b) {
-      if (b) {
-        encoding_ = EncodingUTF8;
-      } else {
-        encoding_ = EncodingLatin1;
-      }
-    }
 
     bool posix_syntax() const { return posix_syntax_; }
     void set_posix_syntax(bool b) { posix_syntax_ = b; }

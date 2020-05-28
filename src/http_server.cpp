@@ -651,7 +651,6 @@ void http_server::add_route(const std::list<std::string>& method, const std::str
     r.handler = hander;
     r.re2_options = std::move(std::make_shared<RE2::Options>());
     r.re2_options->set_log_errors(false);
-    r.re2_options->set_utf8(true);
     r.re2_engine = std::move(std::make_shared<RE2>("(" + pattern + ")", *r.re2_options));
     auto iter = std::find_if(this->route_map.begin(), this->route_map.end(), [&](const route_t& i) {
         return i.pattern == pattern;

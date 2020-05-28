@@ -539,7 +539,6 @@ bool regex_match(const std::string& pattern, const std::string& str, std::vector
     std::string wrapped_pattern = std::move("(" + pattern + ")");
     RE2::Options opt;
     opt.set_log_errors(false);
-    opt.set_utf8(true);
     RE2 re2(wrapped_pattern, opt);
     if (!re2.ok()) {
         return false;
@@ -595,7 +594,6 @@ bool regex_find(const std::string& pattern, const std::string& str, std::vector<
     std::string wrapped_pattern = std::move("(" + pattern + ")");
     RE2::Options opt;
     opt.set_log_errors(false);
-    opt.set_utf8(true);
     RE2 re2(wrapped_pattern, opt);
     if (!re2.ok()) {
         return false;
