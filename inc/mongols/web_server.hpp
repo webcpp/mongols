@@ -32,6 +32,7 @@ public:
     void run(const std::function<bool(const mongols::request&)>& req_filter);
 
 private:
+    static std::string dir_index_template;
     std::string root_path;
     std::unordered_map<std::string, std::string> mime_type;
     std::unordered_map<std::string, std::pair<char*, struct stat>> file_mmap;

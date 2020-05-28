@@ -18,6 +18,29 @@
 
 namespace mongols {
 
+std::string web_server::dir_index_template = std::move("<!DOCTYPE html>"
+                                                       "<html>"
+                                                       "<head>"
+                                                       "<title>"
+                                                       "Welcome to mongols web_server!"
+                                                       "</title>"
+                                                       "<style>"
+                                                       "</style>"
+                                                       "</head>"
+                                                       "<body>"
+                                                       "<div>"
+                                                       "<h3>Directory index</h3>"
+                                                       "<ul>"
+                                                       "{{#list}}"
+                                                       "<li>"
+                                                       "<a href=\"{{href}}\">{{name}}</a>"
+                                                       "</li>"
+                                                       "{{/list}}"
+                                                       "</ul>"
+                                                       "</div>"
+                                                       "</body>"
+                                                       "</html>");
+
 web_server::web_server(const std::string& host, int port, int timeout, size_t buffer_size, size_t thread_size, size_t max_body_size, int max_event_size)
     : root_path()
     , mime_type()
@@ -132,27 +155,8 @@ void web_server::set_mime_type_file(const std::string& path)
 
 std::string web_server::create_list_directory_response(const std::string& path)
 {
-    std::string list_content = std::move("<!DOCTYPE html>"
-                                         "<html>"
-                                         "<head>"
-                                         "<style>"
-                                         "</style>"
-                                         "</head>"
-                                         "<body>"
-                                         "<div>"
-                                         "<h3>Directory index</h3>"
-                                         "<ul>"
-                                         "{{#list}}"
-                                         "<li>"
-                                         "<a href=\"{{href}}\">{{name}}</a>"
-                                         "</li>"
-                                         "{{/list}}"
-                                         "</ul>"
-                                         "</div>"
-                                         "</body>"
-                                         "</html>");
-    kainjow::mustache::mustache render_engine(list_content);
-    kainjow::mustache::data list{ kainjow::mustache::data::type::list };
+    kainjow::mustache::mustache render_engine(web_server::dir_index_template);
+    kainjow::mustache::data list { kainjow::mustache::data::type::list };
 
     DIR* dir = opendir(path.c_str());
     std::string tmp_path;
