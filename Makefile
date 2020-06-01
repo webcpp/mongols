@@ -1,16 +1,16 @@
 NAME=mongols
 PROJECT=lib$(NAME).so
-CPPSRC=$(shell find src -type f -name *.cpp)
-CPPOBJ=$(patsubst %.cpp,%.o,$(CPPSRC))
-CCSRC=$(shell find src -type f -name *.cc)
-CCOBJ=$(patsubst %.cc,%.o,$(CCSRC))
-CXXSRC=$(shell find src -type f -name *.cxx)
-CXXOBJ=$(patsubst %.cxx,%.o,$(CXXSRC))
+CPPSRC:=$(shell find src -type f -name *.cpp)
+CPPOBJ:=$(patsubst %.cpp,%.o,$(CPPSRC))
+CCSRC:=$(shell find src -type f -name *.cc)
+CCOBJ:=$(patsubst %.cc,%.o,$(CCSRC))
+CXXSRC:=$(shell find src -type f -name *.cxx)
+CXXOBJ:=$(patsubst %.cxx,%.o,$(CXXSRC))
 
-CSRC=$(shell find src -type f -name *.c)
-COBJ=$(patsubst %.c,%.o,$(CSRC))
+CSRC:=$(shell find src -type f -name *.c)
+COBJ:=$(patsubst %.c,%.o,$(CSRC))
 
-OBJ=$(COBJ) $(CXXOBJ) $(CCOBJ) $(CPPOBJ)
+OBJ:=$(COBJ) $(CXXOBJ) $(CCOBJ) $(CPPOBJ)
 
 CC=gcc
 CXX=g++
