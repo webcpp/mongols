@@ -1,5 +1,5 @@
-SERVERSRC=$(shell find . -maxdepth 1 -type f -name '*.cpp' )
-SERVEROBJ=$(patsubst %.cpp,%.o,$(SERVERSRC))
+SERVERSRC:=$(shell find . -maxdepth 1 -type f -name '*.cpp' )
+SERVEROBJ:=$(patsubst %.cpp,%.o,$(SERVERSRC))
 
 CXX=g++
 CXXFLAGS+=-std=c++11 -Wall -O3  `pkg-config --cflags mongols openssl`
