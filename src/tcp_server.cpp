@@ -119,10 +119,6 @@ tcp_server::~tcp_server()
     if (this->cleaning_fun) {
         this->cleaning_fun();
     }
-    if (this->listenfd) {
-        shutdown(this->listenfd, SHUT_RDWR);
-        close(this->listenfd);
-    }
 }
 
 tcp_server::client_t::client_t()
