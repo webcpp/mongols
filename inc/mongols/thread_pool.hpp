@@ -4,6 +4,7 @@
 #include <atomic>
 #include <functional>
 #include <iostream>
+#include <pthread.h>
 #include <thread>
 #include <vector>
 
@@ -68,7 +69,12 @@ public:
         try {
             for (size_t i = 0; i < th_size; ++i) {
                 this->th.push_back(std::move(std::thread(std::bind(&thread_pool::work, this))));
+                cpu_set_t cpuset;
+                CPU_ZERO(&cpuset);
+                CPU_SET(i, &cpuset);
+                pthread_setaffinity_np(this->th.back().native_handle(), sizeof(cpu_set_t), &cpuset);
             }
+
         } catch (...) {
             this->shutdown();
         }
