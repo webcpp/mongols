@@ -72,8 +72,8 @@ static unsigned mday[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
 std::string http_time(time_t* t)
 {
     struct tm* timeinfo = gmtime(t);
-    char buffer[80] = { 0 };
-    size_t n = strftime(buffer, 80, "%a, %d %b %Y %T GMT", timeinfo);
+    char buffer[32] = { 0 };
+    size_t n = strftime(buffer, 32, "%a, %d %b %Y %T GMT", timeinfo);
     return std::string(buffer, n);
 }
 
