@@ -107,7 +107,6 @@ udp_server::~udp_server()
     }
 
     if (this->listenfd) {
-        shutdown(this->listenfd, SHUT_RDWR);
         close(this->listenfd);
     }
 }
