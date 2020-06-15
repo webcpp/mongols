@@ -6,7 +6,7 @@ A high performance network library for c++:
 
 - Both apache and nginx are very slow.
 
-![mongols.png](https://raw.githubusercontent.com/webcpp/mongols/master/example/html/image/mongols.png)
+![mongols.png](https://raw.githubusercontent.com/webcpp/mongols/master/mongols.drawio.png)
 
 ## benchmark
 
