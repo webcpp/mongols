@@ -93,7 +93,7 @@ class Regexp::ParseState {
   bool PushSimpleOp(RegexpOp op);
 
   // Pushes a ^ onto the stack.
-  bool PushCarat();
+  bool PushCaret();
 
   // Pushes a \b (word == true) or \B (word == false) onto the stack.
   bool PushWordBoundary(bool word);
@@ -423,7 +423,7 @@ bool Regexp::ParseState::PushLiteral(Rune r) {
 }
 
 // Pushes a ^ onto the stack.
-bool Regexp::ParseState::PushCarat() {
+bool Regexp::ParseState::PushCaret() {
   if (flags_ & OneLine) {
     return PushSimpleOp(kRegexpBeginText);
   }
@@ -1802,14 +1802,13 @@ ParseStatus ParseUnicodeGroup(StringPiece* s, Regexp::ParseFlags parse_flags,
 
   // Convert the UnicodeSet to a URange32 and UGroup that we can add.
   int nr = uset.getRangeCount();
-  URange32* r = new URange32[nr];
+  PODArray<URange32> r(nr);
   for (int i = 0; i < nr; i++) {
     r[i].lo = uset.getRangeStart(i);
     r[i].hi = uset.getRangeEnd(i);
   }
-  UGroup g = {"", +1, 0, 0, r, nr};
+  UGroup g = {"", +1, 0, 0, r.data(), nr};
   AddUGroup(cc, &g, sign, parse_flags);
-  delete[] r;
 #endif
 
   return kParseOk;
@@ -2272,7 +2271,7 @@ Regexp* Regexp::Parse(const StringPiece& s, ParseFlags global_flags,
         break;
 
       case '^':  // Beginning of line.
-        if (!ps.PushCarat())
+        if (!ps.PushCaret())
           return NULL;
         t.remove_prefix(1);  // '^'
         break;

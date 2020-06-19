@@ -20,6 +20,7 @@
 #include "util/logging.h"
 #include "util/mutex.h"
 #include "util/utf.h"
+#include "re2/pod_array.h"
 #include "re2/stringpiece.h"
 #include "re2/walker-inl.h"
 
@@ -243,16 +244,15 @@ Regexp* Regexp::ConcatOrAlternate(RegexpOp op, Regexp** sub, int nsub,
       return new Regexp(kRegexpEmptyMatch, flags);
   }
 
-  Regexp** subcopy = NULL;
+  PODArray<Regexp*> subcopy;
   if (op == kRegexpAlternate && can_factor) {
     // Going to edit sub; make a copy so we don't step on caller.
-    subcopy = new Regexp*[nsub];
-    memmove(subcopy, sub, nsub * sizeof sub[0]);
-    sub = subcopy;
+    subcopy = PODArray<Regexp*>(nsub);
+    memmove(subcopy.data(), sub, nsub * sizeof sub[0]);
+    sub = subcopy.data();
     nsub = FactorAlternation(sub, nsub, flags);
     if (nsub == 1) {
       Regexp* re = sub[0];
-      delete[] subcopy;
       return re;
     }
   }
@@ -269,7 +269,6 @@ Regexp* Regexp::ConcatOrAlternate(RegexpOp op, Regexp** sub, int nsub,
     subs[nbigsub - 1] = ConcatOrAlternate(op, sub+(nbigsub-1)*kMaxNsub,
                                           nsub - (nbigsub-1)*kMaxNsub, flags,
                                           false);
-    delete[] subcopy;
     return re;
   }
 
@@ -278,8 +277,6 @@ Regexp* Regexp::ConcatOrAlternate(RegexpOp op, Regexp** sub, int nsub,
   Regexp** subs = re->sub();
   for (int i = 0; i < nsub; i++)
     subs[i] = sub[i];
-
-  delete[] subcopy;
   return re;
 }
 
@@ -658,78 +655,83 @@ std::map<int, std::string>* Regexp::CaptureNames() {
   return w.TakeMap();
 }
 
+void ConvertRunesToBytes(bool latin1, Rune* runes, int nrunes,
+                         std::string* bytes) {
+  if (latin1) {
+    bytes->resize(nrunes);
+    for (int i = 0; i < nrunes; i++)
+      (*bytes)[i] = static_cast<char>(runes[i]);
+  } else {
+    bytes->resize(nrunes * UTFmax);  // worst case
+    char* p = &(*bytes)[0];
+    for (int i = 0; i < nrunes; i++)
+      p += runetochar(p, &runes[i]);
+    bytes->resize(p - &(*bytes)[0]);
+    bytes->shrink_to_fit();
+  }
+}
+
 // Determines whether regexp matches must be anchored
 // with a fixed string prefix.  If so, returns the prefix and
 // the regexp that remains after the prefix.  The prefix might
 // be ASCII case-insensitive.
 bool Regexp::RequiredPrefix(std::string* prefix, bool* foldcase,
                             Regexp** suffix) {
+  prefix->clear();
+  *foldcase = false;
+  *suffix = NULL;
+
   // No need for a walker: the regexp must be of the form
   // 1. some number of ^ anchors
   // 2. a literal char or string
   // 3. the rest
-  prefix->clear();
-  *foldcase = false;
-  *suffix = NULL;
   if (op_ != kRegexpConcat)
     return false;
-
-  // Some number of anchors, then a literal or concatenation.
   int i = 0;
-  Regexp** sub = this->sub();
-  while (i < nsub_ && sub[i]->op_ == kRegexpBeginText)
+  while (i < nsub_ && sub()[i]->op_ == kRegexpBeginText)
     i++;
   if (i == 0 || i >= nsub_)
     return false;
-
-  Regexp* re = sub[i];
-  switch (re->op_) {
-    default:
-      return false;
-
-    case kRegexpLiteralString:
-      // Convert to string in proper encoding.
-      if (re->parse_flags() & Latin1) {
-        prefix->resize(re->nrunes_);
-        for (int j = 0; j < re->nrunes_; j++)
-          (*prefix)[j] = static_cast<char>(re->runes_[j]);
-      } else {
-        // Convert to UTF-8 in place.
-        // Assume worst-case space and then trim.
-        prefix->resize(re->nrunes_ * UTFmax);
-        char *p = &(*prefix)[0];
-        for (int j = 0; j < re->nrunes_; j++) {
-          Rune r = re->runes_[j];
-          if (r < Runeself)
-            *p++ = static_cast<char>(r);
-          else
-            p += runetochar(p, &r);
-        }
-        prefix->resize(p - &(*prefix)[0]);
-      }
-      break;
-
-    case kRegexpLiteral:
-      if ((re->parse_flags() & Latin1) || re->rune_ < Runeself) {
-        prefix->append(1, static_cast<char>(re->rune_));
-      } else {
-        char buf[UTFmax];
-        prefix->append(buf, runetochar(buf, &re->rune_));
-      }
-      break;
-  }
-  *foldcase = (sub[i]->parse_flags() & FoldCase) != 0;
+  Regexp* re = sub()[i];
+  if (re->op_ != kRegexpLiteral &&
+      re->op_ != kRegexpLiteralString)
+    return false;
   i++;
-
-  // The rest.
   if (i < nsub_) {
     for (int j = i; j < nsub_; j++)
-      sub[j]->Incref();
-    re = Concat(sub + i, nsub_ - i, parse_flags());
+      sub()[j]->Incref();
+    *suffix = Concat(sub() + i, nsub_ - i, parse_flags());
   } else {
-    re = new Regexp(kRegexpEmptyMatch, parse_flags());
+    *suffix = new Regexp(kRegexpEmptyMatch, parse_flags());
   }
-  *suffix = re;
+
+  bool latin1 = (re->parse_flags() & Latin1) != 0;
+  Rune* runes = re->op_ == kRegexpLiteral ? &re->rune_ : re->runes_;
+  int nrunes = re->op_ == kRegexpLiteral ? 1 : re->nrunes_;
+  ConvertRunesToBytes(latin1, runes, nrunes, prefix);
+  *foldcase = (re->parse_flags() & FoldCase) != 0;
+  return true;
+}
+
+// Determines whether regexp matches must be unanchored
+// with a fixed string prefix.  If so, returns the prefix.
+// The prefix might be ASCII case-insensitive.
+bool Regexp::RequiredPrefixForAccel(std::string* prefix, bool* foldcase) {
+  prefix->clear();
+  *foldcase = false;
+
+  // No need for a walker: the regexp must either begin with or be
+  // a literal char or string.
+  Regexp* re = op_ == kRegexpConcat && nsub_ > 0 ? sub()[0] : this;
+  if (re->op_ != kRegexpLiteral &&
+      re->op_ != kRegexpLiteralString)
+    return false;
+
+  bool latin1 = (re->parse_flags() & Latin1) != 0;
+  Rune* runes = re->op_ == kRegexpLiteral ? &re->rune_ : re->runes_;
+  int nrunes = re->op_ == kRegexpLiteral ? 1 : re->nrunes_;
+  ConvertRunesToBytes(latin1, runes, nrunes, prefix);
+  *foldcase = (re->parse_flags() & FoldCase) != 0;
   return true;
 }
 
