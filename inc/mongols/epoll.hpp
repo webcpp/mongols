@@ -7,6 +7,7 @@
 namespace mongols {
 
 class epoll {
+public:
     epoll() = delete;
     epoll(int ev_size = 64, int timeout = -1);
 
