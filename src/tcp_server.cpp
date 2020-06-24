@@ -205,6 +205,8 @@ void tcp_server::run(const handler_function& g)
         if (!epoll.add(whitelist_fd, EPOLLIN | EPOLLET) || !this->whitelist_inotify->watch(IN_MODIFY)) {
             epoll.del(whitelist_fd);
             this->whitelist_inotify.reset();
+        } else {
+            this->setnonblocking(whitelist_fd);
         }
     }
     auto main_fun = std::bind(&tcp_server::main_loop, this, std::placeholders::_1, std::cref(g), std::ref(epoll));
