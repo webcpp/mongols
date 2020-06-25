@@ -202,11 +202,10 @@ void tcp_server::run(const handler_function& g)
     }
     if (this->whitelist_inotify) {
         int whitelist_fd = this->whitelist_inotify->get_fd();
+        this->setnonblocking(whitelist_fd);
         if (!epoll.add(whitelist_fd, EPOLLIN | EPOLLET) || !this->whitelist_inotify->watch(IN_MODIFY)) {
             epoll.del(whitelist_fd);
             this->whitelist_inotify.reset();
-        } else {
-            this->setnonblocking(whitelist_fd);
         }
     }
     auto main_fun = std::bind(&tcp_server::main_loop, this, std::placeholders::_1, std::cref(g), std::ref(epoll));
@@ -504,6 +503,7 @@ void tcp_server::main_loop(struct epoll_event* event, const handler_function& g,
             socklen_t clilen = sizeof(clientaddr);
             int connfd = accept(this->listenfd, (struct sockaddr*)&clientaddr, &clilen);
             if (connfd > 0) {
+                this->setnonblocking(connfd);
                 std::string clientip;
                 int clientport = 0;
                 if (!this->get_client_address(&clientaddr, clientip, clientport)) {
@@ -522,7 +522,6 @@ void tcp_server::main_loop(struct epoll_event* event, const handler_function& g,
                     this->del_client(connfd);
                     break;
                 }
-                this->setnonblocking(connfd);
             } else {
                 if (errno == EINTR) {
                     continue;
