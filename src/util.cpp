@@ -67,8 +67,6 @@ std::string real_path(const std::string& path)
     return ret;
 }
 
-static unsigned mday[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
-
 std::string http_time(time_t* t)
 {
     struct tm* timeinfo = gmtime(t);
@@ -76,6 +74,8 @@ std::string http_time(time_t* t)
     size_t n = strftime(buffer, 32, "%a, %d %b %Y %T GMT", timeinfo);
     return std::string(buffer, n);
 }
+
+static unsigned mday[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
 
 time_t parse_http_time(u_char* value, size_t len)
 {

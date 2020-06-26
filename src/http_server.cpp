@@ -107,11 +107,9 @@ void http_server::run_with_route(const std::function<bool(const mongols::request
 
 std::string http_server::create_response(mongols::response& res, bool b)
 {
-    time_t now = time(0);
     std::string output;
     output.append("HTTP/1.1 ").append(std::to_string(res.status)).append(" ").append(this->get_status_text(res.status)).append("\r\n");
     res.headers.insert(std::move(std::make_pair("Server", mongols_http_server_version)));
-    res.headers.insert(std::move(std::make_pair("Date", mongols::http_time(&now))));
     if (b == KEEPALIVE_CONNECTION) {
         res.headers.insert(std::move(std::make_pair("Connection", "keep-alive")));
     } else {
