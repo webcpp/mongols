@@ -530,10 +530,10 @@ void tcp_server::main_loop(struct epoll_event* event, const handler_function& g,
                 }
             }
         }
-    } else if (this->whitelist_inotify && event->data.fd == this->whitelist_inotify->get_fd()) {
-        this->whitelist_inotify->run();
     } else if (event->events & EPOLLIN) {
-        if (this->openssl_is_ok) {
+        if (this->whitelist_inotify && event->data.fd == this->whitelist_inotify->get_fd()) {
+            this->whitelist_inotify->run();
+        } else if (this->openssl_is_ok) {
             this->ssl_work(event->data.fd, g);
         } else {
             this->work(event->data.fd, g);
