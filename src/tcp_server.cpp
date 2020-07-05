@@ -498,10 +498,11 @@ ev_recv:
 void tcp_server::main_loop(struct epoll_event* event, const handler_function& g, mongols::epoll& epoll)
 {
     if (event->data.fd == this->listenfd) {
-        while (tcp_server::done) {
-            struct sockaddr_storage clientaddr;
-            socklen_t clilen = sizeof(clientaddr);
-            int connfd = accept(this->listenfd, (struct sockaddr*)&clientaddr, &clilen);
+        struct sockaddr_storage clientaddr;
+        socklen_t clilen = sizeof(clientaddr);
+        int connfd = 0;
+        do {
+            connfd = accept(this->listenfd, (struct sockaddr*)&clientaddr, &clilen);
             if (connfd > 0) {
                 this->setnonblocking(connfd);
                 std::string clientip;
@@ -522,14 +523,8 @@ void tcp_server::main_loop(struct epoll_event* event, const handler_function& g,
                     this->del_client(connfd);
                     break;
                 }
-            } else {
-                if (errno == EINTR) {
-                    continue;
-                } else {
-                    break;
-                }
             }
-        }
+        } while (connfd > 0);
     } else if (event->events & EPOLLIN) {
         if (this->whitelist_inotify && event->data.fd == this->whitelist_inotify->get_fd()) {
             this->whitelist_inotify->run();
