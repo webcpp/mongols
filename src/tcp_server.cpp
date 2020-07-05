@@ -500,13 +500,14 @@ void tcp_server::main_loop(struct epoll_event* event, const handler_function& g,
     if (event->data.fd == this->listenfd) {
         struct sockaddr_storage clientaddr;
         socklen_t clilen = sizeof(clientaddr);
+        std::string clientip;
+        int clientport = 0;
         int connfd = 0;
         do {
             connfd = accept(this->listenfd, (struct sockaddr*)&clientaddr, &clilen);
             if (connfd > 0) {
                 this->setnonblocking(connfd);
-                std::string clientip;
-                int clientport = 0;
+
                 if (!this->get_client_address(&clientaddr, clientip, clientport)) {
                     goto accept_error;
                 }
