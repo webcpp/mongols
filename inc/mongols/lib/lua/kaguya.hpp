@@ -16,9 +16,6 @@ extern "C" {
 #include "lua.h"
 #include "lauxlib.h"
 #include "lualib.h"
-//#include <lua.h>
-//#include <lauxlib.h>
-//#include <lualib.h>
 }
 
 #ifndef KAGUYA_USE_CPP11
@@ -6216,11 +6213,6 @@ struct ErrorHandler {
       throw LuaErrorRunningError(status, message
                                              ? std::string(message)
                                              : "unknown error running error");
-#if LUA_VERSION_NUM >= 502
-    case LUA_ERRGCMM:
-      throw LuaGCError(status,
-                       message ? std::string(message) : "unknown gc error");
-#endif
     default:
       throw LuaUnknownError(status, message ? std::string(message)
                                             : "lua unknown error");
@@ -6759,7 +6751,7 @@ public:
     if (argnum < 0) {
       argnum = 0;
     }
-    int result = lua_resume(thread, state, argnum);
+    int result = lua_resume(thread, state, argnum,0);
     except::checkErrorAndThrow(result, thread);
     return detail::FunctionResultProxy::ReturnValue(thread, result, 1,
                                                     types::typetag<Result>());
