@@ -53,6 +53,10 @@ LUAMOD_API int (luaopen_cjson_safe) (lua_State *l);
 #define LUA_LFSLIBNAME "lfs"
 LUAMOD_API int (luaopen_lfs) (lua_State *l);
 
+#define LUA_XUTF8LIBNAME "xutf8"
+LUAMOD_API int (luaopen_xutf8) (lua_State *l);
+
+
 /* open all previous libraries */
 LUALIB_API void (luaL_openlibs) (lua_State *L);
 
