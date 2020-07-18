@@ -6,10 +6,10 @@
 #include <vector>
 
 #include "http_request_parser.hpp"
+#include "lib/json.hpp"
 #include "lib/libwshandshake.hpp"
 #include "lib/websocket_parser.h"
 #include "ws_server.hpp"
-#include "json/json.h"
 
 namespace mongols {
 
@@ -83,26 +83,21 @@ void ws_server::set_enable_security_check(bool b)
 std::string ws_server::ws_json_parse(const std::string& message, bool& keepalive, bool& send_to_other, tcp_server::client_t& client, tcp_server::filter_handler_function& send_to_other_filter, ws_message_t& ws_msg_type)
 {
     ws_msg_type = ws_message_t::TEXT;
-    std::string errs;
-    Json::CharReaderBuilder json_reader_builder;
-    std::unique_ptr<Json::CharReader> json_reader(json_reader_builder.newCharReader());
-    Json::Value root;
-    if (json_reader->parse(message.c_str(), message.c_str() + message.size(), &root, &errs) && errs.empty()) {
-        if (root.isMember("uid")
-            && root.isMember("gid")
-            && root.isMember("ufilter")
-            && root["ufilter"].isArray()
-            && root.isMember("gfilter")
-            && root["gfilter"].isArray()) {
-
-            int64_t uid = root["uid"].asInt64();
+    try {
+        nlohmann::json root = nlohmann::json::parse(message);
+        if (root.contains("uid")
+            && root.contains("gid")
+            && root.contains("ufilter")
+            && root["ufilter"].is_array()
+            && root.contains("gfilter")
+            && root["gfilter"].is_array()) {
+            int64_t uid = root["uid"].get<int64_t>();
             if (client.uid == 0 && uid > 0) {
                 client.uid = uid;
             }
-
-            std::function<void(const Json::Value&)> gid_filter = [&](const Json::Value& v) {
-                if (v.isNumeric()) {
-                    int64_t gid = v.asInt64();
+            std::function<void(const nlohmann::json&)> gid_filter = [&](const nlohmann::json& v) {
+                if (v.is_number_integer()) {
+                    int64_t gid = v.get<int64_t>();
                     bool gid_is_uint64 = (gid >= 0);
                     std::list<size_t>::iterator gid_iter = std::find(client.gid.begin(), client.gid.end(), (gid_is_uint64 ? gid : -gid));
                     if (gid_iter == client.gid.end()) {
@@ -114,31 +109,30 @@ std::string ws_server::ws_json_parse(const std::string& message, bool& keepalive
                             client.gid.erase(gid_iter);
                         }
                     }
-                } else if (v.isArray()) {
-                    Json::ArrayIndex gid_v_size = v.size();
-                    for (Json::ArrayIndex i = 0; i < gid_v_size; ++i) {
-                        gid_filter(v[i]);
+                } else if (v.is_array()) {
+                    for (auto& ele : v) {
+                        gid_filter(ele);
                     }
                 }
             };
-            const Json::Value& gid_v = root["gid"];
+            auto& gid_v = root["gid"];
             gid_filter(gid_v);
 
             keepalive = KEEPALIVE_CONNECTION;
             send_to_other = true;
             std::vector<size_t> gfilter, ufilter;
-            const Json::Value &gfilter_array = root["gfilter"], &ufilter_array = root["ufilter"];
-            Json::ArrayIndex ufilter_size = ufilter_array.size(), gfilter_size = gfilter_array.size();
-            for (Json::ArrayIndex i = 0; i < ufilter_size; ++i) {
-                if (ufilter_array[i].isUInt64()) {
-                    ufilter.emplace_back(ufilter_array[i].asUInt64());
+            auto &gfilter_array = root["gfilter"], &ufilter_array = root["ufilter"];
+            for (auto& ele : ufilter_array) {
+                if (ele.is_number_unsigned()) {
+                    ufilter.emplace_back(ele.get<uint64_t>());
                 }
             }
-            for (Json::ArrayIndex i = 0; i < gfilter_size; ++i) {
-                if (gfilter_array[i].isUInt64()) {
-                    gfilter.emplace_back(gfilter_array[i].asUInt64());
+            for (auto& ele : gfilter_array) {
+                if (ele.is_number_unsigned()) {
+                    gfilter.emplace_back(ele.get<uint64_t>());
                 }
             }
+
             send_to_other_filter = [=](const tcp_server::client_t& cur_client) {
                 bool res = false;
                 if (gfilter.empty()) {
@@ -161,24 +155,16 @@ std::string ws_server::ws_json_parse(const std::string& message, bool& keepalive
                 return res;
             };
             root["ip"] = client.ip;
-            root["u_size"] = Json::UInt64(client.u_size);
-            Json::StreamWriterBuilder json_writer_builder;
-            std::ostringstream os;
-            std::unique_ptr<Json::StreamWriter> json_writer(json_writer_builder.newStreamWriter());
-            json_writer->write(root, &os);
-            return os.str();
+            root["u_size"] = client.u_size;
+
+            return root.dump();
         }
-    } else {
-        //keepalive = CLOSE_CONNECTION;
-        Json::Value msg_error;
+    } catch (nlohmann::json::parse_error& err) {
+        nlohmann::json msg_error;
         msg_error["error"] = true;
         msg_error["message"] = "Failed to send message.";
         send_to_other = false;
-        Json::StreamWriterBuilder json_writer_builder;
-        std::ostringstream os;
-        std::unique_ptr<Json::StreamWriter> json_writer(json_writer_builder.newStreamWriter());
-        json_writer->write(root, &os);
-        return os.str();
+        return msg_error.dump();
     }
     return message;
 }
