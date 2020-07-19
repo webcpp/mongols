@@ -15,8 +15,19 @@ OBJ:=$(COBJ) $(CXXOBJ) $(CCOBJ) $(CPPOBJ)
 CC=gcc
 CXX=g++
 
-CFLAGS+=-O3 -g -std=c11 -Wall -fPIC 
-CFLAGS+=-Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -DNDEBUG
+BOTHFLAGS=-Wall -Wextra -Werror \
+		  -Wno-sign-compare     \
+		  -Wno-missing-field-initializers \
+		  -Wno-unused-but-set-variable \
+		  -Wno-unused-label \
+    	  -Wno-unused-function \
+    	  -Wno-unused-parameter \
+    	  -Wno-unused-variable \
+		  -Wno-array-bounds \
+		  -Wno-maybe-uninitialized
+
+CFLAGS+=-O3 -g -std=c11 -fPIC -DNDEBUG
+CFLAGS+=$(BOTHFLAGS)
 CFLAGS+=-Iinc/mongols -Iinc/mongols/lib
 CFLAGS+=-Iinc/mongols/lib/lua -DLUA_COMPAT_5_2 -DLUA_COMPAT_5_1 -DLUA_USE_LINUX -D_GNU_SOURCE
 CFLAGS+=-DMULTIPLE_THREADS
@@ -35,8 +46,8 @@ CFLAGS+=-Iinc/mongols/lib/qjs -D_GNU_SOURCE -DCONFIG_VERSION=\"$(shell cat src/q
 
 
 
-CXXFLAGS+=-O3 -g -std=c++11 -Wall -fPIC
-CXXFLAGS+=-Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -DNDEBUG
+CXXFLAGS+=-O3 -g -std=c++11 -fPIC -DNDEBUG
+CXXFLAGS+=$(BOTHFLAGS)
 CXXFLAGS+=`pkg-config --cflags openssl`
 CXXFLAGS+=-Iinc/mongols -Iinc/mongols/lib 
 CXXFLAGS+=-Isrc/MPFDParser

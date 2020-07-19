@@ -73,7 +73,7 @@ void web_server::run(const std::function<bool(const mongols::request&)>& req_fil
 
 void web_server::res_filter(const mongols::request& req, mongols::response& res)
 {
-    std::string path = this->root_path + req.uri;
+    std::string path = std::move(this->root_path + req.uri);
     struct stat st;
     if (stat(path.c_str(), &st) == 0) {
         if (S_ISREG(st.st_mode)) {
