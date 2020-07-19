@@ -526,7 +526,7 @@ void http_server::set_enable_session(bool b)
 
 void http_server::set_max_file_size(size_t len)
 {
-    //this->db_options.max_file_size = len;
+    this->db_options.max_file_size = len;
 }
 
 void http_server::set_max_open_files(int len)
