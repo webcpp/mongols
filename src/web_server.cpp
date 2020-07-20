@@ -166,10 +166,9 @@ std::string web_server::create_list_directory_response(const std::string& path)
     while ((entry = readdir(dir)) != NULL) {
         if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
             tmp_path = b ? path + "/" + entry->d_name : path + entry->d_name;
-            auto p = tmp_path.find(this->root_path);
             kainjow::mustache::data item;
             item.set("name", entry->d_name);
-            item.set("href", tmp_path.substr(p + n));
+            item.set("href", tmp_path.substr(n));
             list.push_back(item);
         }
     }
