@@ -1,6 +1,6 @@
 #include "sqlite_server.hpp"
+#include "lib/json.hpp"
 #include "util.hpp"
-#include "json/json.h"
 #include <iostream>
 
 #define SQLITE_SQL_FIELD "sql"
@@ -49,9 +49,9 @@ void sqlite_server::run(const std::string& db_name)
 void sqlite_server::work(const mongols::request& req, mongols::response& res)
 {
     res.headers.find("Content-Type")->second = "application/json;charset=utf-8";
-    Json::Value root;
+    nlohmann::json root;
     res.status = 500;
-    root["error"] = Json::Value();
+    root["error"] = nlohmann::json();
     std::unordered_map<std::string, std::string>::const_iterator sql_iter, type_iter;
     if ((sql_iter = req.form.find(SQLITE_SQL_FIELD)) != req.form.end()
         && (type_iter = req.form.find(SQLITE_TYPE_FIELD)) != req.form.end()) {
@@ -82,11 +82,11 @@ void sqlite_server::work(const mongols::request& req, mongols::response& res)
             try {
                 sqlite3pp::query qry(*this->db, sql);
                 for (sqlite3pp::query::iterator i = qry.begin(); i != qry.end(); ++i) {
-                    Json::Value row;
+                    nlohmann::json row;
                     for (int j = 0; j < qry.column_count(); ++j) {
                         switch ((*i).column_type(j)) {
                         case SQLITE_INTEGER:
-                            row[qry.column_name(j)] = static_cast<Json::Int64>((*i).get<long long int>(j));
+                            row[qry.column_name(j)] = static_cast<long long int>((*i).get<long long int>(j));
                             break;
                         case SQLITE_FLOAT:
                             row[qry.column_name(j)] = (*i).get<double>(j);
@@ -95,7 +95,7 @@ void sqlite_server::work(const mongols::request& req, mongols::response& res)
                             row[qry.column_name(j)] = std::move((*i).get<std::string>(j));
                             break;
                         case SQLITE_NULL:
-                            row[qry.column_name(j)] = Json::Value();
+                            row[qry.column_name(j)] = nlohmann::json();
                             break;
                         case SQLITE_TEXT:
                             row[qry.column_name(j)] = std::move((*i).get<std::string>(j));
@@ -104,7 +104,7 @@ void sqlite_server::work(const mongols::request& req, mongols::response& res)
                             break;
                         }
                     }
-                    root["result"].append(row);
+                    root["result"].emplace_back(row);
                 }
                 res.status = 200;
             } catch (std::exception& e) {
@@ -116,8 +116,7 @@ void sqlite_server::work(const mongols::request& req, mongols::response& res)
     } else {
         root["error"] = std::move("Not found form data.");
     }
-    Json::FastWriter writer;
-    res.content = std::move(writer.write(root));
+    res.content = root.dump();
 }
 
 void sqlite_server::set_enable_lru_cache(bool b)
@@ -170,7 +169,8 @@ void sqlite_server::set_enable_security_check(bool b)
 {
     this->server->set_enable_security_check(b);
 }
-void sqlite_server::set_shutdown(const tcp_server::shutdown_function& f){
+void sqlite_server::set_shutdown(const tcp_server::shutdown_function& f)
+{
     this->server->set_shutdown(f);
 }
 }

@@ -1,7 +1,7 @@
 #ifndef JSON_HPP
 #define JSON_HPP
 
-#include "lib/json/json.h"
+#include "lib/json.hpp"
 #include <memory>
 #include <string>
 
@@ -9,8 +9,7 @@ namespace mongols {
 
 class json {
 private:
-    json(const Json::Value&);
-    void config_builder();
+    json(const nlohmann::json&);
 
 public:
     json();
@@ -52,9 +51,7 @@ public:
     size_t size() const;
 
 private:
-    Json::Value root;
-    Json::StreamWriterBuilder builder;
-    Json::Reader reader;
+    nlohmann::json root;
 };
 }
 
