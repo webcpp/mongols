@@ -5,31 +5,19 @@
 
 namespace mongols {
 
-class hash_engine {
-public:
-    static std::string bin2hex(const std::string&);
-    static std::string bin2hex(const char*, size_t);
-    enum hash_t {
-        MD5 = 0,
-        SHA1,
-        SHA256,
-        SHA512
-    };
+namespace hash_engine {
 
-public:
-    hash_engine() = delete;
-    hash_engine(hash_t);
-    virtual ~hash_engine();
-    const std::string& get(const std::string&);
-    const std::string& get(const char*, size_t);
-
-private:
-    hash_t t;
-    size_t DIGEST_LENGTH;
-    void* ctx;
-    std::string out;
-    char* buffer;
-};
+    std::string bin2hex(const std::string&);
+    std::string bin2hex(const char*, size_t);
+    std::string md5(const std::string&);
+    std::string md5(const char*, size_t);
+    std::string sha1(const std::string&);
+    std::string sha1(const char*, size_t);
+    std::string sha256(const std::string&);
+    std::string sha256(const char*, size_t);
+    std::string sha512(const std::string&);
+    std::string sha512(const char*, size_t);
+}
 
 }
 

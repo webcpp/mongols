@@ -72,11 +72,11 @@ int main(int, char**)
     //    }
 
     server.set_function([](const std::string& str) {
-        return mongols::hash_engine(mongols::hash_engine::hash_t::SHA1).get(str);
+        return mongols::hash_engine::sha1(str);
     },
         "sha1");
     server.set_function([](const std::string& str) {
-        return mongols::hash_engine(mongols::hash_engine::hash_t::MD5).get(str);
+        return mongols::hash_engine::md5(str);
     },
         "md5");
 

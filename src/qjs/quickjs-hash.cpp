@@ -8,7 +8,7 @@ static JSValue js_hash_md5(JSContext* ctx, JSValueConst this_val,
         return JS_EXCEPTION;
     }
     const char* content = JS_ToCString(ctx, argv[0]);
-    JSValue ret = JS_NewString(ctx, mongols::hash_engine(mongols::hash_engine::hash_t::MD5).get(content).c_str());
+    JSValue ret = JS_NewString(ctx, mongols::hash_engine::md5(content).c_str());
     JS_FreeCString(ctx, content);
     return ret;
 }
@@ -20,7 +20,7 @@ static JSValue js_hash_sha1(JSContext* ctx, JSValueConst this_val,
         return JS_EXCEPTION;
     }
     const char* content = JS_ToCString(ctx, argv[0]);
-    JSValue ret = JS_NewString(ctx, mongols::hash_engine(mongols::hash_engine::hash_t::SHA1).get(content).c_str());
+    JSValue ret = JS_NewString(ctx, mongols::hash_engine::sha1(content).c_str());
     JS_FreeCString(ctx, content);
     return ret;
 }
@@ -32,7 +32,7 @@ static JSValue js_hash_sha256(JSContext* ctx, JSValueConst this_val,
         return JS_EXCEPTION;
     }
     const char* content = JS_ToCString(ctx, argv[0]);
-    JSValue ret = JS_NewString(ctx, mongols::hash_engine(mongols::hash_engine::hash_t::SHA256).get(content).c_str());
+    JSValue ret = JS_NewString(ctx, mongols::hash_engine::sha256(content).c_str());
     JS_FreeCString(ctx, content);
     return ret;
 }
@@ -44,7 +44,7 @@ static JSValue js_hash_sha512(JSContext* ctx, JSValueConst this_val,
         return JS_EXCEPTION;
     }
     const char* content = JS_ToCString(ctx, argv[0]);
-    JSValue ret = JS_NewString(ctx, mongols::hash_engine(mongols::hash_engine::hash_t::SHA512).get(content).c_str());
+    JSValue ret = JS_NewString(ctx, mongols::hash_engine::sha512(content).c_str());
     JS_FreeCString(ctx, content);
     return ret;
 }

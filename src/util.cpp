@@ -31,7 +31,7 @@ std::string random_string(const std::string& s)
 {
     time_t now = time(NULL);
     char* now_str = ctime(&now);
-    return hash_engine(hash_engine::hash_t::MD5).get(s + now_str);
+    return hash_engine::md5((s + now_str));
 }
 
 bool read_file(const std::string& path, std::string& out)

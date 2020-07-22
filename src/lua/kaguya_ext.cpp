@@ -72,10 +72,10 @@ void lua_ext(kaguya::State& vm)
     vm["mongols_hash"] = kaguya::NewTable();
     kaguya::LuaTable hash_tbl = vm["mongols_hash"];
     hash_tbl["md5"] = kaguya::function([](const std::string& str) {
-        return mongols::hash_engine(mongols::hash_engine::hash_t::MD5).get(str);
+        return mongols::hash_engine::md5(str);
     });
     hash_tbl["sha1"] = kaguya::function([](const std::string& str) {
-        return mongols::hash_engine(mongols::hash_engine::hash_t::SHA1).get(str);
+        return mongols::hash_engine::sha1(str);
     });
 
     vm["mongols_json"].setClass(
