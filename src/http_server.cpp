@@ -8,7 +8,7 @@
 
 #include "MPFDParser/Parser.h"
 #include "http_server.hpp"
-#include "lib/hash/md5.hpp"
+#include "lib/hash/hash_engine.hpp"
 #include "lib/leveldb/cache.h"
 #include "lib/msgpack.hpp"
 #include "lib/re2/re2.h"
@@ -352,7 +352,8 @@ std::string http_server::work(
                 res.content.clear();
                 return this->create_response(res, keepalive);
             }
-            std::string cache_k = std::move(mongols::md5(req.method + req.uri + "?" + req.param));
+            
+            std::string cache_k = std::move(hash_engine(hash_engine::hash_t::MD5).get(req.method + req.uri + "?" + req.param));
             if (this->enable_lru_cache && req.method == "GET") {
                 if (this->lru_cache->contains(cache_k)) {
                     auto cache_ele = this->lru_cache->get(cache_k);

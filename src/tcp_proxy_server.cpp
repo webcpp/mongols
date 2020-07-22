@@ -14,7 +14,7 @@
 
 #include "http_request_parser.hpp"
 #include "http_response_parser.hpp"
-#include "lib/hash/md5.hpp"
+#include "lib/hash/hash_engine.hpp"
 #include "tcp_proxy_server.hpp"
 #include "version.hpp"
 
@@ -349,7 +349,7 @@ std::string tcp_proxy_server::http_work(const tcp_server::filter_handler_functio
             if (this->enable_http_lru_cache) {
                 std::string tmp_str(req.method);
                 tmp_str.append(req.uri);
-                cache_key = std::make_shared<std::string>(std::move(mongols::md5(req.param.empty() ? tmp_str : tmp_str.append("?").append(req.param))));
+                cache_key = std::make_shared<std::string>(std::move(hash_engine(hash_engine::hash_t::MD5).get(req.param.empty() ? tmp_str : tmp_str.append("?").append(req.param))));
                 if (this->http_lru_cache->contains(*cache_key)) {
                     output = this->http_lru_cache->get(*cache_key);
                     if (difftime(time(0), output->second) > this->http_lru_cache_expires) {

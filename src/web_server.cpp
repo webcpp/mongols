@@ -9,7 +9,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "lib/hash/md5.hpp"
+#include "lib/hash/hash_engine.hpp"
 #include "lib/mustache.hpp"
 #include "response.hpp"
 #include "util.hpp"
@@ -193,7 +193,7 @@ void web_server::set_enable_lru_cache(bool b)
 
 void web_server::res_filter_with_mmap(const mongols::request& req, mongols::response& res)
 {
-    std::string path = std::move(this->root_path + req.uri), mmap_key = std::move(mongols::md5(path));
+    std::string path = std::move(this->root_path + req.uri), mmap_key = std::move(hash_engine(hash_engine::hash_t::MD5).get(path));
     std::unordered_map<std::string, std::pair<char*, struct stat>>::const_iterator iter;
     struct stat st;
     if (stat(path.c_str(), &st) == 0) {

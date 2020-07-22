@@ -1,5 +1,5 @@
 #include "file_mmap.hpp"
-#include "lib/hash/md5.hpp"
+#include "lib/hash/hash_engine.hpp"
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -22,7 +22,7 @@ file_mmap::~file_mmap()
 
 bool file_mmap::get(const std::string& path, std::pair<char*, struct stat>& ele)
 {
-    std::string mmap_key = std::move(mongols::md5(path));
+    std::string mmap_key = std::move(hash_engine(hash_engine::hash_t::MD5).get(path));
     std::unordered_map<std::string, std::pair<char*, struct stat>>::const_iterator iter;
     struct stat st;
     if (stat(path.c_str(), &st) == 0) {
