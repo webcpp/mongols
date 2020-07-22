@@ -24,7 +24,8 @@ BOTHFLAGS=-Wall -Wextra -Werror \
     	  -Wno-unused-parameter \
     	  -Wno-unused-variable \
 		  -Wno-array-bounds \
-		  -Wno-maybe-uninitialized
+		  -Wno-maybe-uninitialized \
+		  -Wno-implicit-fallthrough
 
 CFLAGS+=-O3 -g -std=c11 -fPIC -DNDEBUG
 CFLAGS+=$(BOTHFLAGS)
