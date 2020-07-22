@@ -7,6 +7,10 @@ A high performance network library for c++:
 - Both apache and nginx are very slow.
 
 
+![nginx_4_worker](benchmark/nginx_4_worker.png)
+![mongols_4_worker](benchmark/mongols_4_worker.png)
+![nginx_vs_mongols](benchmark/nginx_vs_mongols.png)
+
 
 ## dependency
 
