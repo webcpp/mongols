@@ -1,7 +1,6 @@
-#ifndef VERSION_HPP
-#define VERSION_HPP
+#ifndef B2C01A81_0BAF_40D0_A8E8_494238A6FB08
+#define B2C01A81_0BAF_40D0_A8E8_494238A6FB08
 
 #define mongols_http_server_version "mongols/1.8.4"
 
-#endif /* VERSION_HPP */
-
+#endif /* B2C01A81_0BAF_40D0_A8E8_494238A6FB08 */

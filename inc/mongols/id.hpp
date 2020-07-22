@@ -1,5 +1,5 @@
-#ifndef ID_HPP
-#define ID_HPP
+#ifndef BBADA2A5_79C2_4376_B7F1_FA0FFD05965A
+#define BBADA2A5_79C2_4376_B7F1_FA0FFD05965A
 
 #include <list>
 #include <mutex>
@@ -20,4 +20,4 @@ private:
 };
 }
 
-#endif // !ID_HPP
+#endif /* BBADA2A5_79C2_4376_B7F1_FA0FFD05965A */

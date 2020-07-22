@@ -1,5 +1,5 @@
-#ifndef EPOLL_HPP
-#define EPOLL_HPP
+#ifndef BFAC9F12_63AE_4128_BC55_38822B8FB7A0
+#define BFAC9F12_63AE_4128_BC55_38822B8FB7A0
 
 #include <functional>
 #include <sys/epoll.h>
@@ -28,4 +28,4 @@ private:
 };
 }
 
-#endif /* EPOLL_HPP */
+#endif /* BFAC9F12_63AE_4128_BC55_38822B8FB7A0 */

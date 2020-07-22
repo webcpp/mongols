@@ -1,5 +1,5 @@
-#ifndef MODULE_HPP
-#define MODULE_HPP
+#ifndef C567B229_B3E1_449F_8B99_3B1BD9340276
+#define C567B229_B3E1_449F_8B99_3B1BD9340276
 
 #include <dlfcn.h>
 #include <memory>
@@ -112,4 +112,4 @@ private:
 };
 }
 
-#endif /* MODULE_HPP */
+#endif /* C567B229_B3E1_449F_8B99_3B1BD9340276 */

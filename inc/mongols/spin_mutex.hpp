@@ -1,5 +1,5 @@
-#ifndef SPIN_MUTEX_HPP
-#define SPIN_MUTEX_HPP
+#ifndef E08DF8D4_7BA1_4CBA_AE5F_4DFA7DA56D3D
+#define E08DF8D4_7BA1_4CBA_AE5F_4DFA7DA56D3D
 
 #include <atomic>
 
@@ -29,4 +29,4 @@ public:
 };
 }
 
-#endif /* SPIN_MUTEX_HPP */
+#endif /* E08DF8D4_7BA1_4CBA_AE5F_4DFA7DA56D3D */

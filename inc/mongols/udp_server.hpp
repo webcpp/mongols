@@ -1,5 +1,5 @@
-#ifndef UDP_SERVER_HPP
-#define UDP_SERVER_HPP
+#ifndef ACB370BD_6C79_427F_9C5A_9060F9F746F7
+#define ACB370BD_6C79_427F_9C5A_9060F9F746F7
 
 #include <atomic>
 #include <ctime>
@@ -114,4 +114,4 @@ protected:
 };
 }
 
-#endif // !UDP_SERVER_HPP
+#endif /* ACB370BD_6C79_427F_9C5A_9060F9F746F7 */

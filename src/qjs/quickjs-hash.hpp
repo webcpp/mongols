@@ -1,5 +1,5 @@
-#ifndef QUICKJS_HASH_HPP
-#define QUICKJS_HASH_HPP
+#ifndef E655A67A_5FA2_4E54_8DB9_F402AD8CD4E3
+#define E655A67A_5FA2_4E54_8DB9_F402AD8CD4E3
 
 extern "C" {
 #include "cutils.h"
@@ -8,4 +8,4 @@ extern "C" {
 
 JSModuleDef* js_init_module_hash(JSContext* ctx, const char* module_name);
 
-#endif // !QUICKJS_HASH_HPP
+#endif /* E655A67A_5FA2_4E54_8DB9_F402AD8CD4E3 */

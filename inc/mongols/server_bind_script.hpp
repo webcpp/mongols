@@ -1,5 +1,5 @@
-#ifndef SERVER_BIND_SCRIPT_HPP
-#define SERVER_BIND_SCRIPT_HPP
+#ifndef C1E18F15_532A_4199_8648_C7EC415E382E
+#define C1E18F15_532A_4199_8648_C7EC415E382E
 
 #include "request.hpp"
 #include "response.hpp"
@@ -144,4 +144,4 @@ private:
 };
 }
 
-#endif /* SERVER_BIND_SCRIPT_HPP */
+#endif /* C1E18F15_532A_4199_8648_C7EC415E382E */

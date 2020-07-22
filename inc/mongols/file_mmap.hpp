@@ -1,5 +1,5 @@
-#ifndef FILE_MMAP_HPP
-#define FILE_MMAP_HPP
+#ifndef CC2A4155_173C_4E4D_A8D2_4C4FFF952BDC
+#define CC2A4155_173C_4E4D_A8D2_4C4FFF952BDC
 
 #include <string>
 #include <sys/stat.h>
@@ -19,4 +19,4 @@ private:
 };
 }
 
-#endif /* FILE_MMAP_HPP */
+#endif /* CC2A4155_173C_4E4D_A8D2_4C4FFF952BDC */

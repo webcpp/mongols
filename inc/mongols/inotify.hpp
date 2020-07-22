@@ -1,5 +1,5 @@
-#ifndef INOTIFY_HPP
-#define INOTIFY_HPP
+#ifndef DCD22375_A901_4F02_B9AA_D96A5924AC43
+#define DCD22375_A901_4F02_B9AA_D96A5924AC43
 
 #include <functional>
 #include <string>
@@ -30,4 +30,4 @@ public:
 };
 }
 
-#endif
+#endif /* DCD22375_A901_4F02_B9AA_D96A5924AC43 */

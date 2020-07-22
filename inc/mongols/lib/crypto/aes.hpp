@@ -1,5 +1,5 @@
-#ifndef AES_HPP
-#define AES_HPP
+#ifndef B1A981F8_389F_49B7_B7C6_490C4007C8A8
+#define B1A981F8_389F_49B7_B7C6_490C4007C8A8
 
 #include <openssl/aes.h>
 #include <string>
@@ -20,8 +20,8 @@ public:
 
 private:
     std::string key, cipher, plain;
-    AES_KEY en_key,de_key;
+    AES_KEY en_key, de_key;
 };
 }
 
-#endif // !AES_HPP#define AES_HPP
+#endif /* B1A981F8_389F_49B7_B7C6_490C4007C8A8 */

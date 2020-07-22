@@ -1,5 +1,5 @@
-#ifndef HTTP_SERVER_HPP
-#define HTTP_SERVER_HPP
+#ifndef D3CCF23F_CC4E_434B_B658_FBB57CD3675B
+#define D3CCF23F_CC4E_434B_B658_FBB57CD3675B
 
 #include "http_request_parser.hpp"
 #include "lib/LRUCache11.hpp"
@@ -112,4 +112,4 @@ public:
 };
 }
 
-#endif /* HTTP_SERVER_HPP */
+#endif /* D3CCF23F_CC4E_434B_B658_FBB57CD3675B */

@@ -1,5 +1,5 @@
-#ifndef WS_SERVER_HPP
-#define WS_SERVER_HPP
+#ifndef E874EE94_67BC_4378_9535_6D79D0ADA609
+#define E874EE94_67BC_4378_9535_6D79D0ADA609
 
 #include "request.hpp"
 #include "tcp_server.hpp"
@@ -52,4 +52,4 @@ private:
 };
 }
 
-#endif /* WS_SERVER_HPP */
+#endif /* E874EE94_67BC_4378_9535_6D79D0ADA609 */

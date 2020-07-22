@@ -1,5 +1,5 @@
-#ifndef PCRE_REGEX_HPP
-#define PCRE_REGEX_HPP
+#ifndef C701943C_32FC_4A3A_9218_C3D09169AE6B
+#define C701943C_32FC_4A3A_9218_C3D09169AE6B
 
 #include <pcre.h>
 #include <string>
@@ -68,4 +68,4 @@ private:
 };
 }
 
-#endif /* PCRE_REGEX_HPP */
+#endif /* C701943C_32FC_4A3A_9218_C3D09169AE6B */

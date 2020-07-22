@@ -1,5 +1,5 @@
-#ifndef POSIX_REGEX_HPP
-#define POSIX_REGEX_HPP
+#ifndef A110EE56_3466_4773_A8CC_D9432C2A814B
+#define A110EE56_3466_4773_A8CC_D9432C2A814B
 
 #include <iostream>
 #include <regex.h>
@@ -27,4 +27,4 @@ private:
 };
 }
 
-#endif /* POSIX_REGEX_HPP */
+#endif /* A110EE56_3466_4773_A8CC_D9432C2A814B */

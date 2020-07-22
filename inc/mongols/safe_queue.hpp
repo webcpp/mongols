@@ -1,5 +1,5 @@
-#ifndef SAFE_QUEUE_HPP
-#define SAFE_QUEUE_HPP
+#ifndef F20C8785_6EBD_41DA_80D0_2AD6361B6E8D
+#define F20C8785_6EBD_41DA_80D0_2AD6361B6E8D
 
 #include <condition_variable>
 #include <memory>
@@ -67,4 +67,4 @@ public:
 };
 }
 
-#endif /* SAFE_QUEUE_HPP */
+#endif /* F20C8785_6EBD_41DA_80D0_2AD6361B6E8D */

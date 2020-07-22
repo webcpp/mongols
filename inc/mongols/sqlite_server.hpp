@@ -1,5 +1,5 @@
-#ifndef SQLITE_SERVER_HPP
-#define SQLITE_SERVER_HPP
+#ifndef BA14E691_B38A_4574_BFC5_D81631BA6625
+#define BA14E691_B38A_4574_BFC5_D81631BA6625
 
 #include "http_server.hpp"
 #include "lib/sqlite/sqlite3pp.h"
@@ -37,4 +37,4 @@ protected:
 };
 }
 
-#endif /* SQLITE_SERVER_HPP */
+#endif /* BA14E691_B38A_4574_BFC5_D81631BA6625 */

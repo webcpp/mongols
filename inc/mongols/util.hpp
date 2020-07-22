@@ -1,6 +1,7 @@
-#ifndef UTIL_HPP
-#define UTIL_HPP
+#ifndef C81F6ED0_6DA5_4237_AB1A_274674CAE2A8
+#define C81F6ED0_6DA5_4237_AB1A_274674CAE2A8
 
+#include "lib/re2/re2.h"
 #include <algorithm>
 #include <cstdio>
 #include <cstdlib>
@@ -12,7 +13,6 @@
 #include <unistd.h>
 #include <unordered_map>
 #include <vector>
-#include "lib/re2/re2.h"
 
 namespace mongols {
 
@@ -107,4 +107,4 @@ private:
 };
 }
 
-#endif /* UTIL_HPP */
+#endif /* C81F6ED0_6DA5_4237_AB1A_274674CAE2A8 */

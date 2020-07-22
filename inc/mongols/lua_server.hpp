@@ -1,5 +1,5 @@
-#ifndef LUA_SERVER_HPP
-#define LUA_SERVER_HPP
+#ifndef F1A0B2A8_702E_4922_B4B8_1B41866EB66D
+#define F1A0B2A8_702E_4922_B4B8_1B41866EB66D
 
 #include "http_server.hpp"
 #include "lib/lua/kaguya.hpp"
@@ -59,4 +59,4 @@ private:
 };
 }
 
-#endif /* LUA_SERVER_HPP */
+#endif /* F1A0B2A8_702E_4922_B4B8_1B41866EB66D */

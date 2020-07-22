@@ -1,5 +1,5 @@
-#ifndef TCP_THREADING_SERVER_HPP
-#define TCP_THREADING_SERVER_HPP
+#ifndef D5DFD123_CAF7_4805_B500_8CAC294F07C0
+#define D5DFD123_CAF7_4805_B500_8CAC294F07C0
 
 #include "tcp_server.hpp"
 #include "thread_pool.hpp"
@@ -15,6 +15,7 @@ public:
     virtual ~tcp_threading_server() = default;
     virtual void set_whitelist(const std::string&);
     virtual void del_whitelist(const std::string&);
+
 private:
     virtual bool add_client(int, const std::string&, int);
     virtual void del_client(int);
@@ -31,4 +32,4 @@ private:
 };
 }
 
-#endif /* TCP_THREADING_SERVER_HPP */
+#endif /* D5DFD123_CAF7_4805_B500_8CAC294F07C0 */

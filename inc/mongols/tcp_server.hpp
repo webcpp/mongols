@@ -1,5 +1,5 @@
-#ifndef TCP_SERVER_HPP
-#define TCP_SERVER_HPP
+#ifndef C3200096_C7F1_4006_B373_7B88A1BB95E3
+#define C3200096_C7F1_4006_B373_7B88A1BB95E3
 
 #include <atomic>
 #include <ctime>
@@ -145,4 +145,4 @@ protected:
 };
 }
 
-#endif /* TCP_SERVER_HPP */
+#endif /* C3200096_C7F1_4006_B373_7B88A1BB95E3 */

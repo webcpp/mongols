@@ -1,5 +1,5 @@
-#ifndef REQUEST_HPP
-#define REQUEST_HPP
+#ifndef D805C907_BBE7_4769_993B_66FA7B2EB25B
+#define D805C907_BBE7_4769_993B_66FA7B2EB25B
 
 #include <string>
 #include <unordered_map>
@@ -27,4 +27,4 @@ public:
 };
 }
 
-#endif /* REQUEST_HPP */
+#endif /* D805C907_BBE7_4769_993B_66FA7B2EB25B */

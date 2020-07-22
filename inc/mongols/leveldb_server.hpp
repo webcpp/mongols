@@ -1,7 +1,5 @@
-#ifndef LEVELDB_SERVER_HPP
-#define LEVELDB_SERVER_HPP
-
-#include <netdb.h>
+#ifndef C9371814_D8DC_4A12_9CB5_E49E13914DE6
+#define C9371814_D8DC_4A12_9CB5_E49E13914DE6
 
 #include "http_server.hpp"
 #include "lib/leveldb/db.h"
@@ -44,4 +42,4 @@ protected:
 };
 }
 
-#endif /* LEVELDB_SERVER_HPP */
+#endif /* C9371814_D8DC_4A12_9CB5_E49E13914DE6 */

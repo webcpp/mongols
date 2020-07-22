@@ -1,5 +1,5 @@
-#ifndef QUICKJS_MONGOLS_HPP
-#define QUICKJS_MONGOLS_HPP
+#ifndef B90BEBDC_6618_4951_978F_6B6704B531C0
+#define B90BEBDC_6618_4951_978F_6B6704B531C0
 
 extern "C" {
 #include "cutils.h"
@@ -12,4 +12,4 @@ int eval_file(JSContext* ctx, const char* filename, int module);
 
 JSModuleDef* js_init_module_mongols(JSContext* ctx, const char* module_name);
 
-#endif //
+#endif /* B90BEBDC_6618_4951_978F_6B6704B531C0 */

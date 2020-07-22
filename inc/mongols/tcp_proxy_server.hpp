@@ -1,5 +1,5 @@
-#ifndef TCP_PROXY_SERVER_HPP
-#define TCP_PROXY_SERVER_HPP
+#ifndef CA0A8993_99AF_4891_B370_E8DB720B1705
+#define CA0A8993_99AF_4891_B370_E8DB720B1705
 
 #include <netdb.h>
 #include <netinet/in.h>
@@ -113,4 +113,4 @@ private:
 };
 }
 
-#endif /* TCP_PROXY_SERVER_HPP */
+#endif /* CA0A8993_99AF_4891_B370_E8DB720B1705 */

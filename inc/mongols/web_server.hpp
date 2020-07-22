@@ -1,5 +1,5 @@
-#ifndef WEB_SERVER_HPP
-#define WEB_SERVER_HPP
+#ifndef FA6C80F2_357F_4E6C_BD7E_5DA6112FBD59
+#define FA6C80F2_357F_4E6C_BD7E_5DA6112FBD59
 
 #include "http_server.hpp"
 #include <sys/stat.h>
@@ -45,4 +45,4 @@ private:
 };
 }
 
-#endif /* WEB_SERVER_HPP */
+#endif /* FA6C80F2_357F_4E6C_BD7E_5DA6112FBD59 */

@@ -1,5 +1,5 @@
-#ifndef OPENSSL_HPP
-#define OPENSSL_HPP
+#ifndef C54CC66B_81C1_4A96_93D5_4D6B88CFEF3C
+#define C54CC66B_81C1_4A96_93D5_4D6B88CFEF3C
 
 #include <arpa/inet.h>
 #include <cstring>
@@ -85,4 +85,4 @@ private:
 };
 }
 
-#endif /* OPENSSL_HPP */
+#endif /* C54CC66B_81C1_4A96_93D5_4D6B88CFEF3C */

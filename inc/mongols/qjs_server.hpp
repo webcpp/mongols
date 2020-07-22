@@ -1,5 +1,5 @@
-#ifndef QJS_SERVER_HPP
-#define QJS_SERVER_HPP
+#ifndef CC4C2FF9_74AD_4489_865A_CE111EAFD1B5
+#define CC4C2FF9_74AD_4489_865A_CE111EAFD1B5
 
 #include "file_mmap.hpp"
 #include "http_server.hpp"
@@ -10,7 +10,7 @@ namespace mongols {
 
 class qjs_server {
 public:
-    static size_t memory_limit,ctx_called_limit;
+    static size_t memory_limit, ctx_called_limit;
 
 public:
     qjs_server() = delete;
@@ -56,4 +56,4 @@ private:
 };
 }
 
-#endif /* QJS_SERVER_HPP */
+#endif /* CC4C2FF9_74AD_4489_865A_CE111EAFD1B5 */

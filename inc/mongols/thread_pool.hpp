@@ -1,5 +1,5 @@
-#ifndef THREAD_POOL_HPP
-#define THREAD_POOL_HPP
+#ifndef F7EF3FB2_DFA3_4E87_97D4_6F18EC6293C4
+#define F7EF3FB2_DFA3_4E87_97D4_6F18EC6293C4
 
 #include <atomic>
 #include <functional>
@@ -104,4 +104,4 @@ public:
 };
 }
 
-#endif /* THREAD_POOL_HPP */
+#endif /* F7EF3FB2_DFA3_4E87_97D4_6F18EC6293C4 */

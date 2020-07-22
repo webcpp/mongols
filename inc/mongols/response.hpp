@@ -1,5 +1,5 @@
-#ifndef RESPONSE_HPP
-#define RESPONSE_HPP
+#ifndef EC3865D2_F8D6_44D0_A410_DD0E2BAE448B
+#define EC3865D2_F8D6_44D0_A410_DD0E2BAE448B
 
 #include <string>
 #include <unordered_map>
@@ -41,4 +41,4 @@ public:
 };
 }
 
-#endif /* RESPONSE_HPP */
+#endif /* EC3865D2_F8D6_44D0_A410_DD0E2BAE448B */

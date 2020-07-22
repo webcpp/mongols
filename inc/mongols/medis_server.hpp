@@ -1,5 +1,6 @@
-#ifndef MEDIS_SERVER_HPP
-#define MEDIS_SERVER_HPP
+#ifndef EC50EE21_0250_40E3_B067_DC12C668C552
+#define EC50EE21_0250_40E3_B067_DC12C668C552
+
 
 #include <ctime>
 #include <functional>
@@ -266,4 +267,5 @@ private:
 
 } // namespace mongols
 
-#endif
+
+#endif /* EC50EE21_0250_40E3_B067_DC12C668C552 */

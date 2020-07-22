@@ -1,5 +1,5 @@
-#ifndef SHARED_MEMORY_HPP
-#define SHARED_MEMORY_HPP
+#ifndef EFE382D3_1312_413C_A415_94AA074A32C6
+#define EFE382D3_1312_413C_A415_94AA074A32C6
 
 #include "util.hpp"
 #include <cmath>
@@ -335,4 +335,4 @@ private:
 };
 }
 
-#endif /* SHARED_MEMORY_HPP */
+#endif /* EFE382D3_1312_413C_A415_94AA074A32C6 */
