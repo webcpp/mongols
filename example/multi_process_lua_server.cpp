@@ -1,5 +1,4 @@
-#include <mongols/lib/hash/md5.hpp>
-#include <mongols/lib/hash/sha1.hpp>
+#include <mongols/lib/hash/hash_engine.hpp>
 #include <mongols/lua_server.hpp>
 #include <mongols/util.hpp>
 #include <pthread.h>
@@ -84,8 +83,14 @@ int main(int, char**)
     //        return -1;
     //    }
 
-    server.set_function(&mongols::sha1, "sha1");
-    server.set_function(&mongols::md5, "md5");
+    server.set_function([](const std::string& str) {
+        return mongols::hash_engine(mongols::hash_engine::hash_t::SHA1).get(str);
+    },
+        "sha1");
+    server.set_function([](const std::string& str) {
+        return mongols::hash_engine(mongols::hash_engine::hash_t::MD5).get(str);
+    },
+        "md5");
 
     server.set_class(
         kaguya::UserdataMetatable<person>()
