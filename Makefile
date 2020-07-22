@@ -26,7 +26,8 @@ BOTHFLAGS=-Wall -Wextra -Werror \
 		  -Wno-array-bounds \
 		  -Wno-maybe-uninitialized \
 		  -Wno-implicit-fallthrough \
-		  -Wno-stringop-truncation
+		  -Wno-stringop-truncation \
+		  -Wno-cast-function-type
 
 CFLAGS+=-O3 -g -std=c11 -fPIC -DNDEBUG
 CFLAGS+=$(BOTHFLAGS)
