@@ -31,6 +31,7 @@ BOTHFLAGS=-Wall -Wextra -Werror \
 
 CFLAGS+=-O3 -g -std=c11 -fPIC -DNDEBUG
 CFLAGS+=$(BOTHFLAGS)
+CFLAGS+=`pkg-config --cflags openssl`
 CFLAGS+=-Iinc/mongols -Iinc/mongols/lib
 CFLAGS+=-Iinc/mongols/lib/lua -DLUA_COMPAT_5_2 -DLUA_COMPAT_5_1 -DLUA_USE_LINUX -D_GNU_SOURCE
 CFLAGS+=-DMULTIPLE_THREADS
