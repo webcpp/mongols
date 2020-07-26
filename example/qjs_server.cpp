@@ -6,7 +6,7 @@ int main(int, char**)
     int port = 9090;
     const char* host = "127.0.0.1";
     mongols::qjs_server
-        server(host, port, 5000, 8192, 0 /*2*/);
+        server(host, port, 5000, 8192, 0);
     server.set_root_path("html/qjs");
     server.set_enable_bootstrap(true);
     server.set_enable_lru_cache(false);
