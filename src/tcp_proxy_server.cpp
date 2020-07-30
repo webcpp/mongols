@@ -30,7 +30,11 @@ tcp_client::ctx_t::ctx_t()
     OpenSSL_add_ssl_algorithms();
     switch (openssl::version) {
     case openssl::version_t::SSLv23:
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
         this->ctx = SSL_CTX_new(SSLv23_client_method());
+#else
+        this->ctx = SSL_CTX_new(TSL_client_method());
+#endif
         break;
     case openssl::version_t::TLSv12:
         this->ctx = SSL_CTX_new(TLSv1_2_client_method());
@@ -39,7 +43,11 @@ tcp_client::ctx_t::ctx_t()
         this->ctx = SSL_CTX_new(TLSv1_2_client_method());
         break;
     default:
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
         this->ctx = SSL_CTX_new(TLSv1_2_client_method());
+#else
+        this->ctx = SSL_CTX_new(TSL_client_method());
+#endif
         break;
     }
 
