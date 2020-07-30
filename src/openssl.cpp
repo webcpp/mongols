@@ -24,7 +24,11 @@ openssl::openssl(const std::string& crt_file, const std::string& key_file, opens
     OpenSSL_add_all_algorithms();
     switch (this->v) {
     case openssl::version_t::SSLv23:
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
         this->ctx = SSL_CTX_new(SSLv23_server_method());
+#else
+        this->ctx = SSL_CTX_new(TLS_server_method());
+#endif
         break;
     case openssl::version_t::TLSv12:
         this->ctx = SSL_CTX_new(TLSv1_2_server_method());
@@ -36,7 +40,11 @@ openssl::openssl(const std::string& crt_file, const std::string& key_file, opens
         this->ctx = SSL_CTX_new(DTLS_server_method());
         break;
     default:
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
         this->ctx = SSL_CTX_new(TLSv1_2_server_method());
+#else
+        this->ctx = SSL_CTX_new(TLS_server_method());
+#endif
         break;
     }
 
