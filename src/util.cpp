@@ -420,7 +420,10 @@ std::vector<std::string> split(const std::string& s, char delimiter)
     return tokens;
 }
 
-std::string regular_expression::INTEGER = R"(^[+-]?[1-9]+[0-9]*$)", regular_expression::NUMBER = R"(^[+-]?[1-9]+[0-9]*\.?[0-9]*$)", regular_expression::EMAIL = R"(^[0-9a-zA-Z]+(([-_\.])?[0-9a-zA-Z]+)?\@[0-9a-zA-Z]+[-_]?[0-9a-zA-Z]+(\.[0-9a-zA-Z]+)+$)", regular_expression::URL = R"(^(http[s]?|ftp)://[0-9a-zA-Z\._-]([0-9a-zA-Z]+/?)+\??.*$)";
+std::string regular_expression::INTEGER = R"(^[+-]?[1-9]+[0-9]*$)";
+std::string regular_expression::NUMBER = R"(^[+-]?[1-9]+[0-9]*\.?[0-9]*$)";
+std::string regular_expression::EMAIL = R"(^[0-9a-zA-Z]+(([-_\.])?[0-9a-zA-Z]+)?\@[0-9a-zA-Z]+[-_]?[0-9a-zA-Z]+(\.[0-9a-zA-Z]+)+$)";
+std::string regular_expression::URL = R"(^((http[s]?|ftp):\/\/)?([0-9a-zA-Z\.\/]+)+(\?.*)?$)";
 
 std::string base64_encode(const std::string& str)
 {
@@ -461,7 +464,6 @@ std::string bin2hex(const char* input, size_t len)
 std::string url_encode(const std::string& str)
 {
     std::string new_str;
-    ;
     char c;
     int ic;
     const char* chars = str.c_str();
