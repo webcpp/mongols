@@ -1,8 +1,3 @@
-#include <sys/prctl.h>
-#include <sys/signal.h>
-#include <sys/wait.h>
-#include <unistd.h>
-
 #include <mongols/tcp_proxy_server.hpp>
 #include <mongols/util.hpp>
 
@@ -22,15 +17,24 @@ int main(int, char**)
 
     mongols::tcp_proxy_server server(host, port, 5000, 8192, 0);
 
-    server.set_enable_tcp_send_to_other(false);
+    server.set_enable_tcp_send_to_other(true);
     //see example/nodejs
-    server.set_backend_server(host, 8888);
-    server.set_backend_server(host, 8889);
+    server.set_backend_server(host, 8886);
     //    if (!server.set_openssl("openssl/localhost.crt", "openssl/localhost.key")) {
     //        return -1;
     //    }
-    server.set_shutdown([&]() {
-        std::cout << "process " << getpid() << " exit.\n";
-    });
-    server.run(f);
+
+    std::function<void(pthread_mutex_t*, size_t*)> ff = [&](pthread_mutex_t* mtx, size_t* data) {
+        server.set_shutdown([&]() {
+            std::cout << "process " << getpid() << " exit.\n";
+        });
+        server.run(f);
+    };
+
+    std::function<bool(int)> g = [&](int status) {
+        return false;
+    };
+
+    mongols::multi_process main_process;
+    main_process.run(ff, g);
 }
