@@ -40,6 +40,9 @@
 //   R"((?i)hello)"          -- (?i) turns on case-insensitive matching
 //   R"(/\*(.*?)\*/)"        -- .*? matches . minimum no. of times possible
 //
+// When using UTF-8 encoding, case-insensitive matching will perform
+// simple case folding, not full case folding.
+//
 // -----------------------------------------------------------------------
 // MATCHING INTERFACE:
 //
@@ -244,6 +247,7 @@ class RE2 {
     ErrorBadCharRange,       // bad character class range
     ErrorMissingBracket,     // missing closing ]
     ErrorMissingParen,       // missing closing )
+    ErrorUnexpectedParen,    // unexpected closing )
     ErrorTrailingBackslash,  // trailing \ at end of regexp
     ErrorRepeatArgument,     // repeat argument missing, e.g. "*"
     ErrorRepeatSize,         // bad repetition argument
