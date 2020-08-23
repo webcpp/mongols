@@ -15,6 +15,10 @@ OBJ:=$(COBJ) $(CXXOBJ) $(CCOBJ) $(CPPOBJ)
 CC=gcc
 CXX=g++
 
+CFLAGS+=-O3 -g -std=c11 -fPIC -DNDEBUG
+CXXFLAGS+=-O3 -g -std=c++11 -fPIC -DNDEBUG
+
+
 BOTHFLAGS=-Wall -Wextra -Werror \
 		  -Wno-sign-compare     \
 		  -Wno-missing-field-initializers \
@@ -28,15 +32,17 @@ BOTHFLAGS=-Wall -Wextra -Werror \
 		  -Wno-implicit-fallthrough \
 		  -Wno-stringop-truncation \
 		  -Wno-cast-function-type \
-		  -Wno-deprecated-declarations
+		  -Wno-deprecated-declarations \
+		  -Wno-unused-result \
+		  -Wno-write-strings
 
-CFLAGS+=-O3 -g -std=c11 -fPIC -DNDEBUG
-CFLAGS+=$(BOTHFLAGS)
-CFLAGS+=`pkg-config --cflags openssl`
-CFLAGS+=-Iinc/mongols -Iinc/mongols/lib
-CFLAGS+=-Iinc/mongols/lib/lua -DLUA_COMPAT_5_2 -DLUA_COMPAT_5_1 -DLUA_USE_LINUX -D_GNU_SOURCE
-CFLAGS+=-DMULTIPLE_THREADS
-CFLAGS+=-Iinc/mongols/lib/sqlite  -DSQLITE_THREADSAFE=1 \
+
+
+BOTHFLAGS+=`pkg-config --cflags openssl`
+BOTHFLAGS+=-Iinc/mongols -Iinc/mongols/lib
+BOTHFLAGS+=-Iinc/mongols/lib/lua -DLUA_COMPAT_5_2 -DLUA_COMPAT_5_1 -DLUA_USE_LINUX -D_GNU_SOURCE -DKAGUYA_USE_CPP11
+BOTHFLAGS+=-DMULTIPLE_THREADS
+BOTHFLAGS+=-Iinc/mongols/lib/sqlite  -DSQLITE_THREADSAFE=1 \
 	-DSQLITE_ENABLE_FTS4  \
 	-DSQLITE_ENABLE_FTS5 \
 	-DSQLITE_ENABLE_JSON1  \
@@ -44,24 +50,16 @@ CFLAGS+=-Iinc/mongols/lib/sqlite  -DSQLITE_THREADSAFE=1 \
 	-DSQLITE_ENABLE_EXPLAIN_COMMENTS  \
 	-DHAVE_USLEEP \
 	-DHAVE_READLINE
-CFLAGS+=-Iinc/mongols/lib/z
-CFLAGS+=-Iinc/mongols/lib/hash
-CFLAGS+=-Iinc/mongols/lib/WjCryptLib
-CFLAGS+=-Iinc/mongols/lib/qjs -D_GNU_SOURCE -DCONFIG_VERSION=\"$(shell cat src/qjs/VERSION)\" -DCONFIG_BIGNUM
+BOTHFLAGS+=-Iinc/mongols/lib/z
+BOTHFLAGS+=-Iinc/mongols/lib/hash
+BOTHFLAGS+=-Iinc/mongols/lib/qjs -D_GNU_SOURCE -DCONFIG_VERSION=\"$(shell cat src/qjs/VERSION)\" -DCONFIG_BIGNUM
+BOTHFLAGS+=-Iinc/mongols/lib/hiredis
+BOTHFLAGS+=-Iinc/mongols/lib/leveldb -Isrc/leveldb -DLEVELDB_PLATFORM_POSIX -DLEVELDB_HAS_PORT_CONFIG_H
+BOTHFLAGS+=-Isrc/MPFDParser
+BOTHFLAGS+=-Isrc -Isrc/re2
 
-
-
-CXXFLAGS+=-O3 -g -std=c++11 -fPIC -DNDEBUG
+CFLAGS+=$(BOTHFLAGS)
 CXXFLAGS+=$(BOTHFLAGS)
-CXXFLAGS+=`pkg-config --cflags openssl`
-CXXFLAGS+=-Iinc/mongols -Iinc/mongols/lib 
-CXXFLAGS+=-Isrc/MPFDParser
-CXXFLAGS+=-Iinc/mongols/lib/leveldb -Isrc/leveldb -DLEVELDB_PLATFORM_POSIX -DLEVELDB_HAS_PORT_CONFIG_H
-CXXFLAGS+= -DKAGUYA_USE_CPP11
-CXXFLAGS+=-Isrc -Isrc/re2 
-CXXFLAGS+=-Iinc/mongols/lib/sqlite
-CXXFLAGS+=-Iinc/mongols/lib/qjs -D_GNU_SOURCE -DCONFIG_VERSION=\"$(shell cat src/qjs/VERSION)\" -DCONFIG_BIGNUM
-
 
 
 LDLIBS+=-lpthread -ldl -lrt -lm -lstdc++
