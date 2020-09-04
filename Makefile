@@ -19,6 +19,8 @@ CFLAGS+=-O3 -g -std=c11 -fPIC -DNDEBUG
 CXXFLAGS+=-O3 -g -std=c++11 -fPIC -DNDEBUG
 
 
+QUICKJS_VERSION:=$(shell cat src/qjs/VERSION)
+
 BOTHFLAGS=-Wall -Wextra -Werror \
 		  -Wno-sign-compare     \
 		  -Wno-missing-field-initializers \
@@ -52,7 +54,7 @@ BOTHFLAGS+=-Iinc/mongols/lib/sqlite  -DSQLITE_THREADSAFE=1 \
 	-DHAVE_READLINE
 BOTHFLAGS+=-Iinc/mongols/lib/z
 BOTHFLAGS+=-Iinc/mongols/lib/hash
-BOTHFLAGS+=-Iinc/mongols/lib/qjs -D_GNU_SOURCE -DCONFIG_VERSION=\"$(shell cat src/qjs/VERSION)\" -DCONFIG_BIGNUM
+BOTHFLAGS+=-Iinc/mongols/lib/qjs -D_GNU_SOURCE -DCONFIG_VERSION=\"$(QUICKJS_VERSION)\" -DCONFIG_BIGNUM
 BOTHFLAGS+=-Iinc/mongols/lib/hiredis
 BOTHFLAGS+=-Iinc/mongols/lib/leveldb -Isrc/leveldb -DLEVELDB_PLATFORM_POSIX -DLEVELDB_HAS_PORT_CONFIG_H
 BOTHFLAGS+=-Isrc/MPFDParser
