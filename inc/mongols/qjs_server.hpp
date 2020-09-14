@@ -10,7 +10,7 @@ namespace mongols {
 
 class qjs_server {
 public:
-    static size_t memory_limit, ctx_called_limit;
+    static size_t memory_limit, ctx_called_limit,stack_limit;
 
 public:
     qjs_server() = delete;

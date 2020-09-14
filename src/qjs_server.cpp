@@ -6,15 +6,15 @@ extern "C" {
 #include "qjs/quickjs-libc.h"
 }
 
+#include "qjs/quickjs-crypto.hpp"
 #include "qjs/quickjs-hash.hpp"
 #include "qjs/quickjs-mongols.hpp"
-#include "qjs/quickjs-crypto.hpp"
 #include "util.hpp"
 #include <functional>
 
 namespace mongols {
 
-size_t qjs_server::memory_limit = 1048576 * 1024 /*1GB*/, qjs_server::ctx_called_limit = 10240;
+size_t qjs_server::memory_limit = 1048576 * 1024 /*1GB*/, qjs_server::ctx_called_limit = 10240, qjs_server::stack_limit = 1048576 * 1024;
 
 qjs_server::qjs_server(const std::string& host, int port, int timeout, size_t buffer_size, size_t thread_size, size_t max_body_size, int max_event_size)
     : vm(0)
@@ -91,6 +91,8 @@ void qjs_server::config_vm()
 {
     if (this->vm) {
         JS_SetMemoryLimit(this->vm, qjs_server::memory_limit);
+        JS_SetMaxStackSize(this->vm, qjs_server::stack_limit);
+        js_std_init_handlers(this->vm);
         JS_SetModuleLoaderFunc(this->vm, NULL, js_module_loader, NULL);
     }
 }
@@ -107,7 +109,7 @@ void qjs_server::config_ctx()
         js_init_module_bjson(this->ctx, "bjson");
         js_init_module_mongols(this->ctx, "mongols");
         js_init_module_hash(this->ctx, "hash");
-        js_init_module_crypto(this->ctx,"crypto");
+        js_init_module_crypto(this->ctx, "crypto");
     }
 }
 
