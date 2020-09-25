@@ -31,13 +31,13 @@ bool file_mmap::get(const std::string& path, std::pair<char*, struct stat>& ele)
                 if (iter->second.second.st_mtime != st.st_mtime) {
                     munmap(iter->second.first, iter->second.second.st_size);
                     this->data.erase(iter);
-                    goto js_read;
+                    goto fd_read;
                 }
                 ele.first = iter->second.first;
                 ele.second = iter->second.second;
                 return true;
             } else {
-            js_read:
+            fd_read:
                 int ffd = open(path.c_str(), O_RDONLY | O_NONBLOCK);
                 if (ffd > 0) {
                     char* mmap_ptr = (char*)mmap(0, st.st_size, PROT_READ, MAP_PRIVATE | MAP_POPULATE, ffd, 0);
