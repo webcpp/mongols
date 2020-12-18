@@ -14,7 +14,7 @@ extern "C" {
 
 namespace mongols {
 
-size_t qjs_server::memory_limit = 1048576 * 1024 /*1GB*/, qjs_server::ctx_called_limit = 10240, qjs_server::stack_limit = 1048576 * 1024;
+size_t qjs_server::memory_limit = 1048576 * 1024 /*1GB*/, qjs_server::ctx_called_limit = 10240, qjs_server::stack_limit = 1048576 * 8 /*8MB*/;
 
 qjs_server::qjs_server(const std::string& host, int port, int timeout, size_t buffer_size, size_t thread_size, size_t max_body_size, int max_event_size)
     : vm(0)
@@ -34,11 +34,13 @@ qjs_server::qjs_server(const std::string& host, int port, int timeout, size_t bu
 
 qjs_server::~qjs_server()
 {
+    if(this->vm){
+        js_std_free_handlers(this->vm);
+    }
     if (this->ctx) {
         JS_FreeContext(this->ctx);
     }
     if (this->vm) {
-        js_std_free_handlers(this->vm);
         JS_FreeRuntime(this->vm);
     }
     if (this->server) {
