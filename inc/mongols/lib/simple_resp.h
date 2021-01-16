@@ -1,13 +1,14 @@
-#ifndef SIMPLE_RESP_SIMPLE_RESP_H
-#define SIMPLE_RESP_SIMPLE_RESP_H
+#pragma once
 
 #include <iostream>
 #include <string>
 #include <vector>
 
-namespace simple_resp {
+namespace simple_resp
+{
 
-    enum RESP_TYPE {
+    enum RESP_TYPE
+    {
         SIMPLE_STRINGS = '+',
         ERRORS = '-',
         INTEGERS = ':',
@@ -15,7 +16,8 @@ namespace simple_resp {
         ARRAYS = '*'
     };
 
-    enum STATUS {
+    enum STATUS
+    {
         OK = 0,
         EMPTY_INPUT = 1,
         INVAILID_RESP_TYPE = 2,
@@ -23,23 +25,27 @@ namespace simple_resp {
         UNKNOWN_INTERNAL_ERROR = 4
     };
 
-    enum PARSE_STATE {
+    enum PARSE_STATE
+    {
         INIT = 0,
         PARSE_ELEMENTS = 1,
         PARSE_BLUK_STRINGS = 2
     };
 
-    struct encode_result {
+    struct encode_result
+    {
         STATUS status;
         std::string response;
     };
 
-    struct decode_result {
+    struct decode_result
+    {
         STATUS status;
         std::vector<std::string> response;
     };
 
-    class decoder {
+    class decoder
+    {
     public:
         decoder() = default;
         decode_result decode(const std::string &input);
@@ -53,7 +59,8 @@ namespace simple_resp {
         decoder operator=(const decoder &) = delete;
     };
 
-    class encoder {
+    class encoder
+    {
     public:
         encoder() = default;
         encode_result encode(const RESP_TYPE &type, const std::vector<std::string> &args);
@@ -64,5 +71,3 @@ namespace simple_resp {
     };
 
 } // namespace simple_resp
-
-#endif //SIMPLE_RESP_SIMPLE_RESP_H

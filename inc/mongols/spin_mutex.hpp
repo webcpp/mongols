@@ -1,32 +1,31 @@
-#ifndef E08DF8D4_7BA1_4CBA_AE5F_4DFA7DA56D3D
-#define E08DF8D4_7BA1_4CBA_AE5F_4DFA7DA56D3D
+#pragma once
 
 #include <atomic>
 
-namespace mongols {
+namespace mongols
+{
 
-class spin_mutex {
-private:
-    std::atomic_flag flag;
-
-public:
-    spin_mutex()
-        : flag(ATOMIC_FLAG_INIT)
+    class spin_mutex
     {
-    }
-    virtual ~spin_mutex() = default;
+    private:
+        std::atomic_flag flag;
 
-    void lock()
-    {
-        while (this->flag.test_and_set(std::memory_order_acquire))
-            ;
-    }
+    public:
+        spin_mutex()
+            : flag(ATOMIC_FLAG_INIT)
+        {
+        }
+        virtual ~spin_mutex() = default;
 
-    void unlock()
-    {
-        this->flag.clear(std::memory_order_release);
-    }
-};
-}
+        void lock()
+        {
+            while (this->flag.test_and_set(std::memory_order_acquire))
+                ;
+        }
 
-#endif /* E08DF8D4_7BA1_4CBA_AE5F_4DFA7DA56D3D */
+        void unlock()
+        {
+            this->flag.clear(std::memory_order_release);
+        }
+    };
+} // namespace mongols
