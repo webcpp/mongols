@@ -11,16 +11,16 @@
 #include <algorithm>
 #include <iostream>
 
-class person {
+class person
+{
 public:
     person()
-        : name("Tom")
-        , age(0)
+        : name("Tom"), age(0)
     {
     }
     virtual ~person() = default;
 
-    void set_name(const std::string& name)
+    void set_name(const std::string &name)
     {
         this->name = name;
     }
@@ -30,7 +30,7 @@ public:
         this->age = age;
     }
 
-    const std::string& get_name() const
+    const std::string &get_name() const
     {
         return this->name;
     }
@@ -45,7 +45,8 @@ private:
     unsigned int age;
 };
 
-class studest : public person {
+class studest : public person
+{
 public:
     studest()
         : person()
@@ -67,12 +68,12 @@ private:
     double score;
 };
 
-int main(int, char**)
+int main(int, char **)
 {
     //    daemon(1, 0);
 
     int port = 9090;
-    const char* host = "127.0.0.1";
+    const char *host = "127.0.0.1";
     mongols::lua_server
         server(host, port, 5000, 8192, 0 /*2*/);
     server.set_root_path("html/lua");
@@ -83,14 +84,14 @@ int main(int, char**)
     //        return -1;
     //    }
 
-     server.set_function([](const std::string& str) {
+    server.set_function([](const std::string &str) {
         return mongols::hash_engine::sha1(str);
     },
-        "sha1");
-    server.set_function([](const std::string& str) {
+                        "sha1");
+    server.set_function([](const std::string &str) {
         return mongols::hash_engine::md5(str);
     },
-        "md5");
+                        "md5");
 
     server.set_class(
         kaguya::UserdataMetatable<person>()
@@ -108,10 +109,11 @@ int main(int, char**)
             .addFunction("set_score", &studest::set_score),
         "studest");
 
-    std::function<void(pthread_mutex_t*, size_t*)> f = [&](pthread_mutex_t* mtx, size_t* data) {
+    std::function<void(pthread_mutex_t *, size_t *)> f = [&](pthread_mutex_t *mtx, size_t *data) {
         std::string i;
         pthread_mutex_lock(mtx);
-        if (*data > std::thread::hardware_concurrency() - 1) {
+        if (*data > std::thread::hardware_concurrency() - 1)
+        {
             *data = 0;
         }
         i = std::move(std::to_string(*data));

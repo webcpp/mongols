@@ -10,19 +10,19 @@
 #include <algorithm>
 #include <iostream>
 
-int main(int, char**)
+int main(int, char **)
 {
     //    daemon(1, 0);
 
-    auto f = [](const mongols::request&) {
+    auto f = [](const mongols::request &) {
         return true;
     };
-    auto g = [](const mongols::request& req, mongols::response& res) {
+    auto g = [](const mongols::request &req, mongols::response &res) {
         res.content = std::move("hello,world");
         res.status = 200;
     };
     int port = 9090;
-    const char* host = "127.0.0.1";
+    const char *host = "127.0.0.1";
     mongols::http_server
         server(host, port, 5000, 8192, 0 /*2*/);
     server.set_enable_session(false);
@@ -31,10 +31,11 @@ int main(int, char**)
     //        return -1;
     //    }
 
-    std::function<void(pthread_mutex_t*, size_t*)> ff = [&](pthread_mutex_t* mtx, size_t* data) {
+    std::function<void(pthread_mutex_t *, size_t *)> ff = [&](pthread_mutex_t *mtx, size_t *data) {
         std::string i;
         pthread_mutex_lock(mtx);
-        if (*data > std::thread::hardware_concurrency() - 1) {
+        if (*data > std::thread::hardware_concurrency() - 1)
+        {
             *data = 0;
         }
         i = std::move(std::to_string(*data));

@@ -1,14 +1,17 @@
 #include <mongols/lib/lua/kaguya.hpp>
 
-std::string hello() {
+std::string hello()
+{
     return "hello cpp module";
 }
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-    int luaopen_hello(lua_State* L) {
+    int luaopen_hello(lua_State *L)
+    {
         kaguya::State state(L);
         kaguya::LuaTable module = state.newTable();
         module["hello"] = kaguya::function(&hello);
@@ -18,4 +21,3 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-

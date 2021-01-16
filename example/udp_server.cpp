@@ -2,13 +2,13 @@
 #include <iostream>
 #include <mongols/udp_server.hpp>
 
-int main(int, char**)
+int main(int, char **)
 {
-    auto f = [](const std::pair<char*, size_t>& input, const mongols::udp_server::client_t& client) {
+    auto f = [](const std::pair<char *, size_t> &input, const mongols::udp_server::client_t &client) {
         return std::string(input.first, input.second);
     };
     int port = 9090;
-    const char* host = "127.0.0.1";
+    const char *host = "127.0.0.1";
 
     mongols::udp_server::setsockopt_cb = [&](int fd) {
         // call setsockopt

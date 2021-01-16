@@ -9,17 +9,18 @@
 #include <functional>
 #include <iostream>
 
-int main(int, char**)
+int main(int, char **)
 {
     //    daemon(1, 0);
-    auto f = [](const mongols::request& req) {
-        if (req.method == "GET" && req.uri.find("..") == std::string::npos) {
+    auto f = [](const mongols::request &req) {
+        if (req.method == "GET" && req.uri.find("..") == std::string::npos)
+        {
             return true;
         }
         return false;
     };
     int port = 9090;
-    const char* host = "127.0.0.1";
+    const char *host = "127.0.0.1";
     mongols::web_server
         server(host, port, 5000, 512000, 0 /*2*/);
     server.set_root_path("html");
@@ -30,7 +31,7 @@ int main(int, char**)
     //        return -1;
     //    }
 
-    std::function<void(pthread_mutex_t*, size_t*)> ff = [&](pthread_mutex_t* mtx, size_t* data) {
+    std::function<void(pthread_mutex_t *, size_t *)> ff = [&](pthread_mutex_t *mtx, size_t *data) {
         server.set_shutdown([&]() {
             std::cout << "process " << getpid() << " exit.\n";
         });

@@ -1,16 +1,16 @@
 #include <mongols/http_server.hpp>
 
-int main(int, char**)
+int main(int, char **)
 {
-    auto f = [](const mongols::request&) {
+    auto f = [](const mongols::request &) {
         return true;
     };
-    auto g = [](const mongols::request& req, mongols::response& res) {
+    auto g = [](const mongols::request &req, mongols::response &res) {
         res.content = std::move("hello,world");
         res.status = 200;
     };
     int port = 9090;
-    const char* host = "127.0.0.1";
+    const char *host = "127.0.0.1";
     mongols::http_server
         server(host, port, 5000, 8192, 0 /*2*/);
     server.set_enable_session(false);

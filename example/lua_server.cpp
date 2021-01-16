@@ -1,16 +1,16 @@
 #include <mongols/lib/hash/hash_engine.hpp>
 #include <mongols/lua_server.hpp>
 
-class person {
+class person
+{
 public:
     person()
-        : name("Tom")
-        , age(0)
+        : name("Tom"), age(0)
     {
     }
     virtual ~person() = default;
 
-    void set_name(const std::string& name)
+    void set_name(const std::string &name)
     {
         this->name = name;
     }
@@ -20,7 +20,7 @@ public:
         this->age = age;
     }
 
-    const std::string& get_name() const
+    const std::string &get_name() const
     {
         return this->name;
     }
@@ -35,7 +35,8 @@ private:
     unsigned int age;
 };
 
-class studest : public person {
+class studest : public person
+{
 public:
     studest()
         : person()
@@ -57,10 +58,10 @@ private:
     double score;
 };
 
-int main(int, char**)
+int main(int, char **)
 {
     int port = 9090;
-    const char* host = "127.0.0.1";
+    const char *host = "127.0.0.1";
     mongols::lua_server
         server(host, port, 5000, 8192, 0 /*2*/);
     server.set_root_path("html/lua");
@@ -71,14 +72,14 @@ int main(int, char**)
     //        return -1;
     //    }
 
-    server.set_function([](const std::string& str) {
+    server.set_function([](const std::string &str) {
         return mongols::hash_engine::sha1(str);
     },
-        "sha1");
-    server.set_function([](const std::string& str) {
+                        "sha1");
+    server.set_function([](const std::string &str) {
         return mongols::hash_engine::md5(str);
     },
-        "md5");
+                        "md5");
 
     server.set_class(
         kaguya::UserdataMetatable<person>()
