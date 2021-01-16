@@ -1,49 +1,53 @@
 #include "quickjs-hash.hpp"
 #include "lib/hash/hash_engine.hpp"
 
-static JSValue js_hash_md5(JSContext* ctx, JSValueConst this_val,
-    int argc, JSValueConst* argv)
+static JSValue js_hash_md5(JSContext *ctx, JSValueConst this_val,
+                           int argc, JSValueConst *argv)
 {
-    if (argc != 1) {
+    if (argc != 1)
+    {
         return JS_EXCEPTION;
     }
-    const char* content = JS_ToCString(ctx, argv[0]);
+    const char *content = JS_ToCString(ctx, argv[0]);
     JSValue ret = JS_NewString(ctx, mongols::hash_engine::md5(content).c_str());
     JS_FreeCString(ctx, content);
     return ret;
 }
 
-static JSValue js_hash_sha1(JSContext* ctx, JSValueConst this_val,
-    int argc, JSValueConst* argv)
+static JSValue js_hash_sha1(JSContext *ctx, JSValueConst this_val,
+                            int argc, JSValueConst *argv)
 {
-    if (argc != 1) {
+    if (argc != 1)
+    {
         return JS_EXCEPTION;
     }
-    const char* content = JS_ToCString(ctx, argv[0]);
+    const char *content = JS_ToCString(ctx, argv[0]);
     JSValue ret = JS_NewString(ctx, mongols::hash_engine::sha1(content).c_str());
     JS_FreeCString(ctx, content);
     return ret;
 }
 
-static JSValue js_hash_sha256(JSContext* ctx, JSValueConst this_val,
-    int argc, JSValueConst* argv)
+static JSValue js_hash_sha256(JSContext *ctx, JSValueConst this_val,
+                              int argc, JSValueConst *argv)
 {
-    if (argc != 1) {
+    if (argc != 1)
+    {
         return JS_EXCEPTION;
     }
-    const char* content = JS_ToCString(ctx, argv[0]);
+    const char *content = JS_ToCString(ctx, argv[0]);
     JSValue ret = JS_NewString(ctx, mongols::hash_engine::sha256(content).c_str());
     JS_FreeCString(ctx, content);
     return ret;
 }
 
-static JSValue js_hash_sha512(JSContext* ctx, JSValueConst this_val,
-    int argc, JSValueConst* argv)
+static JSValue js_hash_sha512(JSContext *ctx, JSValueConst this_val,
+                              int argc, JSValueConst *argv)
 {
-    if (argc != 1) {
+    if (argc != 1)
+    {
         return JS_EXCEPTION;
     }
-    const char* content = JS_ToCString(ctx, argv[0]);
+    const char *content = JS_ToCString(ctx, argv[0]);
     JSValue ret = JS_NewString(ctx, mongols::hash_engine::sha512(content).c_str());
     JS_FreeCString(ctx, content);
     return ret;
@@ -56,15 +60,15 @@ static const JSCFunctionListEntry js_hash_funcs[] = {
     JS_CFUNC_DEF("sha512", 1, js_hash_sha512),
 };
 
-static int js_hash_init(JSContext* ctx, JSModuleDef* m)
+static int js_hash_init(JSContext *ctx, JSModuleDef *m)
 {
     return JS_SetModuleExportList(ctx, m, js_hash_funcs,
-        countof(js_hash_funcs));
+                                  countof(js_hash_funcs));
 }
 
-JSModuleDef* js_init_module_hash(JSContext* ctx, const char* module_name)
+JSModuleDef *js_init_module_hash(JSContext *ctx, const char *module_name)
 {
-    JSModuleDef* m;
+    JSModuleDef *m;
     m = JS_NewCModule(ctx, module_name, js_hash_init);
     if (!m)
         return NULL;
