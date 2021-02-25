@@ -28,12 +28,11 @@
 
 #include "table/block_builder.h"
 
-#include <assert.h>
-
 #include <algorithm>
+#include <cassert>
 
 #include "leveldb/comparator.h"
-#include "leveldb/table_builder.h"
+#include "leveldb/options.h"
 #include "util/coding.h"
 
 namespace leveldb {

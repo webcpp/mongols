@@ -25,10 +25,10 @@
 #define HAVE_SNAPPY 0
 #endif  // !defined(HAVE_SNAPPY)
 
-// Define to 1 if your processor stores words with the most significant byte
-// first (like Motorola and SPARC, unlike Intel and VAX).
-#if !defined(LEVELDB_IS_BIG_ENDIAN)
-#define LEVELDB_IS_BIG_ENDIAN 0
-#endif  // !defined(LEVELDB_IS_BIG_ENDIAN)
+// Define to 1 if you have a definition for O_CLOEXEC in <fcntl.h>.
+#if !defined(HAVE_O_CLOEXEC)
+#define HAVE_O_CLOEXEC 1
+#endif  // !defined(HAVE_O_CLOEXEC)
+
 
 #endif  // STORAGE_LEVELDB_PORT_PORT_CONFIG_H_
