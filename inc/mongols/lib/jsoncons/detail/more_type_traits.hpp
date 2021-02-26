@@ -670,20 +670,44 @@ namespace impl {
     using
     is_constructible_from_string = is_detected<construct_from_string_t,T>;
 
-    // is_function_object
-    // is_function_object_exact
+    template<typename T, typename Data, typename Size>
+    using
+    construct_from_data_size_t = decltype(T(static_cast<Data>(nullptr),Size{}));
+
+
+    template<class T, typename Data, typename Size>
+    using
+    is_constructible_from_data_size = is_detected<construct_from_data_size_t,T,Data,Size>;
+
+    // is_unary_function_object
+    // is_unary_function_object_exact
 
     template<class FunctionObject, class Arg>
         using
-        function_object_t = decltype(std::declval<FunctionObject>()(std::declval<Arg>()));
+        unary_function_object_t = decltype(std::declval<FunctionObject>()(std::declval<Arg>()));
 
     template<class FunctionObject, class Arg>
         using
-        is_function_object = is_detected<function_object_t, FunctionObject, Arg>;
+        is_unary_function_object = is_detected<unary_function_object_t, FunctionObject, Arg>;
 
     template<class FunctionObject, class T, class Arg>
     using
-    is_function_object_exact = is_detected_exact<T,function_object_t, FunctionObject, Arg>;
+    is_unary_function_object_exact = is_detected_exact<T,unary_function_object_t, FunctionObject, Arg>;
+
+    // is_binary_function_object
+    // is_binary_function_object_exact
+
+    template<class FunctionObject, class Arg1, class Arg2>
+        using
+        binary_function_object_t = decltype(std::declval<FunctionObject>()(std::declval<Arg1>(),std::declval<Arg2>()));
+
+    template<class FunctionObject, class Arg1, class Arg2>
+        using
+        is_binary_function_object = is_detected<binary_function_object_t, FunctionObject, Arg1, Arg2>;
+
+    template<class FunctionObject, class T, class Arg1, class Arg2>
+    using
+    is_binary_function_object_exact = is_detected_exact<T,binary_function_object_t, FunctionObject, Arg1, Arg2>;
 
 } // detail
 } // jsoncons

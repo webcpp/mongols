@@ -134,8 +134,8 @@ private:
     using char_allocator_type = typename std::allocator_traits<temp_allocator_type>:: template rebind_alloc<CharT>;
     using parse_state_allocator_type = typename std::allocator_traits<temp_allocator_type>:: template rebind_alloc<json_parse_state>;
 
-    static constexpr size_t initial_string_buffer_capacity_ = 1024;
-    static constexpr int default_initial_stack_capacity_ = 100;
+    static constexpr std::size_t initial_string_buffer_capacity_ = 1024;
+    static constexpr std::size_t default_initial_stack_capacity_ = 100;
 
     basic_json_decode_options<CharT> options_;
 
@@ -1726,7 +1726,7 @@ minus_sign:
                 ++position_;
                 goto integer;
             default:
-                err_handler_(json_errc::expected_value, *this);
+                err_handler_(json_errc::invalid_number, *this);
                 ec = json_errc::expected_value;
                 more_ = false;
                 return;
@@ -2001,7 +2001,7 @@ exp1:
                 ++position_;
                 goto exp3;
             default:
-                err_handler_(json_errc::expected_value, *this);
+                err_handler_(json_errc::invalid_number, *this);
                 ec = json_errc::expected_value;
                 more_ = false;
                 state_ = json_parse_state::exp1;
@@ -2021,7 +2021,7 @@ exp2:
                 ++position_;
                 goto exp3;
             default:
-                err_handler_(json_errc::expected_value, *this);
+                err_handler_(json_errc::invalid_number, *this);
                 ec = json_errc::expected_value;
                 more_ = false;
                 state_ = json_parse_state::exp2;
@@ -2603,6 +2603,11 @@ escape_u8:
     std::size_t position() const override
     {
         return saved_position_;
+    }
+
+    std::size_t offset() const 
+    {
+        return input_ptr_ - begin_input_;
     }
 private:
 
