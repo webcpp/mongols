@@ -42,7 +42,7 @@ BOTHFLAGS=-Wall -Wextra -Werror \
 
 BOTHFLAGS+=`pkg-config --cflags openssl`
 BOTHFLAGS+=-Iinc/mongols -Iinc/mongols/lib
-BOTHFLAGS+=-Iinc/mongols/lib/lua -DLUA_COMPAT_5_2 -DLUA_COMPAT_5_1 -DLUA_USE_LINUX -D_GNU_SOURCE -DKAGUYA_USE_CPP11
+BOTHFLAGS+=-Iinc/mongols/lib/lua -DLUA_COMPAT_5_3 -DLUA_USE_LINUX -D_GNU_SOURCE -DKAGUYA_USE_CPP11
 BOTHFLAGS+=-DMULTIPLE_THREADS
 BOTHFLAGS+=-Iinc/mongols/lib/sqlite  -DSQLITE_THREADSAFE=1 \
 	-DSQLITE_ENABLE_FTS4  \

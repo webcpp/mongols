@@ -61,10 +61,4 @@ LUAMOD_API int (luaopen_xutf8) (lua_State *l);
 LUALIB_API void (luaL_openlibs) (lua_State *L);
 
 
-
-#if !defined(lua_assert)
-#define lua_assert(x)	((void)0)
-#endif
-
-
 #endif
