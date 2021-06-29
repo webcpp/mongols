@@ -306,16 +306,20 @@ namespace mongols
 
     bool tcp_server::send_to_all_client(int fd, const std::string &str, const filter_handler_function &h)
     {
+        std::vector<int> litter_fd;
         for (auto i = this->clients.begin(); i != this->clients.end();)
         {
             if (i->first != fd && h(i->second.client) && (this->openssl_is_ok ? this->openssl_manager->write(i->second.ssl->get_ssl(), str) < 0 : send(i->first, str.c_str(), str.size(), MSG_NOSIGNAL) < 0))
             {
-                this->del_client(i->first);
+                litter_fd.push_back(i->first);
             }
             else
             {
                 ++i;
             }
+        }
+        for( auto& i : litter_fd){
+            this->del_client(i);
         }
         return false;
     }
